@@ -2,5 +2,6 @@
 .env.*
 !.env.example
 !bot/.env.example
+!deploy/prem-eu4/.env.example
 data/
 node_modules/

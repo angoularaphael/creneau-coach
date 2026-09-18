@@ -1,0 +1,22 @@
+{
+  "name": "creneau-coach-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bot créneaux coachs — Deciplus JUNIOR + IMAP jeremyfidge@gmail.com",
+  "main": "start.js",
+  "scripts": {
+    "start": "node start.js",
+    "bot": "node worker.js",
+    "test": "node --test test/*.test.js",
+    "test:imap": "node scripts/test-imap.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "imapflow": "^1.6.6",
+    "mailparser": "^3.9.15"
+  }
+}

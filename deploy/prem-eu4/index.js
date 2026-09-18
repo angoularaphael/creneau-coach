@@ -2,13 +2,13 @@
 /**
  * Bot créneau coachs — prem-eu4.bot-hosting.net:20695
  *
- * Vendeur Deciplus JUNIOR. Jobs grant/revoke uniquement (BOT_ROLE=coach-access).
+ * Clone creneau-coach, lance bot/start.js (JUNIOR + IMAP jeremyfidge@gmail.com).
  *
- * Upload :
+ * Upload panel :
  *   /home/container/index.js  (ce fichier)
  *   /home/container/.env      (voir .env.example)
  *
- * Startup panel : node index.js
+ * Startup : node index.js
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
@@ -16,12 +16,12 @@ const path = require('path');
 
 const ROOT = __dirname;
 const ENV_FILE = path.join(ROOT, '.env');
-const BOT_DIR = path.join(ROOT, 'boxi-deci-bot');
-const REPO = process.env.BOT_REPO_URL || 'https://github.com/angoularaphael/boxi-deci-bot.git';
+const BOT_DIR = path.join(ROOT, 'creneau-coach');
+const REPO = process.env.BOT_REPO_URL || 'https://github.com/angoularaphael/creneau-coach.git';
 const BRANCH = process.env.BOT_REPO_BRANCH || 'main';
 
 function log(msg) {
-  console.log(`[BOXPLUS coach-slot eu4] ${msg}`);
+  console.log(`[creneau-coach eu4] ${msg}`);
 }
 
 function loadEnvFile(filePath) {
@@ -55,59 +55,16 @@ function resolvePath(p) {
 
 function ensureDataPaths() {
   const dataRoot = resolvePath(process.env.BOT_DATA_DIR || 'data');
-  const pw = resolvePath(process.env.PLAYWRIGHT_BROWSERS_PATH || path.join(dataRoot, 'ms-playwright'));
   const tmp = resolvePath(process.env.TMPDIR || path.join(dataRoot, 'tmp'));
-  fs.mkdirSync(pw, { recursive: true });
   fs.mkdirSync(tmp, { recursive: true });
   fs.mkdirSync(path.join(dataRoot, 'session'), { recursive: true });
   fs.mkdirSync(path.join(dataRoot, 'queue'), { recursive: true });
-  process.env.PLAYWRIGHT_BROWSERS_PATH = pw;
   process.env.TMPDIR = tmp;
   process.env.BOT_DATA_DIR = dataRoot;
+  process.env.BOT_QUEUE_DIR = process.env.BOT_QUEUE_DIR || path.join(dataRoot, 'queue');
   process.env.BOT_SESSION_DIR = resolvePath(process.env.BOT_SESSION_DIR || path.join(dataRoot, 'session'));
-  process.env.BOXPLUS_QUEUE_DIR = path.join(dataRoot, 'queue');
-  log(`Playwright → ${pw}`);
-  log(`TMPDIR → ${tmp}`);
+  log(`Queue → ${process.env.BOT_QUEUE_DIR}`);
   log(`Session → ${process.env.BOT_SESSION_DIR}`);
-}
-
-function playwrightReady(basePath) {
-  if (!fs.existsSync(basePath)) return false;
-  return fs.readdirSync(basePath).some((n) => /chromium|headless/i.test(n));
-}
-
-function playwrightCli(botDir) {
-  return path.join(botDir, 'node_modules', 'playwright', 'cli.js');
-}
-
-function runPlaywrightInstall(botDir, variant) {
-  const cli = playwrightCli(botDir);
-  if (!fs.existsSync(cli)) {
-    throw new Error('playwright/cli.js absent — npm install a echoue ?');
-  }
-  run(`node "${cli}" install ${variant}`, botDir);
-}
-
-function installPlaywright(botDir) {
-  const base = process.env.PLAYWRIGHT_BROWSERS_PATH;
-  const already = playwrightReady(base);
-  if (!already) {
-    run('rm -rf ~/.cache/ms-playwright 2>/dev/null || true', ROOT);
-    for (const variant of ['chromium-headless-shell', 'chromium']) {
-      try {
-        log(`Installation Playwright: ${variant}`);
-        runPlaywrightInstall(botDir, variant);
-        if (playwrightReady(base)) break;
-      } catch (err) {
-        log(`Echec ${variant}: ${err.message || err}`);
-      }
-    }
-  } else {
-    log('Playwright deja installe — skip navigateur');
-  }
-  if (!playwrightReady(base)) {
-    throw new Error('Playwright non installe — verifie df -h (disque plein ?)');
-  }
 }
 
 loadEnvFile(ENV_FILE);
@@ -115,18 +72,17 @@ loadEnvFile(ENV_FILE);
 process.env.BOT_ROLE = process.env.BOT_ROLE || 'coach-access';
 process.env.BOT_ID = process.env.BOT_ID || 'junior-coach';
 process.env.BOT_HTTP_PORT = process.env.BOT_HTTP_PORT || process.env.PORT || '20695';
-process.env.DECIPLUS_HEADLESS = process.env.DECIPLUS_HEADLESS || 'true';
-process.env.DECIPLUS_FAST = process.env.DECIPLUS_FAST || '1';
-process.env.BOT_CATALOG_PUSH_ENABLED = process.env.BOT_CATALOG_PUSH_ENABLED || 'false';
 process.env.DECIPLUS_USER = process.env.DECIPLUS_USER || 'JUNIOR';
+process.env.DECIPLUS_IMAP_USER = process.env.DECIPLUS_IMAP_USER || 'jeremyfidge@gmail.com';
 process.env.ALERT_EMAIL = process.env.ALERT_EMAIL || 'boxingcentertls@gmail.com';
 
 ensureDataPaths();
 log(`.env ${fs.existsSync(ENV_FILE) ? 'OK' : 'MANQUANT'} (${ENV_FILE})`);
 log(`BOT_ROLE=${process.env.BOT_ROLE} BOT_ID=${process.env.BOT_ID} PORT=${process.env.BOT_HTTP_PORT}`);
+log(`IMAP ${process.env.DECIPLUS_IMAP_USER} pass=${process.env.DECIPLUS_IMAP_PASS ? 'oui' : 'NON — à faire'}`);
 
 function ensureBotRepo() {
-  if (!fs.existsSync(path.join(BOT_DIR, 'bot', 'index.js'))) {
+  if (!fs.existsSync(path.join(BOT_DIR, 'bot', 'start.js'))) {
     log(`Clone ${REPO} → ${BOT_DIR}`);
     run(`git clone --depth 1 --branch ${BRANCH} ${REPO} "${BOT_DIR}"`);
     return;
@@ -139,16 +95,17 @@ function ensureBotRepo() {
   }
 }
 
+const appDir = path.join(BOT_DIR, 'bot');
 ensureBotRepo();
-run('npm install --omit=dev --no-fund --no-audit --ignore-scripts', BOT_DIR);
-installPlaywright(BOT_DIR);
 
-const depsFile = path.join(BOT_DIR, 'lib', 'playwright-host-deps.js');
-if (fs.existsSync(depsFile)) {
-  const { installChromiumSystemDeps } = require(depsFile);
-  const depsDir = path.join(resolvePath(process.env.BOT_DATA_DIR || 'data'), 'system-libs');
-  installChromiumSystemDeps({ baseDir: depsDir, botDir: BOT_DIR, log: (m) => log(m) });
+const panelEnv = path.join(ROOT, '.env');
+const botEnv = path.join(appDir, '.env');
+if (fs.existsSync(panelEnv)) {
+  fs.copyFileSync(panelEnv, botEnv);
+  log(`Copie .env panel → ${botEnv}`);
 }
 
-log('Demarrage bot créneau coachs (vendeur Junior)…');
-run('node start.js', BOT_DIR);
+run('npm install --omit=dev --no-fund --no-audit --ignore-scripts', appDir);
+
+log('Demarrage bot créneau coachs (JUNIOR / jeremyfidge)…');
+run('node start.js', appDir);
