@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { getSessionMe } from '@/lib/auth/session';
@@ -16,8 +17,25 @@ export async function SiteHeader() {
 
   return (
     <header className="site-header">
-      <Link href="/" className="brand">
-        Boxing <span>Center</span>
+      {/*
+        Le logo est un FICHIER, jamais du texte.
+
+        L'en-tête recomposait « Boxing Center » en Bebas Neue. Le logo officiel
+        est un lettrage arqué avec contour blanc et filet cuivre : retapé en
+        police, ce n'est plus le logo, c'est une imitation. Tous les sites frères
+        posent `logo-blanc.png` de la même façon — même fichier, même méthode.
+
+        `priority` : le logo est dans le premier écran, il ne doit pas arriver
+        après le texte.
+      */}
+      <Link href="/" className="brand" aria-label="Boxing Center — accueil">
+        <Image
+          src="/logo-blanc.png"
+          alt="Boxing Center"
+          width={132}
+          height={44}
+          priority
+        />
       </Link>
       <nav className="nav" aria-label="Principale">
         {links.map((l) => (

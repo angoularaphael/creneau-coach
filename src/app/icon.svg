@@ -1,19 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Boxing Center — créneaux coachs">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Boxing Center">
   <!--
-    Favicon PROPRE À CE PROJET.
+    Favicon — la langue de la famille Boxing Center.
 
-    La doctrine est explicite : deux sites de la famille ne partagent jamais le
-    même favicon. Sept favicons au même md5, c'est un défaut de barre, pas un
-    détail — le SEO et les métadonnées parlent autant que la page.
+    Les sites frères (Muret, Colomiers, Cugnaux, Labège, L'Union, Castelginest…)
+    partagent tous la même construction : carré encre, anneau cuivre, monogramme
+    blanc. Deux salles ne portent jamais les mêmes lettres ; c'est ce qui les
+    distingue dans une barre d'onglets.
 
-    Le signe n'est ni un gant ni un logo répété : c'est le mécanisme du produit.
-    Trois barres = trois heures d'une journée. Celle du milieu est pleine et
-    rouge : le créneau pris. C'est exactement ce que dessine le rail d'intensité
-    du planning, réduit à 16 pixels. Le site des clubs a son identité ; celui-ci
-    parle de temps réservé, et son signe le dit.
+    Ici les lettres sont BC, parce que ce produit n'est pas une salle : c'est la
+    plateforme de réservation de tout le réseau. Le cuivre est la seconde couleur
+    du logo officiel et n'appartient à aucune salle en particulier — il est donc
+    exactement à sa place sur la surface qui les réunit.
+
+    Le logo officiel complet (BOXING CENTER arqué) ne se lit pas à 16 px : c'est
+    précisément pourquoi la famille a ce système. Le vrai logo est dans l'en-tête,
+    en fichier, jamais recomposé en texte.
   -->
-  <rect width="32" height="32" rx="7" fill="#0c0d0f"/>
-  <rect x="7"  y="8"  width="18" height="4" rx="2" fill="#f4f4f5" opacity="0.28"/>
-  <rect x="7"  y="14" width="18" height="4" rx="2" fill="#e11d48"/>
-  <rect x="7"  y="20" width="18" height="4" rx="2" fill="#f4f4f5" opacity="0.28"/>
+  <rect width="192" height="192" fill="#1e2044"/>
+  <circle cx="96" cy="96" r="66" fill="none" stroke="#b8763a" stroke-width="13"/>
+  <text x="96" y="97"
+        font-family="Bebas Neue, Oswald, Haettenschweiler, Impact, sans-serif"
+        font-size="74" font-weight="700" letter-spacing="1"
+        fill="#f3efe6" text-anchor="middle" dominant-baseline="central">BC</text>
 </svg>
