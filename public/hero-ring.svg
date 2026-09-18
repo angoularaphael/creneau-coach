@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="g" cx="70%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#3a1520"/>
+      <stop offset="55%" stop-color="#14161c"/>
+      <stop offset="100%" stop-color="#0a0b0e"/>
+    </radialGradient>
+    <linearGradient id="rope" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c4122f" stop-opacity="0"/>
+      <stop offset="35%" stop-color="#c4122f"/>
+      <stop offset="65%" stop-color="#e8193a"/>
+      <stop offset="100%" stop-color="#c4122f" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g)"/>
+  <g opacity="0.35" fill="none" stroke="#f3f0ea" stroke-width="2">
+    <rect x="780" y="180" width="620" height="520" rx="8"/>
+    <line x1="780" y1="280" x2="1400" y2="280" stroke="url(#rope)" stroke-width="6"/>
+    <line x1="780" y1="380" x2="1400" y2="380" stroke="url(#rope)" stroke-width="6"/>
+    <line x1="780" y1="480" x2="1400" y2="480" stroke="url(#rope)" stroke-width="6"/>
+    <line x1="780" y1="580" x2="1400" y2="580" stroke="url(#rope)" stroke-width="6"/>
+  </g>
+  <circle cx="420" cy="520" r="160" fill="none" stroke="#c4122f" stroke-opacity="0.25" stroke-width="18"/>
+  <circle cx="420" cy="520" r="95" fill="none" stroke="#f3f0ea" stroke-opacity="0.08" stroke-width="3"/>
+</svg>

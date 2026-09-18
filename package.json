@@ -2,22 +2,38 @@
   "name": "coach-reservation",
   "version": "1.0.0",
   "private": true,
-  "description": "Plateforme réservation coachs — lot Raphael (paiement, signature, QR, Deciplus)",
-  "main": "server.js",
+  "description": "Plateforme réservation coachs Boxing Center — Next.js (Brad) + API Express Lot A (Raphael)",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "api:raphael": "node server.js",
     "bot": "node bot/start.js",
     "bootstrap": "node bootstrap.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "test:slots": "node --test test/slots-contract.test.mjs",
+    "test:auth": "node --test test/auth-contract.test.mjs",
+    "test:tunnel": "node --test test/tunnel-contract.test.mjs",
+    "test:lot-b": "node --test test/slots-contract.test.mjs test/auth-contract.test.mjs test/tunnel-contract.test.mjs"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "next": "^14.2.18",
     "pdfkit": "^0.19.1",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.7.2"
   }
 }

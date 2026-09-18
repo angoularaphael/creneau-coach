@@ -106,41 +106,41 @@ Tout ce que le coach **voit**. Tu **consommes** l’API ; tu ne calcules pas le 
 
 ### 2.1 Site public
 
-- [ ] Viewport + mobile-first (375 / 900), CSS Boxing Center (`boutique.css` / `components.css`)
-- [ ] Accueil, Nos clubs, Comment ça marche, Tarifs, Contact, pages légales
-- [ ] 5 fiches club : Minimes, St-Cyprien, États-Unis, Ramonville, Portet
-- [ ] États-Unis : 3 espaces (Boxe / MMA-Sol / Fitness) — Portet : 2 (Boxe-Fitness / MMA-Sol)
-- [ ] `GET /clubs`, `GET /clubs/:id`, `POST /contact`
-- [ ] Mentions RGPD + politique de confidentialité (textes direction)
+- [x] Viewport + mobile-first (375 / 900), CSS Boxing Center (`boutique.css` / `components.css`)
+- [x] Accueil, Nos clubs, Comment ça marche, Tarifs, Contact, pages légales
+- [x] 5 fiches club : Minimes, St-Cyprien, États-Unis, Ramonville, Portet
+- [x] États-Unis : 3 espaces (Boxe / MMA-Sol / Fitness) — Portet : 2 (Boxe-Fitness / MMA-Sol)
+- [x] `GET /clubs`, `GET /clubs/:id`, `POST /contact`
+- [~] Mentions RGPD + politique de confidentialité (textes direction)
 
 ### 2.2 Auth + compte
 
-- [ ] Inscription / login / logout Supabase — cookies **httpOnly**, pas de JWT dans `localStorage`
-- [ ] Email vérifié, mot de passe robuste
-- [ ] Consentements CGU + confidentialité **non** pré-cochés
-- [ ] `GET/PATCH /me`, photo privée (`POST /me/photo` MIME + 5 Mo)
-- [ ] Compte suspendu → écran bloqué, pas de tunnel
-- [ ] `GET /me/export` + demande `DELETE /me` (UI)
+- [x] Inscription / login / logout Supabase — cookies **httpOnly**, pas de JWT dans `localStorage`
+- [x] Email vérifié, mot de passe robuste
+- [x] Consentements CGU + confidentialité **non** pré-cochés
+- [x] `GET/PATCH /me`, photo privée (`POST /me/photo` MIME + 5 Mo)
+- [x] Compte suspendu → écran bloqué, pas de tunnel
+- [x] `GET /me/export` + demande `DELETE /me` (UI)
 
 ### 2.3 Tunnel + espace coach
 
-- [ ] Grille lun–sam 10h–19h via `GET /clubs/:id/slots` (`open` / `full` / `blocked` / `past` / `mine`)
-- [ ] Afficher `amount_cents` **serveur** (10 € / 15 €) — jamais recalculé en React
-- [ ] `POST /reservations` + `Idempotency-Key` → bouton Payer (URL Raphael)
-- [ ] Écran signature (embed Raphael) après `awaiting_signature`
-- [ ] Mes réservations, mes avoirs (`credits_cents`), historique paiements (lecture)
-- [ ] QR + PDF seulement si `confirmed` — pas d’URL devinable
-- [ ] Annulation UI → `POST .../cancel` (Junior décide 24 h)
-- [ ] CTA 44×44, 1 colonne mobile, boutons `width: 100%` petit écran
+- [x] Grille lun–sam 10h–19h via `GET /clubs/:id/slots` (`open` / `full` / `blocked` / `past` / `mine`)
+- [x] Afficher `amount_cents` **serveur** (10 € / 15 €) — jamais recalculé en React
+- [x] `POST /reservations` + `Idempotency-Key` → bouton Payer (URL Raphael)
+- [x] Écran signature (embed Raphael) après `awaiting_signature`
+- [x] Mes réservations, mes avoirs (`credits_cents`), historique paiements (lecture)
+- [x] QR + PDF seulement si `confirmed` — pas d’URL devinable
+- [x] Annulation UI → `POST .../cancel` (Junior décide 24 h)
+- [x] CTA 44×44, 1 colonne mobile, boutons `width: 100%` petit écran
 
 ### 2.4 Sécu / tests Brad
 
-- [ ] L’UI ne « cache » pas un leak : si l’API 404, pas de données d’un autre coach
-- [ ] Prix / `paid` jamais écrits depuis le client
-- [ ] Headers CSP / clickjacking tunnel paiement + signature (avec Raphael)
-- [ ] Vérif visuelle 375 px et ~900 px sur chaque page livrée
+- [x] L’UI ne « cache » pas un leak : si l’API 404, pas de données d’un autre coach
+- [x] Prix / `paid` jamais écrits depuis le client
+- [~] Headers CSP / clickjacking tunnel paiement + signature (avec Raphael)
+- [~] Vérif visuelle 375 px et ~900 px sur chaque page livrée
 
-**Attend Junior :** `GET /slots` + hold. **Attend Raphael :** checkout_url + pad + QR.
+**Attend Junior :** `GET /slots` + hold **réels** (mock Brad en place). **Attend Raphael :** checkout / pad / QR **prod** (simulateurs Brad en place).
 
 ---
 
