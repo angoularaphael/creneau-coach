@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Boxing Center — créneaux coachs">
+  <!--
+    Favicon PROPRE À CE PROJET.
+
+    La doctrine est explicite : deux sites de la famille ne partagent jamais le
+    même favicon. Sept favicons au même md5, c'est un défaut de barre, pas un
+    détail — le SEO et les métadonnées parlent autant que la page.
+
+    Le signe n'est ni un gant ni un logo répété : c'est le mécanisme du produit.
+    Trois barres = trois heures d'une journée. Celle du milieu est pleine et
+    rouge : le créneau pris. C'est exactement ce que dessine le rail d'intensité
+    du planning, réduit à 16 pixels. Le site des clubs a son identité ; celui-ci
+    parle de temps réservé, et son signe le dit.
+  -->
+  <rect width="32" height="32" rx="7" fill="#0c0d0f"/>
+  <rect x="7"  y="8"  width="18" height="4" rx="2" fill="#f4f4f5" opacity="0.28"/>
+  <rect x="7"  y="14" width="18" height="4" rx="2" fill="#e11d48"/>
+  <rect x="7"  y="20" width="18" height="4" rx="2" fill="#f4f4f5" opacity="0.28"/>
+</svg>
