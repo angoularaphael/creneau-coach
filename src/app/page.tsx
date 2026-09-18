@@ -7,24 +7,40 @@ export const metadata = metadataDeRoute('/');
 export default function HomePage() {
   return (
     <>
-      <section className="hero" aria-label="Accueil">
-        <div>
-          <h1 className="hero-brand">
-            Boxing <span>Center</span>
-          </h1>
-          <p>
-            Réservez votre créneau coach — cinq clubs toulousains, paiement en une
-            fois, accès QR le jour J.
-          </p>
-          <div className="hero-actions">
-            <Link className="btn btn-primary" href="/clubs">
-              Voir les clubs
-            </Link>
-            <Link className="btn btn-ghost" href="/comment-ca-marche">
-              Comment ça marche
-            </Link>
-          </div>
+      <section className="hero" aria-label="Louer une salle">
+        {/*
+          Le titre ne recompose PLUS le logo. Le vrai logo est dans l'en-tête, en
+          fichier ; le répéter en dessous, en police, c'est le contrefaire deux
+          fois et dire au visiteur ce qu'il sait déjà.
+
+          Ce qu'il ne sait pas, c'est ce qu'on vend : une heure de salle. La
+          première phrase confirme donc la raison du clic, elle ne la contredit
+          pas — et elle porte l'intention de recherche « louer salle de boxe
+          Toulouse » sans la réciter comme un robot.
+        */}
+        <p className="hero-kicker mono">
+          <span>5 clubs · Toulouse</span>
+          <span>lun — sam · 10 h → 19 h</span>
+        </p>
+        <h1 className="hero-titre">
+          Louez une salle<br />
+          <em>à l’heure.</em>
+        </h1>
+        <p className="hero-sous">
+          Vous avez le client. Nous avons la salle, le ring et les sacs. Réservez
+          l’heure qu’il vous faut, entrez avec un QR, repartez.
+        </p>
+        <div className="hero-actions">
+          <Link className="btn btn-primary" href="/clubs">
+            Voir les créneaux libres
+          </Link>
+          <Link className="btn btn-ghost" href="/comment-ca-marche">
+            Comment ça marche
+          </Link>
         </div>
+        <p className="hero-prix mono">
+          <b>10 €</b> l’heure creuse <span aria-hidden="true">·</span> <b>15 €</b> l’heure pleine
+        </p>
       </section>
 
       <section className="section">

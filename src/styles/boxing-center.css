@@ -1,23 +1,53 @@
 :root {
-  --bg: #0c0d0f;
-  --bg-elevated: #14161a;
-  --bg-soft: #1a1d24;
-  --ink: #f3f0ea;
-  --ink-muted: #a8a296;
-  --line: rgba(243, 240, 234, 0.12);
-  --accent: #c4122f;
-  --accent-hot: #e8193a;
-  --accent-soft: rgba(196, 18, 47, 0.18);
-  --ok: #3d9b6a;
-  --warn: #c4a035;
-  --blocked: #5c5666;
-  --full: #8a2f3b;
-  --past: #3a3d45;
-  --font-display: var(--font-display), 'Arial Narrow', sans-serif;
-  --font-body: var(--font-body), Georgia, serif;
-  --space: clamp(1rem, 3vw, 2rem);
+  /* ────────────────────────────────────────────────────────────────────
+     PALETTE BOXING CENTER — tranchée par Eddy le 18 septembre 2026.
+     Quatre couleurs : le bleu de la marque, le noir, le blanc, le brun du logo.
+     Le rouge #c4122f qui régnait ici n'appartient à aucune palette de la
+     marque ; le rouge de la marque est réservé au prix 89 € de la campagne été,
+     et deux offres ne cohabitent jamais sur un même support.
+
+     LA LOI : le brun ne dit pas « boxe », il dit « ceci se décide ». Il ne
+     touche que l'action et le créneau prenable. Tout ce qui n'appelle aucune
+     décision — complet, bloqué, passé — vit en bleu éteint, jamais en couleur.
+     Si deux choses sont brunes sur un écran, aucune n'est vue.
+
+     Contrastes calculés (WCAG 2.1), pas estimés :
+       --ink        sur --bg ........ 18,9:1
+       --ink-muted  sur --bg ........  8,9:1   AA petit texte
+       --accent-hot sur --bg ........  7,4:1   AA petit texte
+       --accent     sur --bg ........  5,5:1   AA petit texte
+     ──────────────────────────────────────────────────────────────────── */
+  --bg: #080808;              /* le noir, pas un gris de logiciel */
+  --bg-elevated: #14162e;     /* l'encre dans l'ombre */
+  --bg-soft: #1e2044;         /* le bleu Boxing Center */
+  --ink: #f5f5f5;
+  --ink-muted: #a8abc4;       /* bleuté — jamais un gris chaud neutre */
+  --line: rgba(168, 171, 196, 0.16);
+
+  --accent: #b8763a;          /* le brun du logo : aplats et traits */
+  --accent-hot: #c98a4b;      /* éclairci pour tenir AA en petit texte */
+  --accent-soft: rgba(184, 118, 58, 0.14);
+
+  /* États de créneau. Seul « libre » mérite la couleur. */
+  --ok: #c98a4b;              /* libre = prenable = brun */
+  --warn: #c98a4b;
+  --blocked: #4a4d6b;         /* bloqué : une matière, pas une alerte */
+  --full: #6f7392;            /* complet : éteint, rien à décider */
+  --past: #2a2d42;
+
+  /* On ne redéfinit PAS --font-display / --font-body : next/font les pose déjà
+     sur <html>. Les redéfinir ici en s'y référant crée un cycle, la déclaration
+     devient invalide, et tout retombait en Georgia serif. On empile donc dans
+     des variables distinctes. */
+  --pile-titre: var(--font-display), 'Bebas Neue', Oswald, Impact, sans-serif;
+  /* Montserrat — la police de texte officielle. Georgia serif n'en fait pas partie. */
+  --pile-texte: var(--font-body), 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, monospace;
+
+  /* Mobile d'abord : l'espace part du pouce, pas de l'écran de bureau. */
+  --space: clamp(1rem, 4vw, 2rem);
   --max: 1120px;
-  --tap: 44px;
+  --tap: 48px;                /* 44 est le minimum ; 48 est confortable */
 }
 
 *,
@@ -34,7 +64,7 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  font-family: var(--font-body);
+  font-family: var(--pile-texte);
   font-size: 1.05rem;
   line-height: 1.55;
   background:
@@ -57,7 +87,7 @@ a {
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.1;
@@ -70,6 +100,24 @@ p {
   color: var(--ink-muted);
 }
 
+/* Le logo garde sa place quoi qu'il arrive : il ne se comprime jamais. */
+.brand {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand img {
+  width: auto;
+  height: 1.875rem;
+}
+
+@media (min-width: 60rem) {
+  .brand img {
+    height: 2.5rem;
+  }
+}
+
 .site-header {
   position: sticky;
   top: 0;
@@ -77,15 +125,16 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem var(--space);
+  gap: 0.75rem;
+  padding: 0.75rem var(--space);
   border-bottom: 1px solid var(--line);
-  background: rgba(12, 13, 15, 0.82);
+  /* Le fond de l'en-tête est l'encre de la marque, pas un gris. */
+  background: rgba(20, 22, 46, 0.86);
   backdrop-filter: blur(12px);
 }
 
 .brand {
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   font-size: clamp(1.15rem, 3vw, 1.45rem);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -95,27 +144,155 @@ p {
   color: var(--accent-hot);
 }
 
+/* ── NAVIGATION, mobile d'abord ─────────────────────────────────────────
+   Un `<details>` natif : ouverture au clavier, fermeture à Échap, fonctionne
+   sans JavaScript, zéro octet de script. Le même balisage sert le téléphone
+   et le bureau — pas deux menus à tenir synchronisés. */
+
+.menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.menu__bouton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap);
+  padding-inline: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
+  font-family: var(--pile-titre);
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.menu__bouton::-webkit-details-marker {
+  display: none;
+}
+
+.menu__bouton:hover {
+  border-color: var(--accent);
+}
+
+.menu__barres,
+.menu__barres::before,
+.menu__barres::after {
+  display: block;
+  width: 1rem;
+  height: 2px;
+  background: currentColor;
+  content: '';
+}
+
+.menu__barres {
+  position: relative;
+}
+
+.menu__barres::before {
+  position: absolute;
+  top: -5px;
+}
+
+.menu__barres::after {
+  position: absolute;
+  top: 5px;
+}
+
+/* Ouvert : les barres deviennent une croix. Le bouton dit son état. */
+.menu[open] .menu__barres {
+  background: transparent;
+}
+
+.menu[open] .menu__barres::before {
+  top: 0;
+  transform: rotate(45deg);
+}
+
+.menu[open] .menu__barres::after {
+  top: 0;
+  transform: rotate(-45deg);
+}
+
+.menu[open] .menu__bouton {
+  border-color: var(--accent);
+}
+
 .nav {
+  position: absolute;
+  top: calc(100% + 0.625rem);
+  right: 0;
+  z-index: 50;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1rem;
-  font-family: var(--font-display);
-  font-size: 0.85rem;
+  flex-direction: column;
+  min-width: 13rem;
+  padding: 0.375rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  /* L'encre de la marque, opaque : un menu translucide sur une photo est illisible. */
+  background: var(--bg-elevated);
+  box-shadow: 0 18px 40px rgba(8, 8, 8, 0.55);
+  font-family: var(--pile-titre);
+  font-size: 0.9375rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .nav a {
-  opacity: 0.78;
-  min-height: var(--tap);
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  min-height: var(--tap);
+  padding-inline: 0.75rem;
+  border-radius: 3px;
+  color: var(--ink-muted);
 }
 
 .nav a:hover,
 .nav a[aria-current='page'] {
-  opacity: 1;
-  color: var(--accent-hot);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+/* L'entrée de compte porte la seule couleur chaude du menu. */
+.nav__compte {
+  color: var(--accent-hot) !important;
+}
+
+/* ── Bureau : le menu s'efface, la liste se pose en ligne ──────────────── */
+@media (min-width: 60rem) {
+  .menu__bouton {
+    display: none;
+  }
+
+  /* `<details>` fermé masque son contenu par défaut : sur grand écran on le
+     rend visible quoi qu'il arrive, sinon la nav disparaîtrait au rechargement. */
+  details.menu > .nav {
+    display: flex !important;
+  }
+
+  .nav,
+  .menu[open] .nav {
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 0.85rem;
+    gap: 0.25rem;
+  }
+
+  .nav a {
+    min-height: 2.25rem;
+    padding-inline: 0.625rem;
+  }
 }
 
 .site-main {
@@ -135,18 +312,35 @@ p {
   flex-wrap: wrap;
   gap: 0.75rem 1.25rem;
   margin-bottom: 1rem;
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-size: 0.78rem;
 }
 
+/* ─────────────────────────────────────────────────────────────────────
+   LE HERO — mobile d'abord.
+
+   La majorité des coachs ouvriront ce site sur un téléphone, souvent entre
+   deux clients. Tout est donc dimensionné pour le pouce d'abord, et
+   l'affichage large n'est qu'un élargissement — jamais l'inverse.
+
+   Plus de `min-height: 92vh` : sur un téléphone, ça pousse l'action sous la
+   ligne de flottaison et oblige à faire défiler pour trouver un bouton. Le
+   hero fait la hauteur de son contenu, avec une respiration.
+
+   Le fond est une VRAIE photo de salle — l'allée des sacs aux Minimes, le ring
+   au fond, la fresque au mur. Pas un dégradé, pas un SVG décoratif, pas une
+   image générée : la doctrine est explicite là-dessus, et le pool des sites
+   frères contient les vraies photos.
+   ───────────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
-  min-height: min(92vh, 820px);
-  display: grid;
-  align-items: flex-end;
-  padding: clamp(3rem, 12vh, 7rem) var(--space) clamp(2.5rem, 8vh, 4.5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e4, 1rem);
+  padding: 2.5rem var(--space) 3rem;
   overflow: hidden;
   isolation: isolate;
 }
@@ -157,47 +351,115 @@ p {
   inset: 0;
   z-index: -2;
   background:
-    linear-gradient(105deg, rgba(8, 9, 11, 0.92) 18%, rgba(8, 9, 11, 0.55) 48%, rgba(8, 9, 11, 0.25) 100%),
-    url('/hero-ring.svg') center / cover no-repeat,
-    linear-gradient(135deg, #1a1014, #0c0d0f 45%, #151820);
+    /* L'encre Boxing Center porte l'ombre : la photo se couche dans le bleu
+       de la marque, pas dans un gris neutre. */
+    linear-gradient(180deg, rgba(8, 8, 8, 0.72) 0%, rgba(20, 22, 46, 0.86) 62%, var(--bg) 100%),
+    url('/photos/salle-hero-1200.webp') center 38% / cover no-repeat;
 }
 
+/* Le filet cuivre : la seule couleur chaude de l'écran, posée sur l'arête. */
 .hero::after {
   content: '';
   position: absolute;
-  inset: auto 0 0;
-  height: 35%;
+  inset: auto 0 0 0;
+  height: 2px;
   z-index: -1;
-  background: linear-gradient(transparent, var(--bg));
+  background: linear-gradient(90deg, var(--accent) 0%, transparent 62%);
 }
 
-.hero-brand {
-  font-family: var(--font-display);
-  font-size: clamp(2.6rem, 9vw, 5.5rem);
-  letter-spacing: 0.04em;
+.hero-kicker span + span::before {
+  content: '·';
+  margin-right: 0.75rem;
+  color: var(--accent);
+}
+
+.hero-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  margin: 0 0 0.35em;
-  max-width: 12ch;
-  animation: rise 0.9s ease both;
+  color: var(--ink-muted);
 }
 
-.hero-brand span {
+.hero-titre {
+  font-family: var(--pile-titre);
+  font-size: clamp(2.75rem, 13vw, 6.5rem);
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--ink);
+}
+
+/* Le seul mot en couleur de la page : celui qui porte l'offre. */
+.hero-titre em {
+  font-style: normal;
   color: var(--accent-hot);
 }
 
-.hero p {
+.hero-sous {
+  margin: 0;
   max-width: 34ch;
-  font-size: clamp(1.05rem, 2.4vw, 1.25rem);
-  color: rgba(243, 240, 234, 0.82);
-  animation: rise 0.9s ease 0.12s both;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
 }
 
+.hero-prix {
+  margin: 0;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+.hero-prix b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Le pouce d'abord : les deux actions en pleine largeur, empilées. */
 .hero-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.75rem;
-  animation: rise 0.9s ease 0.22s both;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.625rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.hero-actions .btn {
+  justify-content: center;
+  width: 100%;
+  min-height: var(--tap);
+}
+
+/* À partir de la tablette seulement, les actions se posent côte à côte et le
+   hero reprend de la hauteur. Mobile d'abord : l'élargissement est l'exception. */
+@media (min-width: 40rem) {
+  .hero {
+    min-height: min(78vh, 720px);
+    justify-content: flex-end;
+    padding: 4rem var(--space) 3.5rem;
+    gap: 1.25rem;
+  }
+
+  .hero-actions {
+    flex-direction: row;
+    width: auto;
+    gap: 0.75rem;
+  }
+
+  .hero-actions .btn {
+    width: auto;
+  }
+
+  .hero-sous {
+    font-size: 1.0625rem;
+    max-width: 42ch;
+  }
 }
 
 @keyframes rise {
@@ -220,7 +482,7 @@ p {
   padding: 0.75rem 1.35rem;
   border: 1px solid transparent;
   border-radius: 2px;
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   font-size: 0.92rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -314,7 +576,7 @@ p {
   flex-wrap: wrap;
   gap: 0.4rem;
   margin-top: 1rem;
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -347,7 +609,7 @@ p {
 .slot-toolbar label {
   display: grid;
   gap: 0.35rem;
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -393,7 +655,7 @@ p {
 }
 
 .slot strong {
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -422,7 +684,7 @@ p {
 }
 
 .slot .state {
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -451,7 +713,7 @@ p {
   content: '0' counter(step);
   display: block;
   margin-bottom: 0.75rem;
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   color: var(--accent-hot);
   letter-spacing: 0.08em;
 }
@@ -477,7 +739,7 @@ p {
 .auth-form label {
   display: grid;
   gap: 0.35rem;
-  font-family: var(--font-display);
+  font-family: var(--pile-titre);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -490,7 +752,7 @@ p {
   gap: 0.65rem;
   text-transform: none;
   letter-spacing: 0;
-  font-family: var(--font-body);
+  font-family: var(--pile-texte);
   font-size: 0.95rem;
   color: var(--ink-muted);
   min-height: var(--tap);
@@ -514,7 +776,7 @@ p {
   font: inherit;
   text-transform: none;
   letter-spacing: 0;
-  font-family: var(--font-body);
+  font-family: var(--pile-texte);
 }
 
 .auth-form .btn {

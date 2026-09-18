@@ -37,21 +37,39 @@ export async function SiteHeader() {
           priority
         />
       </Link>
-      <nav className="nav" aria-label="Principale">
-        {links.map((l) => (
-          <Link key={l.href} href={l.href}>
-            {l.label}
-          </Link>
-        ))}
-        {loggedIn ? (
-          <Link href="/espace-coach">Espace coach</Link>
-        ) : (
-          <>
-            <Link href="/auth/connexion">Connexion</Link>
-            <Link href="/auth/inscription">Inscription</Link>
-          </>
-        )}
-      </nav>
+      {/*
+        NAVIGATION — un menu natif, sans JavaScript.
+
+        Le rail qui défilait horizontalement cachait ses deux premières entrées :
+        on ouvrait le site sur un menu tronqué. Ici, `<details>` fait le travail
+        du navigateur : il s'ouvre au clavier, se ferme à Échap, fonctionne
+        script désactivé, et ne coûte aucun octet de JS.
+
+        À partir de 60 rem, le `<summary>` disparaît et la liste se pose en ligne :
+        le même balisage sert les deux tailles, il n'y a pas deux menus à tenir
+        synchronisés — c'est exactement l'erreur qui finit par diverger.
+      */}
+      <details className="menu">
+        <summary className="menu__bouton" aria-label="Ouvrir le menu">
+          <span className="menu__barres" aria-hidden="true" />
+          <span className="menu__mot">Menu</span>
+        </summary>
+        <nav className="nav" aria-label="Principale">
+          {links.map((l) => (
+            <Link key={l.href} href={l.href}>
+              {l.label}
+            </Link>
+          ))}
+          {loggedIn ? (
+            <Link className="nav__compte" href="/espace-coach">Espace coach</Link>
+          ) : (
+            <>
+              <Link href="/auth/connexion">Connexion</Link>
+              <Link className="nav__compte" href="/auth/inscription">Inscription</Link>
+            </>
+          )}
+        </nav>
+      </details>
     </header>
   );
 }
