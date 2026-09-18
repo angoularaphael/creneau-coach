@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signature — Boxing Center</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0B1F3A; color: #fff; }
+    main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 1.4rem; }
+    canvas { width: 100%; height: 180px; background: #fff; border-radius: 8px; touch-action: none; }
+    button { min-height: 44px; width: 100%; margin-top: 12px; border: 0; border-radius: 8px; font-size: 1rem; }
+    .ok { background: #2EC4C6; color: #0B1F3A; font-weight: 700; }
+    .ghost { background: transparent; color: #fff; border: 1px solid #fff !important; }
+    p { line-height: 1.4; }
+    #err { color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Signer CGV, règlement, décharge</h1>
+    <p>Après paiement uniquement. Trace ta signature, puis valide.</p>
+    <canvas id="pad" width="640" height="180"></canvas>
+    <button class="ghost" type="button" id="clear">Effacer</button>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:16px;min-height:44px">
+      <input type="checkbox" id="consent" />
+      J’accepte CGV, règlement intérieur et décharge.
+    </label>
+    <button class="ok" type="button" id="go">Valider la signature</button>
+    <p id="err"></p>
+  </main>
+  <script>
+    const id = location.pathname.split('/').pop();
+    const canvas = document.getElementById('pad');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    function pos(e) {
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      return { x: (t.clientX - r.left) * (canvas.width / r.width), y: (t.clientY - r.top) * (canvas.height / r.height) };
+    }
+    canvas.addEventListener('pointerdown', (e) => { drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('pointermove', (e) => { if (!drawing) return; const p = pos(e); ctx.lineWidth = 2; ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    canvas.addEventListener('pointerup', () => { drawing = false; });
+    document.getElementById('clear').onclick = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('go').onclick = async () => {
+      const err = document.getElementById('err');
+      err.textContent = '';
+      if (!document.getElementById('consent').checked) { err.textContent = 'Coche le consentement.'; return; }
+      const signature_image = canvas.toDataURL('image/png');
+      const res = await fetch('/api/v1/reservations/' + id + '/signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          consent: true,
+          signature_image,
+          document_ids: [
+            '00000000-0000-0000-0000-000000000001',
+            '00000000-0000-0000-0000-000000000002',
+            '00000000-0000-0000-0000-000000000003'
+          ]
+        })
+      });
+      const json = await res.json();
+      if (!res.ok) { err.textContent = (json.error && json.error.message) || 'Erreur'; return; }
+      location.href = '/api/v1/reservations/' + id + '/qr';
+    };
+  </script>
+</body>
+</html>

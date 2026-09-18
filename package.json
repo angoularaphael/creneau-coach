@@ -1,0 +1,21 @@
+{
+  "name": "coach-reservation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plateforme réservation coachs — lot Raphael (paiement, signature, QR, Deciplus)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pdfkit": "^0.19.1",
+    "qrcode": "^1.5.4"
+  }
+}

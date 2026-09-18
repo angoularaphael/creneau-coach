@@ -1,0 +1,1265 @@
+openapi: 3.1.0
+info:
+  title: Boxing Center — API réservation coachs
+  version: 1.0.0
+  description: |
+    Contrat v1 (Europe/Paris). Lots : Eddy (créneaux/BO), Brad (UI), Raphael (paiement/signature/QR/Deciplus).
+    Cahier lisible : CAHIER-API.md
+  contact:
+    name: Boxing Center
+    email: boxingcenter31@gmail.com
+servers:
+  - url: https://coach.boxingcenter.fr/api/v1
+    description: Production
+  - url: http://localhost:3041/api/v1
+    description: Local
+tags:
+  - name: public
+  - name: me
+  - name: reservations
+  - name: payments
+  - name: signatures
+  - name: qr
+  - name: admin
+  - name: internal
+security:
+  - cookieAuth: []
+
+paths:
+  /clubs:
+    get:
+      tags: [public]
+      security: []
+      summary: Liste des 5 clubs
+      operationId: listClubs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [clubs]
+                properties:
+                  clubs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ClubSummary"
+
+  /clubs/{club_id}:
+    get:
+      tags: [public]
+      security: []
+      summary: Fiche club
+      operationId: getClub
+      parameters:
+        - $ref: "#/components/parameters/ClubId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /clubs/{club_id}/slots:
+    get:
+      tags: [public, reservations]
+      summary: Grille de créneaux (sans noms de coachs)
+      operationId: listSlots
+      parameters:
+        - $ref: "#/components/parameters/ClubId"
+        - name: space_id
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlotGrid"
+        "400":
+          $ref: "#/components/responses/Error"
+
+  /contact:
+    post:
+      tags: [public]
+      security: []
+      summary: Formulaire contact
+      operationId: postContact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, message]
+              properties:
+                name: { type: string, maxLength: 120 }
+                email: { type: string, format: email }
+                message: { type: string, maxLength: 4000 }
+      responses:
+        "204": { description: Envoyé }
+        "429":
+          $ref: "#/components/responses/Error"
+
+  /me:
+    get:
+      tags: [me]
+      summary: Session courante
+      operationId: getMe
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+    patch:
+      tags: [me]
+      summary: Mise à jour profil coach
+      operationId: patchMe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfilePatch"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "400":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+    delete:
+      tags: [me]
+      summary: Demande d’effacement RGPD
+      operationId: deleteMe
+      responses:
+        "202": { description: Pris en compte }
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /me/photo:
+    post:
+      tags: [me]
+      summary: Upload photo privée
+      operationId: postMePhoto
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [photo_path]
+                properties:
+                  photo_path: { type: string }
+        "400":
+          $ref: "#/components/responses/Error"
+    get:
+      tags: [me]
+      summary: Stream photo (auth)
+      operationId: getMePhoto
+      responses:
+        "200":
+          description: Image
+          content:
+            image/jpeg: { schema: { type: string, format: binary } }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /me/export:
+    get:
+      tags: [me]
+      summary: Export RGPD
+      operationId: exportMe
+      responses:
+        "200":
+          description: JSON compte
+          content:
+            application/json:
+              schema:
+                type: object
+        "202":
+          description: Génération asynchrone
+
+  /me/payment-methods:
+    get:
+      tags: [payments]
+      summary: Moyens de paiement tokenisés (prestataire)
+      operationId: listPaymentMethods
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  methods:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PaymentMethod"
+    post:
+      tags: [payments]
+      summary: Démarrer un vault prestataire
+      operationId: addPaymentMethod
+      responses:
+        "200":
+          description: URL hosted field
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vault_url: { type: string, format: uri }
+
+  /me/payment-methods/{id}:
+    delete:
+      tags: [payments]
+      operationId: deletePaymentMethod
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Supprimé }
+
+  /reservations:
+    get:
+      tags: [reservations]
+      summary: Liste (coach = soi ; staff = périmètre RLS)
+      operationId: listReservations
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ReservationStatus"
+        - name: club_id
+          in: query
+          schema:
+            $ref: "#/components/schemas/ClubId"
+        - name: coach_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationList"
+    post:
+      tags: [reservations]
+      summary: Hold 10 min (Eddy)
+      operationId: createReservation
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReservation"
+      responses:
+        "201":
+          description: Hold créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+
+  /reservations/{id}:
+    get:
+      tags: [reservations]
+      operationId: getReservation
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /reservations/{id}/cancel:
+    post:
+      tags: [reservations]
+      summary: Annulation > 24 h → avoir (Eddy)
+      operationId: cancelReservation
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Annulée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /reservations/{id}/checkout:
+    post:
+      tags: [payments]
+      summary: Checkout 1× Payplug / PayPal / avoir (Raphael)
+      operationId: checkoutReservation
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider]
+              properties:
+                provider:
+                  type: string
+                  enum: [payplug, paypal, credit]
+      responses:
+        "200":
+          description: URL checkout ou passage avoir
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutResponse"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /reservations/{id}/payment/sync:
+    post:
+      tags: [payments]
+      summary: Re-query prestataire au retour navigateur
+      operationId: syncPayment
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+
+  /webhooks/payplug:
+    post:
+      tags: [payments]
+      security: []
+      summary: Webhook Payplug (signature obligatoire)
+      operationId: webhookPayplug
+      parameters:
+        - name: PayPlug-Signature
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: ACK }
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /webhooks/paypal:
+    post:
+      tags: [payments]
+      security: []
+      summary: Webhook PayPal
+      operationId: webhookPaypal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: ACK }
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /reservations/{id}/documents:
+    get:
+      tags: [signatures]
+      summary: Docs à signer (URLs TTL)
+      operationId: listDocuments
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DocumentVersion"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /reservations/{id}/signature:
+    post:
+      tags: [signatures]
+      summary: Signer CGV + RI + décharge (Raphael)
+      operationId: postSignature
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignatureRequest"
+      responses:
+        "200":
+          description: Réservation confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /reservations/{id}/signature.pdf:
+    get:
+      tags: [signatures]
+      summary: PDF archivé (owner ou direction)
+      operationId: getSignaturePdf
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+      responses:
+        "200":
+          description: PDF
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /reservations/{id}/qr:
+    get:
+      tags: [qr]
+      summary: PNG QR opaque si confirmed
+      operationId: getQr
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QrPayload"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /admin/reservations:
+    get:
+      tags: [admin]
+      summary: Liste staff (isolation club manager)
+      operationId: adminListReservations
+      parameters:
+        - name: club_id
+          in: query
+          schema:
+            $ref: "#/components/schemas/ClubId"
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ReservationStatus"
+        - name: space_id
+          in: query
+          schema: { type: string }
+        - name: coach_q
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffReservationList"
+            text/csv:
+              schema: { type: string }
+
+  /admin/slots:
+    get:
+      tags: [admin]
+      operationId: adminListSlots
+      parameters:
+        - name: club_id
+          in: query
+          schema:
+            $ref: "#/components/schemas/ClubId"
+        - name: space_id
+          in: query
+          schema: { type: string }
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlotGrid"
+
+  /admin/slot-blocks:
+    post:
+      tags: [admin]
+      operationId: createSlotBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SlotBlockInput"
+      responses:
+        "201":
+          description: Créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlotBlock"
+
+  /admin/slot-blocks/{id}:
+    delete:
+      tags: [admin]
+      operationId: deleteSlotBlock
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Supprimé }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /admin/settings:
+    get:
+      tags: [admin]
+      operationId: getSettings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      tags: [admin]
+      summary: Direction only
+      operationId: patchSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Settings"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "403":
+          $ref: "#/components/responses/Error"
+
+  /admin/coaches:
+    get:
+      tags: [admin]
+      operationId: adminListCoaches
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  coaches:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CoachStaffView"
+
+  /admin/coaches/{id}:
+    get:
+      tags: [admin]
+      operationId: adminGetCoach
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachStaffView"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /admin/coaches/{id}/suspend:
+    post:
+      tags: [admin]
+      summary: Direction — coupe QR + Deciplus
+      operationId: suspendCoach
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: Suspendu
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachStaffView"
+
+  /admin/coaches/{id}/unsuspend:
+    post:
+      tags: [admin]
+      operationId: unsuspendCoach
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Réactivé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachStaffView"
+
+  /admin/credits:
+    get:
+      tags: [admin]
+      summary: Avoirs (direction)
+      operationId: adminListCredits
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credits:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Credit"
+        "403":
+          $ref: "#/components/responses/Error"
+
+  /admin/stats:
+    get:
+      tags: [admin]
+      operationId: adminStats
+      parameters:
+        - name: club_id
+          in: query
+          schema:
+            $ref: "#/components/schemas/ClubId"
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /admin/audit:
+    get:
+      tags: [admin]
+      operationId: adminAudit
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditEvent"
+
+  /admin/access-logs:
+    get:
+      tags: [admin]
+      summary: Direction — jobs Deciplus + verify QR
+      operationId: adminAccessLogs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "403":
+          $ref: "#/components/responses/Error"
+
+  /internal/access/verify:
+    post:
+      tags: [internal, qr]
+      security:
+        - syncSecret: []
+      summary: Vérifier un token QR (service)
+      operationId: verifyAccess
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, club_id]
+              properties:
+                token: { type: string }
+                club_id:
+                  $ref: "#/components/schemas/ClubId"
+      responses:
+        "200":
+          description: Accès OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, reservation_id, coach_id]
+                properties:
+                  ok: { type: boolean }
+                  reservation_id: { type: string, format: uuid }
+                  coach_id: { type: string, format: uuid }
+        "401":
+          $ref: "#/components/responses/Error"
+        "410":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+
+  /internal/deciplus/jobs:
+    post:
+      tags: [internal]
+      security:
+        - syncSecret: []
+      operationId: enqueueDeciplusJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, reservation_id]
+              properties:
+                action:
+                  type: string
+                  enum: [grant, revoke, revoke_coach]
+                reservation_id: { type: string, format: uuid }
+                coach_id: { type: string, format: uuid }
+      responses:
+        "202": { description: En file }
+
+  /internal/deciplus/callback:
+    post:
+      tags: [internal]
+      security:
+        - syncSecret: []
+      operationId: deciplusCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reservation_id, job_status]
+              properties:
+                reservation_id: { type: string, format: uuid }
+                deciplus_member_id: { type: string }
+                job_status:
+                  type: string
+                  enum: [queued, granted, revoked, error]
+                error: { type: string }
+      responses:
+        "200": { description: ACK }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sb-access-token
+      description: Cookie session Supabase httpOnly
+    syncSecret:
+      type: apiKey
+      in: header
+      name: x-sync-secret
+
+  parameters:
+    ClubId:
+      name: club_id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ClubId"
+    ReservationId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    NotFound:
+      description: Absent ou hors périmètre (anti-énumération)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+    Error:
+      description: Erreur métier
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+
+  schemas:
+    ClubId:
+      type: string
+      enum: [minimes, st-cyprien, etats-unis, ramonville, portet]
+    ReservationStatus:
+      type: string
+      enum:
+        - held
+        - awaiting_signature
+        - confirmed
+        - consumed
+        - expired
+        - payment_failed
+        - cancelled_credit
+        - no_show
+    PaymentStatus:
+      type: string
+      enum: [unpaid, paid, failed, waived_credit]
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - UNAUTHENTICATED
+        - FORBIDDEN
+        - SUSPENDED
+        - NOT_FOUND
+        - SLOT_FULL
+        - SLOT_BLOCKED
+        - ACTIVE_LIMIT
+        - HOLD_EXPIRED
+        - PAYMENT_REQUIRED
+        - SIGNATURE_REQUIRED
+        - CANCEL_TOO_LATE
+        - PRICE_MISMATCH
+        - CONFLICT
+        - QR_WINDOW_CLOSED
+        - QR_WRONG_CLUB
+        - RATE_LIMITED
+        - WEBHOOK_INVALID
+    ErrorBody:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              $ref: "#/components/schemas/ErrorCode"
+            message: { type: string }
+            details: { type: object, additionalProperties: true }
+    Space:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        capacity: { type: integer, default: 2 }
+    ClubSummary:
+      type: object
+      required: [id, name, spaces]
+      properties:
+        id:
+          $ref: "#/components/schemas/ClubId"
+        name: { type: string }
+        city: { type: string }
+        hero_image: { type: string }
+        spaces:
+          type: array
+          items:
+            $ref: "#/components/schemas/Space"
+    ClubDetail:
+      allOf:
+        - $ref: "#/components/schemas/ClubSummary"
+        - type: object
+          properties:
+            description: { type: string }
+            amenities: { type: array, items: { type: string } }
+            transport: { type: string }
+            peak_hours: { type: string }
+            offpeak_hours: { type: string }
+    SlotState:
+      type: string
+      enum: [open, full, blocked, past]
+    Slot:
+      type: object
+      required: [starts_at, ends_at, amount_cents, tariff, capacity, taken, state]
+      properties:
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        amount_cents: { type: integer }
+        tariff: { type: string, enum: [offpeak, peak] }
+        capacity: { type: integer }
+        taken: { type: integer }
+        state:
+          $ref: "#/components/schemas/SlotState"
+        mine: { type: boolean }
+    SlotGrid:
+      type: object
+      required: [club_id, slots]
+      properties:
+        club_id:
+          $ref: "#/components/schemas/ClubId"
+        space_id: { type: string }
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/Slot"
+    Profile:
+      type: object
+      properties:
+        first_name: { type: string }
+        last_name: { type: string }
+        birth_date: { type: string, format: date }
+        phone: { type: string }
+        email: { type: string, format: email }
+        address_line: { type: string }
+        postal_code: { type: string }
+        city: { type: string }
+        diploma: { type: string }
+        disciplines:
+          type: array
+          items: { type: string }
+        photo_path: { type: string }
+    ProfilePatch:
+      type: object
+      additionalProperties: false
+      properties:
+        first_name: { type: string }
+        last_name: { type: string }
+        birth_date: { type: string, format: date }
+        phone: { type: string }
+        address_line: { type: string }
+        postal_code: { type: string }
+        city: { type: string }
+        diploma: { type: string }
+        disciplines:
+          type: array
+          items: { type: string }
+    Me:
+      type: object
+      required: [id, role, status]
+      properties:
+        id: { type: string, format: uuid }
+        role: { type: string, enum: [coach, manager_salle, direction] }
+        club_id:
+          $ref: "#/components/schemas/ClubId"
+        status: { type: string, enum: [active, suspended, deleted] }
+        profile:
+          $ref: "#/components/schemas/Profile"
+        active_reservations_count: { type: integer }
+        max_active_reservations: { type: integer }
+        credits_cents: { type: integer }
+    PaymentMethod:
+      type: object
+      properties:
+        id: { type: string }
+        provider: { type: string, enum: [payplug, paypal] }
+        brand: { type: string }
+        last4: { type: string }
+    CreateReservation:
+      type: object
+      required: [club_id, space_id, starts_at]
+      properties:
+        club_id:
+          $ref: "#/components/schemas/ClubId"
+        space_id: { type: string }
+        starts_at: { type: string, format: date-time }
+    Reservation:
+      type: object
+      required:
+        - id
+        - coach_id
+        - club_id
+        - space_id
+        - starts_at
+        - ends_at
+        - amount_cents
+        - status
+        - payment_status
+        - signature_status
+      properties:
+        id: { type: string, format: uuid }
+        coach_id: { type: string, format: uuid }
+        club_id:
+          $ref: "#/components/schemas/ClubId"
+        space_id: { type: string }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        amount_cents: { type: integer }
+        currency: { type: string, default: eur }
+        status:
+          $ref: "#/components/schemas/ReservationStatus"
+        payment_status:
+          $ref: "#/components/schemas/PaymentStatus"
+        payment_provider: { type: string, nullable: true }
+        signature_status: { type: string, enum: [none, signed] }
+        signed_at: { type: string, format: date-time, nullable: true }
+        hold_expires_at: { type: string, format: date-time, nullable: true }
+        qr_valid_from: { type: string, format: date-time, nullable: true }
+        qr_valid_to: { type: string, format: date-time, nullable: true }
+        qr_ready: { type: boolean }
+        deciplus_job_status:
+          type: string
+          enum: [none, queued, granted, revoked, error]
+        credit_id: { type: string, format: uuid, nullable: true }
+        created_at: { type: string, format: date-time }
+    ReservationList:
+      type: object
+      properties:
+        reservations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reservation"
+        next_cursor: { type: string, nullable: true }
+    StaffReservationList:
+      type: object
+      properties:
+        reservations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reservation"
+        next_cursor: { type: string, nullable: true }
+    CheckoutResponse:
+      type: object
+      properties:
+        reservation_id: { type: string, format: uuid }
+        provider: { type: string, enum: [payplug, paypal, credit] }
+        checkout_url: { type: string, format: uri }
+        status:
+          $ref: "#/components/schemas/ReservationStatus"
+    DocumentVersion:
+      type: object
+      required: [id, kind, title, version]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [cgv, reglement, decharge, other] }
+        title: { type: string }
+        version: { type: string }
+        url: { type: string, format: uri }
+    SignatureRequest:
+      type: object
+      required: [document_ids, signature_image, consent]
+      properties:
+        document_ids:
+          type: array
+          minItems: 3
+          items: { type: string, format: uuid }
+        signature_image:
+          type: string
+          description: data:image/png;base64,…
+        consent: { type: boolean }
+    QrPayload:
+      type: object
+      required: [png_data_url, valid_from, valid_to, club_id, state]
+      properties:
+        png_data_url: { type: string }
+        valid_from: { type: string, format: date-time }
+        valid_to: { type: string, format: date-time }
+        club_id:
+          $ref: "#/components/schemas/ClubId"
+        state: { type: string, enum: [waiting, active, expired, revoked] }
+    SlotBlockInput:
+      type: object
+      required: [club_id, space_id, starts_at]
+      properties:
+        club_id:
+          $ref: "#/components/schemas/ClubId"
+        space_id: { type: string }
+        starts_at: { type: string, format: date-time }
+        reason: { type: string }
+    SlotBlock:
+      allOf:
+        - $ref: "#/components/schemas/SlotBlockInput"
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+    Settings:
+      type: object
+      properties:
+        max_active_reservations: { type: integer, default: 3 }
+        capacity_per_slot: { type: integer, default: 2 }
+        hold_ttl_seconds: { type: integer, default: 600 }
+        cancel_min_hours: { type: integer, default: 24 }
+        qr_early_minutes: { type: integer, default: 5 }
+        offpeak_cents: { type: integer, default: 1000 }
+        peak_cents: { type: integer, default: 1500 }
+    CoachStaffView:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        first_name: { type: string }
+        last_name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        status: { type: string }
+        active_reservations_count: { type: integer }
+    Credit:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        coach_id: { type: string, format: uuid }
+        amount_cents: { type: integer }
+        origin_reservation_id: { type: string, format: uuid }
+        status: { type: string, enum: [available, consumed, expired] }
+        created_at: { type: string, format: date-time }
+    AuditEvent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        actor_id: { type: string, format: uuid }
+        role: { type: string }
+        action: { type: string }
+        club_id:
+          $ref: "#/components/schemas/ClubId"
+        target_type: { type: string }
+        target_id: { type: string }
+        created_at: { type: string, format: date-time }
