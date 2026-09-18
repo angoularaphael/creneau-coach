@@ -66,8 +66,36 @@ begin
     return public.coach_err('VALIDATION_ERROR', 'Idempotency-Key obligatoire.');
   end if;
 
+  -- ══════════════════════════════════════════ verrou 1 : LE COACH, EN PREMIER
+  -- CE VERROU DOIT ÊTRE PRIS AVANT L'INSERT D'IDEMPOTENCE, et ce n'est pas un
+  -- détail de style : c'est la correction d'un INTERBLOCAGE REPRODUCTIBLE.
+  --
+  -- coach_idempotency_keys.coach_id porte une clé étrangère vers coach_profiles.
+  -- Un INSERT dans cette table prend donc un FOR KEY SHARE (verrou PARTAGÉ) sur la
+  -- ligne de profil, pour empêcher qu'on la supprime sous ses pieds. Si l'INSERT
+  -- vient en premier, la séquence devient :
+  --     1. les N requêtes du MÊME coach prennent toutes le KEY SHARE (compatible
+  --        entre elles : elles l'obtiennent toutes) ;
+  --     2. chacune demande ensuite FOR UPDATE, un verrou EXCLUSIF sur la même
+  --        ligne — donc chacune attend que TOUTES les autres finissent.
+  -- C'est une montée en verrou circulaire : quatre holds parallèles d'un même
+  -- coach se terminaient en « deadlock detected », donc en 500, au lieu de
+  -- produire trois succès et un ACTIVE_LIMIT.
+  --
+  -- En prenant le FOR UPDATE d'abord, la transaction détient déjà le verrou le
+  -- plus fort : le KEY SHARE de l'INSERT est absorbé, il n'y a plus de montée,
+  -- et les requêtes d'un même coach se sérialisent proprement. C'est d'ailleurs
+  -- l'ordre de verrouillage annoncé en tête de ce fichier — l'INSERT
+  -- d'idempotence le violait sans le dire.
+  select * into v_profil from public.coach_profiles where id = v_coach for update;
+
+  if not found or v_profil.deleted_at is not null then
+    -- Rien n'a encore été écrit : il n'y a aucune clé à libérer.
+    return public.coach_err('NOT_FOUND', 'Profil introuvable.');
+  end if;
+
   -- ══════════════════════════════════════════ idempotence : RÉSERVER D'ABORD
-  -- On pose la clé AVANT tout travail. Le rejeu dangereux n'est pas celui d'après
+  -- On pose la clé AVANT tout TRAVAIL. Le rejeu dangereux n'est pas celui d'après
   -- la réponse, c'est le rejeu EN VOL (double-clic, retry réseau).
   v_hash := md5(coalesce(p_club_id,'') || '|' || coalesce(p_space_id,'') || '|'
                 || coalesce(to_char(p_starts_at at time zone 'UTC',
@@ -129,14 +157,12 @@ begin
     end if;
   end;
 
-  -- ══════════════════════════════════════════ verrou 1 : le coach
-  select * into v_profil from public.coach_profiles where id = v_coach for update;
-
-  if not found or v_profil.deleted_at is not null then
-    perform public.coach_idem_release(p_idempotency_key, v_coach, c_endpoint);
-    return public.coach_err('NOT_FOUND', 'Profil introuvable.');
-  end if;
-
+  -- ══════════════════════════════════════════ suspension
+  -- Contrôlée APRÈS la réservation de clé, et volontairement : un rejeu d'une clé
+  -- déjà close doit rendre la réponse mémorisée à l'identique, même si le coach a
+  -- été suspendu entre-temps. Sinon la même clé renverrait deux réponses
+  -- différentes selon le moment, ce qui n'est plus de l'idempotence.
+  --
   -- SUSPENDED se lit EN BASE, pas dans le JWT : un jeton émis avant la
   -- suspension reste valide jusqu'à une heure (test contractuel §13.12).
   if v_profil.status <> 'active' or v_profil.suspended_at is not null then

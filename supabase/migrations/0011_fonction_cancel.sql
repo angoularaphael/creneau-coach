@@ -100,6 +100,17 @@ begin
 
   -- ══════════════════════════════════════════ verrou : la ligne
   -- Empêche deux annulations simultanées de créer deux avoirs.
+  --
+  -- NE JAMAIS AJOUTER « for update » AU SELECT SUR coach_profiles PLUS BAS.
+  -- L'INSERT d'idempotence ci-dessus a déjà pris un FOR KEY SHARE (partagé) sur
+  -- la ligne de profil, via la clé étrangère coach_idempotency_keys.coach_id.
+  -- Demander ensuite un FOR UPDATE sur cette même ligne serait une MONTÉE EN
+  -- VERROU : N annulations parallèles du même coach détiendraient toutes le
+  -- verrou partagé et attendraient toutes les autres — interblocage garanti.
+  -- C'est exactement le défaut corrigé dans 0010 en remontant le FOR UPDATE
+  -- avant l'INSERT. Ici, l'annulation n'a pas besoin de sérialiser le coach :
+  -- c'est la LIGNE DE RÉSERVATION qui porte l'unicité de l'avoir, et l'index
+  -- coach_credits_un_par_resa est le filet.
   select * into v_res from public.coach_reservations
   where id = p_reservation_id
   for update;
