@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Bebas_Neue, Libre_Franklin } from 'next/font/google';
 import { Shell } from '@/components/Shell';
+import { JsonLd } from '@/components/JsonLd';
 import '@/styles/boxing-center.css';
 
 const display = Bebas_Neue({
@@ -44,6 +45,7 @@ export default async function RootLayout({
   return (
     <html lang="fr" className={`${display.variable} ${body.variable}`}>
       <body>
+        <JsonLd />
         <Shell>{children}</Shell>
       </body>
     </html>

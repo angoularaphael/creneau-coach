@@ -1,4 +1,8 @@
 import Link from 'next/link';
+import { metadataDeRoute } from '@/lib/seo';
+
+// L'accueil n'avait aucune metadata : ni title propre, ni description, ni canonical.
+export const metadata = metadataDeRoute('/');
 
 export default function HomePage() {
   return (
