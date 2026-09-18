@@ -1,6 +1,31 @@
+# --- Secrets : rien d'autre que les modèles ---------------------------------
 .env
 .env.*
 !.env.example
 !bot/.env.example
-data/
+
+# --- Dépendances / build ----------------------------------------------------
 node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# --- Données locales --------------------------------------------------------
+data/
+*.log
+
+# --- Documents internes : ne partent JAMAIS sur GitHub ----------------------
+.research/
+.claude/
+.vercel/
+*.bundle
+
+# --- Système ----------------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# --- Next : fichiers générés, jamais édités à la main ------------------------
+next-env.d.ts
+.next-profiles/
