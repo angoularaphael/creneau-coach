@@ -89,6 +89,18 @@ export function superAdminConfigure(): boolean {
   return Boolean(emailSuperAdmin() && motDePasseSuperAdmin())
 }
 
+function motDePasseSuperOk(fourni: string, attendu: string): boolean {
+  if (!fourni || !attendu) return false
+  const variantes = new Set<string>([attendu])
+  if (attendu.startsWith('#')) variantes.add(attendu.slice(1))
+  else variantes.add(`#${attendu}`)
+  if (fourni.startsWith('#')) variantes.add(fourni)
+  for (const v of variantes) {
+    if (comparaisonConstante(fourni, v)) return true
+  }
+  return false
+}
+
 export async function verifierCompteBoxplus(
   emailBrut: string,
   motDePasse: string,
@@ -99,12 +111,9 @@ export async function verifierCompteBoxplus(
   const superEmail = emailSuperAdmin()
   const superPass = motDePasseSuperAdmin()
   if (superEmail && comparaisonConstante(email, superEmail) && superPass) {
-    if (comparaisonConstante(motDePasse, superPass)) {
+    if (motDePasseSuperOk(motDePasse, superPass)) {
       return { email, role: 'super_admin', name: 'Super administrateur' }
     }
-    // Mauvais mot de passe super-admin : on tente quand même `app_users`
-    // (le même e-mail peut exister en table, et un `#` avalé par dotenv
-    // ne doit pas bloquer Guillaume / Brad / Eddy).
   }
 
   const sb = clientBoxplus()

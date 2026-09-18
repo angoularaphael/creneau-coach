@@ -29,7 +29,6 @@ import { rafraichirSession } from '@/lib/supabase/proxy'
  * retirerait silencieusement cette couverture.
  */
 const SURFACES_PRIVEES = ['/espace-coach']
-const COOKIE_BO = 'bo_session'
 
 const MOCK_COOKIE = 'coach_mock_session'
 
@@ -48,18 +47,11 @@ function versConnexion(request: NextRequest, chemin: string) {
 export async function proxy(request: NextRequest) {
   const chemin = request.nextUrl.pathname
 
-  // ---- Back-office : porte à mot de passe partagé, indépendante de Supabase ----
+  // Le back-office a sa propre session (`bo_session`). On ne passe PAS par
+  // `NextResponse.next({ request })` : ça a déjà avalé le Set-Cookie du login
+  // (succès silencieux → retour au formulaire).
   if (chemin.startsWith('/admin')) {
-    if (chemin.startsWith('/admin/connexion')) return NextResponse.next({ request })
-    // Présence seulement. La SIGNATURE du jeton est vérifiée dans la couche de
-    // données : un cookie forgé passe ici et se fait refuser juste après.
-    if (!request.cookies.get(COOKIE_BO)?.value) {
-      const destination = request.nextUrl.clone()
-      destination.pathname = '/admin/connexion'
-      destination.search = `?suite=${encodeURIComponent(chemin)}`
-      return NextResponse.redirect(destination)
-    }
-    return NextResponse.next({ request })
+    return NextResponse.next()
   }
 
   const prive = estPrive(chemin)
@@ -80,6 +72,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|fonts|images|api/v1/webhooks|api/cron|api/v1/internal).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|fonts|images|api/v1/webhooks|api/cron|api/v1/internal|admin).*)',
   ],
 }

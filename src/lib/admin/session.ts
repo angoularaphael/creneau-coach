@@ -82,7 +82,7 @@ export function optionsCookie() {
     httpOnly: true,
     sameSite: 'lax' as const,
     secure: process.env.VERCEL === '1',
-    path: '/admin',
+    path: '/',
     maxAge: DUREE_S,
   }
 }
