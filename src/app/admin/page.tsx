@@ -22,6 +22,8 @@ import {
   actionCreerCoachDeTest,
 } from './actions'
 import { actionSortir } from './connexion/actions'
+import { actionFermerStudio, actionOuvrirStudio } from './studio/actions'
+import { studioActif } from '@/lib/studio/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -120,6 +122,7 @@ export default async function BackOffice({
   searchParams: Promise<{ club?: string; espace?: string; semaine?: string; resultat?: string }>
 }) {
   const staff = await exigeSessionBackOffice()
+  const studio = await studioActif()
 
   const params = await searchParams
   const clubs = await listerClubs()
@@ -170,16 +173,37 @@ export default async function BackOffice({
   return (
     <>
       <p className="bo__bandeau">
-        <strong>BOXPLUS</strong>
+        <strong>{studio ? 'Studio TEST' : 'BOXPLUS'}</strong>
         <span>
           Connecté en tant que <strong>{staff.email}</strong>
-          {staff.role === 'super_admin' ? ' (super-admin)' : ''}. Mêmes comptes que la
-          boutique — pas d’isolation par club pour l’instant : qui entre voit les cinq
-          salles.
+          {staff.role === 'super_admin' ? ' (super-admin)' : ''}.
+          {studio
+            ? ' Paiements Payplug en TEST sur ce navigateur.'
+            : ' Mêmes comptes que la boutique.'}
         </span>
-        <form action={actionSortir} className="bo__sortir">
-          <button className="bo__bouton bo__bouton--discret">Sortir</button>
-        </form>
+        <span className="bo__actions">
+          {studio ? (
+            <form action={actionFermerStudio}>
+              <button className="bo__bouton bo__bouton--discret" type="submit">
+                Éteindre le studio
+              </button>
+            </form>
+          ) : (
+            <form action={actionOuvrirStudio}>
+              <button className="bo__bouton" type="submit">
+                Mode studio
+              </button>
+            </form>
+          )}
+          <Link className="bo__bouton bo__bouton--discret" href="/admin/studio">
+            Comment ça marche
+          </Link>
+          <form action={actionSortir} className="bo__sortir">
+            <button className="bo__bouton bo__bouton--discret" type="submit">
+              Sortir
+            </button>
+          </form>
+        </span>
       </p>
 
       {params.resultat ? (

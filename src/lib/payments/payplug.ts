@@ -14,23 +14,33 @@ function siteUrl(): string {
   ).replace(/\/$/, '')
 }
 
-function payplugKey(): string {
-  const forceTest = (process.env.PAYPLUG_FORCE_TEST ?? '').trim() === '1'
-  if (forceTest && process.env.PAYPLUG_TEST_SECRET_KEY) {
-    return process.env.PAYPLUG_TEST_SECRET_KEY
+function clesPayplug(): { live: string; test: string } {
+  return {
+    live: (process.env.PAYPLUG_SECRET_KEY ?? '').trim(),
+    test: (process.env.PAYPLUG_TEST_SECRET_KEY ?? '').trim(),
   }
-  return process.env.PAYPLUG_SECRET_KEY || process.env.PAYPLUG_TEST_SECRET_KEY || ''
 }
 
-export function payplugActif(): boolean {
-  return Boolean(payplugKey())
+function forcerTestGlobal(): boolean {
+  return (process.env.PAYPLUG_FORCE_TEST ?? '').trim() === '1'
+}
+
+export function clePayplug(test = false): string {
+  const { live, test: testKey } = clesPayplug()
+  if ((test || forcerTestGlobal()) && testKey) return testKey
+  return live || testKey
+}
+
+export function payplugActif(test = false): boolean {
+  return Boolean(clePayplug(test))
 }
 
 export async function creerPaiementPayplug(entree: {
   reservation: Reservation
   profil?: Profil | null
+  test?: boolean
 }): Promise<{ checkout_url: string } | null> {
-  const key = payplugKey()
+  const key = clePayplug(Boolean(entree.test))
   if (!key) return null
   const base = siteUrl()
   const billing = {
@@ -89,9 +99,8 @@ export type PaiementPayplug = {
   metadata?: { reservation_id?: string }
 }
 
-export function verifierSignaturePayplug(corpsBrut: Buffer, header: string | null): boolean {
-  const sig = (header ?? '').trim()
-  const key = payplugKey()
+function hmacPayplug(corpsBrut: Buffer, header: string, key: string): boolean {
+  const sig = header.trim()
   if (!sig || !key) return false
   const parts = sig.split('.')
   if (parts.length !== 3) return false
@@ -105,6 +114,23 @@ export function verifierSignaturePayplug(corpsBrut: Buffer, header: string | nul
   return timingSafeEqual(got, exp)
 }
 
+/** Le webhook n'a pas le cookie studio : on essaie live puis TEST. */
+export function reconnaitreWebhookPayplug(
+  corpsBrut: Buffer,
+  header: string | null,
+): { test: boolean } | null {
+  const sig = (header ?? '').trim()
+  if (!sig) return null
+  const { live, test } = clesPayplug()
+  if (live && hmacPayplug(corpsBrut, sig, live)) return { test: false }
+  if (test && hmacPayplug(corpsBrut, sig, test)) return { test: true }
+  return null
+}
+
+export function verifierSignaturePayplug(corpsBrut: Buffer, header: string | null): boolean {
+  return reconnaitreWebhookPayplug(corpsBrut, header) !== null
+}
+
 export function paiementPayplugRegle(payment: PaiementPayplug | null | undefined): boolean {
   if (!payment || payment.failure) return false
   if (payment.is_paid === true) return true
@@ -113,8 +139,11 @@ export function paiementPayplugRegle(payment: PaiementPayplug | null | undefined
   return Boolean(authorizedAt) && !pending && payment.auto_capture !== false
 }
 
-export async function recupererPaiementPayplug(id: string): Promise<PaiementPayplug | null> {
-  const key = payplugKey()
+export async function recupererPaiementPayplug(
+  id: string,
+  test = false,
+): Promise<PaiementPayplug | null> {
+  const key = clePayplug(test)
   if (!key || !id) return null
   const res = await fetch(`https://api.payplug.com/v1/payments/${encodeURIComponent(id)}`, {
     headers: {

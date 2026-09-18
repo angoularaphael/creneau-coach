@@ -3,7 +3,7 @@ import { marquerPayeCarte } from '@/lib/dal/paiements'
 import {
   paiementPayplugRegle,
   recupererPaiementPayplug,
-  verifierSignaturePayplug,
+  reconnaitreWebhookPayplug,
 } from '@/lib/payments/payplug'
 
 export const runtime = 'nodejs'
@@ -17,7 +17,8 @@ export async function POST(req: Request) {
   const brut = Buffer.from(await req.arrayBuffer())
   const sig =
     req.headers.get('payplug-signature') ?? req.headers.get('PayPlug-Signature')
-  if (!verifierSignaturePayplug(brut, sig)) {
+  const reconnu = reconnaitreWebhookPayplug(brut, sig)
+  if (!reconnu) {
     return jsonError(401, 'WEBHOOK_INVALID', 'Signature Payplug refusée.')
   }
 
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   const paymentId = String(parsed.id || '').trim()
   if (!paymentId) return jsonOk({ ok: true, ignored: true })
 
-  const payment = await recupererPaiementPayplug(paymentId)
+  const payment = await recupererPaiementPayplug(paymentId, reconnu.test)
   if (!payment) return jsonError(401, 'WEBHOOK_INVALID', 'Paiement Payplug illisible.')
 
   const reservationId = String(payment.metadata?.reservation_id || '').trim()

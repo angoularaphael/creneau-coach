@@ -19,7 +19,13 @@ function when(iso: string) {
   }).format(new Date(iso));
 }
 
-export function ReservationActions({ reservation }: { reservation: Reservation }) {
+export function ReservationActions({
+  reservation,
+  paiementsTest = false,
+}: {
+  reservation: Reservation
+  paiementsTest?: boolean
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -93,7 +99,7 @@ export function ReservationActions({ reservation }: { reservation: Reservation }
             disabled={busy}
             onClick={() => pay('payplug')}
           >
-            Payer (Payplug)
+            Payer (Payplug{paiementsTest ? ' TEST' : ''})
           </button>
           <button
             type="button"

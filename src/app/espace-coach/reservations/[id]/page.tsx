@@ -7,7 +7,8 @@ import { versReservationPublique } from '@/lib/dal/map';
 import { exigerSession } from '@/lib/dal/acteur';
 import { contextePage } from '@/lib/dal/page';
 import { nomClub } from '@/lib/clubs';
-import { ReservationActions } from './ReservationActions';
+import { ReservationActions } from './ReservationActions'
+import { studioActif } from '@/lib/studio/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,8 @@ export default async function ReservationPage(ctx: Props) {
 
   const lecture = await lireReservation(req, session.valeur.supabase, session.valeur.acteur, params.id);
   if (!lecture.ok) notFound();
-  const reservation = versReservationPublique(lecture.valeur as unknown as Record<string, unknown>);
+  const reservation = versReservationPublique(lecture.valeur as unknown as Record<string, unknown>)
+  const paiementsTest = await studioActif();
 
   return (
     <>
@@ -42,7 +44,7 @@ export default async function ReservationPage(ctx: Props) {
         </p>
       </header>
       <section className="section" style={{ paddingTop: 0, maxWidth: 520 }}>
-        <ReservationActions reservation={reservation} />
+        <ReservationActions reservation={reservation} paiementsTest={paiementsTest} />
       </section>
     </>
   );

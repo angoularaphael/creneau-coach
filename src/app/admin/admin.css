@@ -556,5 +556,37 @@
 }
 
 .bo__sortir {
+  margin-left: 0;
+}
+
+.bo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
   margin-left: auto;
+}
+
+.bo__actions .bo__bouton {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+}
+
+.bo__etapes {
+  max-width: 40rem;
+  margin: 0 0 1.5rem;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.bo__etapes strong {
+  display: block;
+  margin-bottom: 0.15rem;
 }

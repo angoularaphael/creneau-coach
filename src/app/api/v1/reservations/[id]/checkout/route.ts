@@ -7,6 +7,7 @@ import { exigerSession } from '@/lib/dal/acteur'
 import { lireMonProfil } from '@/lib/dal/profil'
 import { estUrlCheckoutSure } from '@/lib/paiement-url'
 import { creerPaiementPayplug } from '@/lib/payments/payplug'
+import { studioActif } from '@/lib/studio/session'
 import {
   checkRateLimit,
   contexteRequete,
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest, ctxRoute: Ctx) {
     const hosted = await creerPaiementPayplug({
       reservation: resa,
       profil: profil.ok ? profil.valeur : null,
+      test: await studioActif(),
     })
     if (!hosted || !estUrlCheckoutSure(hosted.checkout_url)) {
       return reponseErreur(
