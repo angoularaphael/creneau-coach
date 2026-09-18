@@ -3182,7 +3182,7 @@ create policy coach_private_select_own on storage.objects
     and (
       auth.role() = 'service_role'
       or (storage.foldername(name))[1] = auth.uid()::text
-      or public.coach_jwt_role() = 'direction'
+      or public.coach_role() = 'direction'
     )
   );
 
@@ -3205,7 +3205,7 @@ create policy coach_private_update_own on storage.objects
     and (
       auth.role() = 'service_role'
       or (storage.foldername(name))[1] = auth.uid()::text
-      or public.coach_jwt_role() = 'direction'
+      or public.coach_role() = 'direction'
     )
   );
 
