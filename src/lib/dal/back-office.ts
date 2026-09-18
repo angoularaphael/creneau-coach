@@ -55,6 +55,11 @@ export type Creneau = {
   readonly capacity: number
   readonly taken: number
   readonly state: 'open' | 'full' | 'blocked' | 'past'
+  /**
+   * Plus proche expiration parmi les holds vivants du créneau, ou `null`.
+   * C'est la seule donnée de cette page qui vieillit pendant qu'on la regarde.
+   */
+  readonly hold_expire_le: string | null
 }
 
 export async function listerClubs(): Promise<Club[]> {

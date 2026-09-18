@@ -7,7 +7,12 @@ import {
   listerCoachsDeTest,
   type Creneau,
 } from '@/lib/dal/back-office'
-import { HEURES_CRENEAUX, formaterCentimes, type ClubId } from '@/domain/contrat'
+import {
+  HEURES_CRENEAUX,
+  formaterCentimes,
+  tarifDeLHeure,
+  type ClubId,
+} from '@/domain/contrat'
 import { exigeSessionBackOffice } from '@/lib/admin/garde'
 import {
   actionBloquer,
@@ -80,6 +85,27 @@ function murParis(instant: Date): { jour: string; heure: string } {
   return { jour: `${p.year}-${p.month}-${p.day}`, heure: p.hour ?? '00' }
 }
 
+/**
+ * Secondes restantes avant la plus proche libération de place, ou `null`.
+ * Sert la durée d'animation du liseré : le temps restant EST la donnée.
+ */
+function resteHold(c: Creneau): number | null {
+  if (!c.hold_expire_le) return null
+  const s = Math.round((new Date(c.hold_expire_le).getTime() - Date.now()) / 1000)
+  return s > 0 ? s : null
+}
+
+/**
+ * Libellé lu par un lecteur d'écran. L'état ne doit JAMAIS dépendre de la seule
+ * couleur : ici il est dit en toutes lettres, avec le temps restant s'il y en a.
+ */
+function libelleCase(jour: string, hh: string, c: Creneau): string {
+  const etats = { open: 'libre', full: 'complet', blocked: 'bloqué', past: 'passé' } as const
+  const reste = resteHold(c)
+  const suite = reste ? `, une place se libère dans ${Math.ceil(reste / 60)} minutes` : ''
+  return `${jour} ${hh} h — ${c.taken} sur ${c.capacity}, ${etats[c.state]}${suite}`
+}
+
 /** Affichage seulement — jamais utilisé comme clé. */
 const dateParis = new Intl.DateTimeFormat('fr-FR', {
   timeZone: 'Europe/Paris',
@@ -124,6 +150,12 @@ export default async function BackOffice({
   for (const c of grille) {
     const { jour, heure } = murParis(new Date(c.starts_at))
     parCase.set(`${jour}|${heure}`, c)
+  }
+
+  // Le prix vient du serveur, jamais d'un calcul ici (cahier §1.4).
+  const prixDeLHeure = new Map<number, number>()
+  for (const c of grille) {
+    prixDeLHeure.set(Number(murParis(new Date(c.starts_at)).heure), c.amount_cents)
   }
 
   const lien = (p: Record<string, string>) => {
@@ -227,10 +259,9 @@ export default async function BackOffice({
             <tr>
               <th scope="col">Heure</th>
               {JOURS.map((nom, i) => (
-                <th key={nom} scope="col">
+                <th key={nom} scope="col" data-samedi={i === 5}>
                   {nom}
-                  <br />
-                  {dateParis.format(decaler(lundi, i))}
+                  <b>{dateParis.format(decaler(lundi, i))}</b>
                 </th>
               ))}
             </tr>
@@ -240,11 +271,14 @@ export default async function BackOffice({
               const hh = String(h).padStart(2, '0')
               return (
                 <tr key={h}>
-                  <th scope="row" className="bo__heure">
-                    <b>
-                      {hh}:00
-                    </b>
-                    <span>{h >= 12 && h <= 13 ? 'pleine' : h >= 17 ? 'pleine' : 'creuse'}</span>
+                  <th
+                    scope="row"
+                    className="bo__heure"
+                    data-tarif={tarifDeLHeure(h)}
+                    title={tarifDeLHeure(h) === 'peak' ? 'Heure pleine' : 'Heure creuse'}
+                  >
+                    {hh}:00
+                    <small>{formaterCentimes(prixDeLHeure.get(h) ?? 0)}</small>
                   </th>
                   {JOURS.map((nom, i) => {
                     // Même dérivation que pour les créneaux : une seule définition du jour.
@@ -270,14 +304,26 @@ export default async function BackOffice({
                           <button
                             className="bo__case"
                             data-etat={c.state}
+                            data-samedi={i === 5}
+                            data-prix={formaterCentimes(c.amount_cents)}
                             disabled={passe}
                             title={titre}
-                            aria-label={`${nom} ${hh}h — ${c.taken} sur ${c.capacity} — ${c.state}`}
+                            aria-label={libelleCase(nom, hh, c)}
                           >
-                            <span className="bo__pastille">
-                              {bloque ? '×' : `${c.taken}/${c.capacity}`}
-                            </span>
-                            <span className="bo__prix">{formaterCentimes(c.amount_cents)}</span>
+                            {bloque ? '×' : `${c.taken}/${c.capacity}`}
+                            {resteHold(c) ? (
+                              <span
+                                className="bo__hold"
+                                style={
+                                  {
+                                    '--reste': `${resteHold(c)}s`,
+                                    '--proportion': String(
+                                      Math.min(1, (resteHold(c) ?? 0) / 600),
+                                    ),
+                                  } as React.CSSProperties
+                                }
+                              />
+                            ) : null}
                           </button>
                         </form>
                       </td>
@@ -292,17 +338,23 @@ export default async function BackOffice({
 
       <p className="bo__legendes">
         <span>
-          <i className="bo__puce" style={{ background: 'var(--ok)' }} /> libre
+          <i className="bo__puce" style={{ background: 'var(--accent)', opacity: 0.95 }} /> heure
+          pleine
+        </span>
+        <span>
+          <i className="bo__puce" style={{ background: 'var(--accent)', opacity: 0.3 }} /> heure
+          creuse
         </span>
         <span>
           <i className="bo__puce" style={{ background: 'var(--full)' }} /> complet
         </span>
+        <span>× bloqué — éducative ou back-office</span>
         <span>
-          <i className="bo__puce" style={{ background: 'var(--blocked)' }} /> bloqué (× — éducative
-          ou back-office)
-        </span>
-        <span>
-          <i className="bo__puce" style={{ background: 'var(--past)' }} /> passé
+          <i
+            className="bo__puce"
+            style={{ background: 'var(--accent)', height: '2px', borderRadius: 0 }}
+          />{' '}
+          hold en cours : le liseré se vide, la place se libère à la fin
         </span>
         <span>Un clic sur une case bloque ou débloque le créneau.</span>
       </p>

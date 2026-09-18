@@ -79,7 +79,26 @@ function migrationsDisponibles() {
     .sort()
     .map((nom) => {
       const sql = readFileSync(join(DOSSIER_MIGRATIONS, nom), 'utf8')
-      return { nom, sql, empreinte: createHash('sha256').update(sql).digest('hex').slice(0, 16) }
+      /*
+       * L'empreinte se calcule sur un contenu NORMALISÉ : fins de ligne en \n et
+       * BOM retiré.
+       *
+       * Sans ça, l'empreinte dépend de la plateforme. Git convertit les fins de
+       * ligne à la extraction : le même fichier, identique au dernier octet près
+       * dans le dépôt, donne un hash différent selon qu'il est extrait sous
+       * Windows (CRLF) ou sous Linux (LF). Sur un dépôt partagé par trois
+       * développeurs, le garde-fou d'immuabilité criait à la modification à
+       * chaque extraction — et un garde-fou qui crie pour rien est un garde-fou
+       * qu'on finit par désactiver.
+       *
+       * On veut détecter un changement de CONTENU, pas de mise en forme.
+       */
+      const normalise = sql.replace(/^﻿/, '').replace(/\r\n/g, '\n')
+      return {
+        nom,
+        sql,
+        empreinte: createHash('sha256').update(normalise).digest('hex').slice(0, 16),
+      }
     })
 }
 
