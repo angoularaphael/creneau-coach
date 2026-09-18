@@ -21,7 +21,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` livré · **bloque** = l’
 
 Sans ça, personne ne code en parallèle.
 
-- [ ] Repo app `coach-reservation` (Next.js 14), **pas** dans la boutique BOXPLUS
+- [x] Repo app `coach-reservation` (**Next.js 16.3**, App Router), **pas** dans la boutique BOXPLUS
 - [ ] Projet / schéma Supabase `coach_*` (Eddy propose le SQL, Raphael + Brad relisent)
 - [ ] Rôles Auth : `coach` | `manager_salle` (+ `club_id`) | `direction` | `service`
 - [ ] Matrice RLS du cahier §12 appliquée + vue staff **sans** PDF / token QR / id Deciplus
