@@ -1,3 +1,19 @@
+> # ⛔ DOCUMENT DÉCLASSÉ — 18 septembre 2026
+>
+> **Ce fichier n'est plus un contrat. Ne codez pas contre lui.**
+>
+> Décision d'Eddy, 18 septembre 2026 : le contrat qui fait foi est
+> [`CAHIER-API.md`](./CAHIER-API.md), doublé par [`openapi.yaml`](./openapi.yaml).
+>
+> Le conflit concret qui a motivé la décision : le §5 ci-dessous décrit une machine à états
+> `DRAFT → HELD → PAYMENT_PENDING → PAID → DOCUMENTS_PENDING → ACCESS_PROVISIONING →
+> CONFIRMED → ACCESS_ACTIVE → CONSUMED`, alors que le cahier d'API décrit
+> `held → awaiting_signature → confirmed → consumed`. **Ce ne sont pas les mêmes états.**
+> Trois lots lisant deux vérités, c'est une panne d'intégration programmée.
+>
+> Ce document reste consultable comme **intention produit** et comme trace de la
+> compréhension initiale. Aucune ligne de code, aucun champ, aucun statut ne doit en être tiré.
+
 # Dossier maître du projet — Boxing Center Coachs
 
 Statut du document : compréhension fonctionnelle et technique de référence.

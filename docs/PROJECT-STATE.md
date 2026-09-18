@@ -12,7 +12,8 @@ Le prototype permet de parcourir un exemple de réservation et de visualiser les
 
 Lire dans cet ordre :
 
-1. [`MASTER-PROJECT-SPEC.md`](./MASTER-PROJECT-SPEC.md) — compréhension complète du produit, règles, architecture, données, sécurité, phases et critères de fin ;
+1. [`CAHIER-API.md`](./CAHIER-API.md) + [`openapi.yaml`](./openapi.yaml) — **le contrat qui fait foi** entre les trois lots ;
+1. ~~[`MASTER-PROJECT-SPEC.md`](./MASTER-PROJECT-SPEC.md)~~ — **déclassé le 18/09/2026**, intention produit uniquement, plus un contrat ;
 2. [`DECIPLUS-ACCESS-CONTRACT.md`](./DECIPLUS-ACCESS-CONTRACT.md) — modèle badge/QR, Decipass versus ticket d'accès, cycle de vie et questions à Xplor ;
 3. [`SEO-INFORMATION-ARCHITECTURE.md`](./SEO-INFORMATION-ARCHITECTURE.md) — remplacement de la page unique par une architecture publique multi-page ;
 4. le cahier des charges PDF à la racine — source métier initiale.
