@@ -46,14 +46,14 @@ export async function PATCH(req: NextRequest) {
   const mode = authMode();
 
   if (mode === 'mock') {
-    const id = readMockSessionId();
+    const id = await readMockSessionId();
     const user = id ? getMockUserById(id) : undefined;
     if (!user) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
     return jsonOk(patchMockProfile(user, body));
   }
 
   if (mode === 'supabase') {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

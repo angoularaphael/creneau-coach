@@ -7,13 +7,14 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, { params }: Ctx) {
   const me = await getSessionMe();
   if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
 
-  const r = getReservationForCoach(params.id, me.id);
+  const { id } = await params;
+  const r = getReservationForCoach(id, me.id);
   if (!r) return jsonError(404, 'NOT_FOUND', 'Réservation introuvable.');
 
   if (r.status !== 'confirmed') {

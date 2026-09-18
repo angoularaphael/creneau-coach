@@ -33,13 +33,13 @@ export async function POST(req: NextRequest) {
   const photo_path = `coach-private/${me.id}/${Date.now()}.${file.type.split('/')[1]}`;
 
   if (authMode() === 'mock') {
-    const id = readMockSessionId();
+    const id = await readMockSessionId();
     const user = id ? getMockUserById(id) : undefined;
     if (user) {
       user.profile.photo_path = photo_path;
     }
   } else if (authMode() === 'supabase') {
-    const supabase = createClient();
+    const supabase = await createClient();
     await supabase.auth.updateUser({
       data: { photo_path },
     });

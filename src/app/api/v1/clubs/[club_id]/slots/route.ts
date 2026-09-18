@@ -5,13 +5,13 @@ import { jsonError, jsonOk } from '@/lib/api/http';
 
 export const dynamic = 'force-dynamic';
 
-type Ctx = { params: { club_id: string } };
+type Ctx = { params: Promise<{ club_id: string }> };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** GET /api/v1/clubs/:id/slots — fake contrat-compatible (DoD Brad semaine 0). */
 export async function GET(req: Request, { params }: Ctx) {
-  const rawId = params.club_id;
+  const rawId = (await params).club_id;
   if (!isClubId(rawId)) {
     return jsonError(404, 'NOT_FOUND', 'Club introuvable.');
   }

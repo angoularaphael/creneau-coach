@@ -70,16 +70,19 @@ export function createMockUser(input: {
   return user;
 }
 
-export function setMockSession(userId: string) {
-  cookies().set(MOCK_COOKIE, userId, cookieOpts());
+export async function setMockSession(userId: string) {
+  const store = await cookies();
+  store.set(MOCK_COOKIE, userId, cookieOpts());
 }
 
-export function clearMockSession() {
-  cookies().set(MOCK_COOKIE, '', { ...cookieOpts(), maxAge: 0 });
+export async function clearMockSession() {
+  const store = await cookies();
+  store.set(MOCK_COOKIE, '', { ...cookieOpts(), maxAge: 0 });
 }
 
-export function readMockSessionId(): string | null {
-  return cookies().get(MOCK_COOKIE)?.value ?? null;
+export async function readMockSessionId(): Promise<string | null> {
+  const store = await cookies();
+  return store.get(MOCK_COOKIE)?.value ?? null;
 }
 
 export function mockUserToMe(user: MockUser): Me {

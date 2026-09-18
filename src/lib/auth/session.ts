@@ -16,7 +16,7 @@ export async function getSessionMe(): Promise<Me | null> {
   const mode = authMode();
 
   if (mode === 'mock') {
-    const id = readMockSessionId();
+    const id = await readMockSessionId();
     if (!id) return null;
     const user = getMockUserById(id);
     if (!user) return null;
@@ -26,7 +26,7 @@ export async function getSessionMe(): Promise<Me | null> {
   }
 
   if (mode === 'supabase') {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

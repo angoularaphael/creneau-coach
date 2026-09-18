@@ -6,7 +6,7 @@ import { ApiError, type PaymentProvider } from '@/lib/api/types';
 
 export const dynamic = 'force-dynamic';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 const PROVIDERS = new Set(['payplug', 'paypal', 'credit']);
 
@@ -35,9 +35,10 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   }
 
   try {
+    const { id } = await params;
     const result = checkoutReservation(
       me.id,
-      params.id,
+      id,
       body.provider as PaymentProvider,
       key,
     );

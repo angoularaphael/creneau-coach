@@ -5,7 +5,7 @@ import { ApiError } from '@/lib/api/types';
 
 export const dynamic = 'force-dynamic';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 /** Démo Brad : simule le retour Payplug/PayPal (Raphael remplacera). */
 export async function POST(_req: Request, { params }: Ctx) {
@@ -13,7 +13,8 @@ export async function POST(_req: Request, { params }: Ctx) {
   if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
 
   try {
-    const reservation = mockMarkPaid(me.id, params.id);
+    const { id } = await params;
+    const reservation = mockMarkPaid(me.id, id);
     return jsonOk(reservation);
   } catch (err) {
     if (err instanceof ApiError) {

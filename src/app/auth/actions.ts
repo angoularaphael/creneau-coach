@@ -59,11 +59,11 @@ export async function signUpAction(
       return { error: 'Un compte existe déjà avec cet e-mail.' };
     }
     const user = createMockUser({ email, password, first_name, last_name });
-    setMockSession(user.id);
+    await setMockSession(user.id);
     redirect('/espace-coach');
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -116,11 +116,11 @@ export async function signInAction(
     if (!user || user.password !== password) {
       return { error: 'Identifiants incorrects.' };
     }
-    setMockSession(user.id);
+    await setMockSession(user.id);
     redirect(next.startsWith('/') ? next : '/espace-coach');
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
 
@@ -130,9 +130,9 @@ export async function signInAction(
 export async function signOutAction() {
   const mode = authMode();
   if (mode === 'mock') {
-    clearMockSession();
+    await clearMockSession();
   } else if (mode === 'supabase') {
-    const supabase = createClient();
+    const supabase = await createClient();
     await supabase.auth.signOut();
   }
   redirect('/');

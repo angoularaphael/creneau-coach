@@ -6,7 +6,7 @@ import { ApiError } from '@/lib/api/types';
 
 export const dynamic = 'force-dynamic';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: Ctx) {
   const me = await getSessionMe();
@@ -20,7 +20,8 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   }
 
   try {
-    const reservation = signReservation(me.id, params.id, body.consent === true);
+    const { id } = await params;
+    const reservation = signReservation(me.id, id, body.consent === true);
     return jsonOk(reservation);
   } catch (err) {
     if (err instanceof ApiError) {
@@ -33,7 +34,8 @@ export async function POST(req: NextRequest, { params }: Ctx) {
 export async function GET(_req: Request, { params }: Ctx) {
   const me = await getSessionMe();
   if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
-  const r = getReservationForCoach(params.id, me.id);
+  const { id } = await params;
+  const r = getReservationForCoach(id, me.id);
   if (!r) return jsonError(404, 'NOT_FOUND', 'Réservation introuvable.');
   return jsonOk({
     documents: [

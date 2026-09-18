@@ -6,7 +6,7 @@ import { ApiError } from '@/lib/api/types';
 
 export const dynamic = 'force-dynamic';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: Ctx) {
   const me = await getSessionMe();
@@ -22,7 +22,8 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   }
 
   try {
-    const reservation = cancelReservation(me.id, params.id, key);
+    const { id } = await params;
+    const reservation = cancelReservation(me.id, id, key);
     return jsonOk(reservation);
   } catch (err) {
     if (err instanceof ApiError) {

@@ -314,7 +314,8 @@ test('T7 / T8 — seuls le propriétaire et la direction annulent', () => {
   for (const de of ['awaiting_signature', 'confirmed'] as const) {
     assert.deepEqual(canTransition(de, 'cancelled_credit', PROPRIETAIRE, faits()), { ok: true })
     assert.deepEqual(canTransition(de, 'cancelled_credit', DIRECTION, faits()), { ok: true })
-    for (const acteur of [SERVICE, CRON]) {
+    const autres: Acteur[] = [SERVICE, CRON]
+    for (const acteur of autres) {
       assert.deepEqual(canTransition(de, 'cancelled_credit', acteur, faits()), {
         ok: false,
         code: 'FORBIDDEN',
@@ -399,7 +400,8 @@ test('les états terminaux sont terminaux, pour tout le monde', () => {
   ])
   for (const de of STATUTS_TERMINAUX) {
     for (const vers of STATUTS) {
-      for (const acteur of [PROPRIETAIRE, DIRECTION, SERVICE, CRON]) {
+      const tous: Acteur[] = [PROPRIETAIRE, DIRECTION, SERVICE, CRON]
+      for (const acteur of tous) {
         assert.deepEqual(canTransition(de, vers, acteur, faits()), {
           ok: false,
           code: 'CONFLICT',

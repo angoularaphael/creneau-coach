@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       first_name: String(body.first_name || 'Coach'),
       last_name: String(body.last_name || 'Test'),
     });
-    setMockSession(user.id);
+    await setMockSession(user.id);
     return jsonOk(mockUserToMe(user), { status: 201 });
   }
 
@@ -59,6 +59,6 @@ export async function POST(req: NextRequest) {
   if (!user || user.password !== password) {
     return jsonError(401, 'UNAUTHENTICATED', 'Identifiants incorrects.');
   }
-  setMockSession(user.id);
+  await setMockSession(user.id);
   return jsonOk(mockUserToMe(user));
 }
