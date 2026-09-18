@@ -53,11 +53,10 @@ export default async function QrPage(ctx: Props) {
         <p className="muted">
           <Link href={`/espace-coach/reservations/${params.id}`}>Retour</Link>
         </p>
-        <h1>QR d’accès</h1>
-        <p>
-          Valide de T−5 à la fin du créneau · club{' '}
-          <code>{reservation.club_id}</code>. Token HMAC opaque — pas d’UUID
-          résa dans le PNG.
+        <h1>Votre accès</h1>
+        <p className="page-hero__sous">
+          Présentez ce code au lecteur du club. Il s’active cinq minutes avant votre
+          créneau et s’éteint à la fin. Il n’ouvre que le club réservé.
         </p>
       </header>
       <section className="section" style={{ paddingTop: 0, maxWidth: 360 }}>
@@ -71,7 +70,7 @@ export default async function QrPage(ctx: Props) {
             style={{ width: '100%', maxWidth: 280, background: '#fff' }}
           />
         ) : (
-          <p className="note">QR indisponible (clé HMAC manquante côté serveur).</p>
+          <p className="note">Votre code n’est pas encore disponible. Réessayez dans un instant.</p>
         )}
         <p className="note">
           Fenêtre : {reservation.qr_valid_from} → {reservation.qr_valid_to}

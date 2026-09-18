@@ -13,13 +13,13 @@ export default async function SuspendedPage() {
       <header className="page-hero">
         <h1>Compte suspendu</h1>
         <p>
-          Votre accès coach est bloqué. Le tunnel de réservation est indisponible
-          jusqu’à réactivation par la direction.
+          Vous ne pouvez pas réserver pour le moment. L’équipe Boxing Center doit
+          réactiver votre compte avant que vous puissiez reprendre des créneaux.
         </p>
       </header>
       <section className="section" style={{ paddingTop: 0 }}>
         <p className="note">
-          Code API : <code>403 SUSPENDED</code>
+          Contactez l’équipe pour débloquer la situation
           {me?.profile?.email ? (
             <>
               {' '}

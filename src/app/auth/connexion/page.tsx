@@ -3,7 +3,10 @@ import Link from 'next/link';
 import { SignInForm } from '../AuthForms';
 import { authMode } from '@/lib/auth/config';
 
-export const metadata: Metadata = { title: 'Connexion' };
+export const metadata: Metadata = {
+  title: 'Connexion',
+  description: 'Accédez à vos réservations, vos avoirs et vos QR d’accès Boxing Center.',
+};
 
 type Props = { searchParams: Promise<{ next?: string; error?: string }> };
 
@@ -17,26 +20,28 @@ export default async function SignInPage({ searchParams }: Props) {
   return (
     <>
       <header className="page-hero">
-        <h1>Connexion</h1>
-        <p>Espace coach Boxing Center.</p>
+        <h1>Bon retour</h1>
+        <p className="page-hero__sous">
+          Retrouvez vos réservations, vos avoirs et le QR qui vous ouvre la porte.
+        </p>
       </header>
-      <section className="section" style={{ paddingTop: 0, maxWidth: 480 }}>
+      <section className="section section--etroite" style={{ paddingTop: 0 }}>
         {params.error === 'callback' ? (
           <p className="form-error" role="alert">
-            Lien de confirmation invalide ou expiré.
+            Ce lien de confirmation n’est plus valable. Demandez-en un nouveau.
           </p>
         ) : null}
         {mode === 'unset' ? (
           <p className="note">
-            Auth non configurée. Voir <code>.env.local</code> (Supabase ou{' '}
-            <code>COACH_AUTH_MOCK=1</code>).
+            La connexion est momentanément indisponible. Réessayez dans quelques
+            minutes, ou écrivez-nous depuis la <Link href="/contact">page contact</Link>.
           </p>
         ) : (
           <>
             <SignInForm next={next} />
             <p className="muted" style={{ marginTop: '1.25rem' }}>
               Pas encore de compte ?{' '}
-              <Link href="/auth/inscription">Inscription</Link>
+              <Link href="/auth/inscription">Créez-en un, c’est gratuit</Link>
             </p>
           </>
         )}

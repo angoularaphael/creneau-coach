@@ -8,10 +8,11 @@ export default function TarifsPage() {
   return (
     <>
       <header className="page-hero">
-        <h1>Tarifs</h1>
-        <p>
-          Montants figés serveur au hold. L’UI affiche uniquement ce que l’API
-          renvoie.
+        <p className="sur mono">Sans abonnement</p>
+        <h1>Deux prix, c’est tout</h1>
+        <p className="page-hero__sous">
+          Le prix dépend de l’heure, jamais du club ni de l’espace. Il est affiché
+          avant que vous ne payiez, et il ne bouge plus une fois votre créneau réservé.
         </p>
       </header>
       <section className="section" style={{ paddingTop: 0 }}>

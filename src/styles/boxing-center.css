@@ -855,6 +855,25 @@ p {
   color: var(--texte, var(--ink));
 }
 
+/* ── LE FILET DE GOUTTIÈRE ──────────────────────────────────────────────
+   Quinze pages sur seize écrivaient `<section class="section">` sans
+   l'enveloppe qui porte les marges : sur téléphone, tout le texte et tous les
+   champs de formulaire venaient coller aux bords de l'écran. Illisible, et
+   c'était vrai partout sauf sur l'accueil.
+
+   Plutôt que de corriger quinze fichiers un par un — et d'attendre que le
+   seizième oublie à son tour — la règle porte sur l'absence : une section qui
+   n'a pas d'enveloppe reçoit les marges elle-même. Le jour où quelqu'un ajoute
+   une page sans y penser, elle est correcte quand même. */
+.section:not(:has(> .enveloppe)) {
+  padding-inline: var(--space);
+}
+
+.section:not(:has(> .enveloppe)) > * {
+  max-width: var(--max);
+  margin-inline: auto;
+}
+
 .section--encre {
   background: var(--bg-elevated);
 }
@@ -1136,5 +1155,102 @@ p {
 
   .section--final .final__titre {
     max-width: 24ch;
+  }
+}
+
+/* Colonne étroite pour les formulaires — centrée, avec ses gouttières. */
+.section--etroite > * {
+  max-width: 30rem;
+}
+
+.page-hero__sous {
+  max-width: 46ch;
+  margin: 0.5rem 0 0;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.page-hero .sur {
+  margin-bottom: 0.375rem;
+}
+
+/* ── Le déroulé numéroté ────────────────────────────────────────────── */
+.deroule {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2.25rem;
+}
+
+.deroule__item {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.deroule__n {
+  font-size: 0.875rem;
+  letter-spacing: 0.14em;
+  color: var(--accent-hot);
+}
+
+.deroule__corps h2 {
+  font-size: clamp(1.375rem, 5vw, 1.875rem);
+  margin: 0 0 0.625rem;
+  max-width: 24ch;
+}
+
+.deroule__corps p {
+  margin: 0;
+}
+
+.deroule__aside {
+  margin-top: 0.75rem !important;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  opacity: 0.75;
+}
+
+/* ── Les questions ──────────────────────────────────────────────────── */
+.faq {
+  margin: 1.75rem 0 0;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.faq__item {
+  padding-top: 1.125rem;
+  border-top: 1px solid var(--line);
+}
+
+.faq dt {
+  font-family: var(--pile-titre);
+  font-size: 1.125rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.faq dd {
+  margin: 0;
+  max-width: 62ch;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+@media (min-width: 48rem) {
+  .deroule__item {
+    grid-template-columns: 4rem 1fr;
+    gap: 1.5rem;
+  }
+
+  .faq {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem 2.5rem;
   }
 }

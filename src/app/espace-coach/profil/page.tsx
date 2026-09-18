@@ -19,9 +19,9 @@ export default async function ProfilePage() {
           <Link href="/espace-coach">Espace coach</Link> / profil
         </p>
         <h1>Mon profil</h1>
-        <p>
-          E-mail : {me.profile?.email ?? '—'} (non modifiable ici). Session
-          cookie httpOnly.
+        <p className="page-hero__sous">
+          Ces informations apparaissent sur vos documents à signer. Votre adresse
+          e-mail sert à vous identifier : elle se change depuis la page contact.
         </p>
       </header>
       <section className="section" style={{ paddingTop: 0 }}>

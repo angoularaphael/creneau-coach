@@ -47,7 +47,7 @@ const ETAPES = [
     n: '01',
     titre: 'Choisissez l’heure',
     texte:
-      'La grille affiche les créneaux réellement libres, club par club et espace par espace. Le prix vient du serveur : 10 € en heure creuse, 15 € en heure pleine.',
+      'Vous voyez les créneaux réellement libres, club par club. Le prix est affiché d’avance : 10 € en heure creuse, 15 € en heure pleine.',
   },
   {
     n: '02',
