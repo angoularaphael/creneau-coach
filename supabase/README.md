@@ -2,7 +2,7 @@
 
 Projet Supabase : `zpkdveyhcmxlkhuoudfr`. Tables `coach_*`. **Pas** BOXPLUS. Eddy n’a pas de lot ici.
 
-Coller **`all.sql`** dans le SQL Editor reste valable pour un premier jet. Le moteur complet est la série `0000`–`0017` via `node scripts/db-migrate.mjs`.
+Coller **`all.sql`** dans le SQL Editor : concaténation de `0000`–`0017` + bucket `coach-private`. En local : `node scripts/db-migrate.mjs`.
 
 # Base de données — lot C
 
