@@ -48,29 +48,29 @@ export default async function PageStudio() {
 
       <h1>Comment ça marche</h1>
       <p className="bo__sous">
-        Trois machines. Le site (Vercel) prend la résa et l’argent. Le bot
-        (BotHosting) parle à Deciplus. Deciplus ouvre la porte de la salle. Le
-        coach ne voit que le site.
+        « Résa » = la place bloquée (salle + heure). Ensuite l’argent, ensuite
+        la signature, ensuite le QR et la porte. Ce n’est pas un récap sécurité.
       </p>
 
       <ol className="bo__etapes">
         <li>
-          <strong>Réserver</strong> — le coach choisit un créneau. Le serveur
-          bloque la place 10 min et fixe le prix. Personne ne tape le montant.
+          <strong>Résa</strong> — le coach choisit un créneau. Le serveur
+          bloque la place 10 min (hold) et fixe le prix. Personne ne tape le
+          montant. Tant que ce n’est pas payé, ce n’est qu’une option.
         </li>
         <li>
-          <strong>Payer</strong> — carte Payplug (1×) ou un avoir. Le site
+          <strong>Argent</strong> — carte Payplug (1×) ou un avoir. Le site
           n’écoute pas « j’ai payé » : Payplug rappelle le serveur. En studio,
           c’est le compte TEST Payplug.
         </li>
         <li>
-          <strong>Signer</strong> — CGV, règlement, décharge. Ensuite seulement
+          <strong>Signature</strong> — CGV, règlement, décharge. Ensuite seulement
           la résa est confirmée et un QR apparaît.
         </li>
         <li>
-          <strong>Porte</strong> — le bot, avec le compte JUNIOR, donne l’accès
-          Deciplus pour cette heure et cette salle, puis le retire. Ça, c’est
-          encore à enchaîner (Playwright). Le QR côté site existe déjà.
+          <strong>QR + porte</strong> — le QR est le badge du coach pour cette
+          heure. En parallèle le robot Deciplus (compte JUNIOR) ouvre la porte
+          de la salle, puis la referme à la fin ou à l’annulation.
         </li>
       </ol>
 

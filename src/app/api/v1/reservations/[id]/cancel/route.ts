@@ -12,6 +12,11 @@ import {
 } from '@/lib/security'
 import { reponse429 } from '@/lib/security/rate-limit'
 import { reponseDepuisErreur, reponseJson } from '@/lib/http/erreurs'
+import {
+  doitRevoquerDeciplus,
+  envoyerJobDeciplus,
+  reservationVersJob,
+} from '@/lib/bot/forward'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,11 +41,20 @@ export async function POST(req: NextRequest, ctxRoute: Ctx) {
   }
 
   const { id } = await ctxRoute.params
+  const avant = await lireReservation(ctx, session.valeur.supabase, session.valeur.acteur, id)
   const resultat = await annulerReservation(ctx, session.valeur.supabase, {
     reservationId: id,
     idempotencyKey: cle,
   })
   if (!resultat.ok) return reponseDepuisErreur(resultat.erreur, ctx.requestId)
+
+  if (avant.ok && doitRevoquerDeciplus(avant.valeur.deciplus_job_status)) {
+    void envoyerJobDeciplus(
+      reservationVersJob(avant.valeur as unknown as Record<string, unknown>, 'coach_revoke'),
+    ).catch((e) => {
+      console.warn('[deciplus] enqueue revoke', e instanceof Error ? e.message : e)
+    })
+  }
 
   const lecture = await lireReservation(ctx, session.valeur.supabase, session.valeur.acteur, id)
   if (!lecture.ok) {

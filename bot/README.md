@@ -53,6 +53,16 @@ node bootstrap.js      # comme BotHosting : charge .env, npm, start.js
 
 Les jobs restent **en file** tant que l’IMAP n’est pas branché (pas d’échec silencieux).
 
+Dès que `DECIPLUS_IMAP_PASS` est posé, le worker lance **Playwright** : login JUNIOR
+(+ code 2FA lu dans Gmail), fiche membre, note `COACH-SLOT GRANT/REVOKE` dans
+Deciplus, puis callback `POST /api/v1/internal/deciplus/callback`.
+
+```bash
+cd bot
+npm install
+npx playwright install chromium
+```
+
 ## BotHosting (prem-eu4)
 
 1. Uploader **`bootstrap.js`** en tant que `/home/container/index.js` (c’est le même fichier que `bot/bootstrap.js` / racine du repo)

@@ -2,7 +2,7 @@ import 'server-only'
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
-import { boxplusConfigure, type CompteBoxplus } from './boxplus'
+import { boxplusConfigure, superAdminConfigure, type CompteBoxplus } from './boxplus'
 
 /**
  * Session back-office — cookie signé, httpOnly, chemin `/admin`.
@@ -27,11 +27,7 @@ function secret(): string {
 
 export function porteConfiguree(): boolean {
   const sessionOk = Boolean(process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32)
-  const superOk = Boolean(
-    (process.env.BOXPLUS_SUPER_ADMIN_EMAIL ?? '').trim() &&
-      (process.env.BOXPLUS_SUPER_ADMIN_PASSWORD ?? '').trim().replace(/^["']|["']$/g, ''),
-  )
-  return sessionOk && (boxplusConfigure() || superOk)
+  return sessionOk && (boxplusConfigure() || superAdminConfigure())
 }
 
 function chargeValide(brut: unknown): SessionBo | null {
@@ -85,7 +81,7 @@ export function optionsCookie() {
   return {
     httpOnly: true,
     sameSite: 'lax' as const,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.VERCEL === '1',
     path: '/admin',
     maxAge: DUREE_S,
   }

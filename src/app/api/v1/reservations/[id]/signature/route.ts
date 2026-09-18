@@ -14,6 +14,7 @@ import {
 } from '@/lib/security'
 import { reponse429 } from '@/lib/security/rate-limit'
 import { reponseDepuisErreur, reponseErreur, reponseJson } from '@/lib/http/erreurs'
+import { envoyerJobDeciplus, reservationVersJob } from '@/lib/bot/forward'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,9 +73,10 @@ export async function POST(req: NextRequest, ctxRoute: Ctx) {
   })
   if (!signe.ok) return reponseDepuisErreur(signe.erreur, ctx.requestId)
 
-  return reponseJson(
-    versReservationPublique(signe.valeur as Record<string, unknown>),
-    200,
-    ctx.requestId,
-  )
+  const row = signe.valeur as Record<string, unknown>
+  void envoyerJobDeciplus(reservationVersJob(row, 'coach_grant')).catch((e) => {
+    console.warn('[deciplus] enqueue grant', e instanceof Error ? e.message : e)
+  })
+
+  return reponseJson(versReservationPublique(row), 200, ctx.requestId)
 }

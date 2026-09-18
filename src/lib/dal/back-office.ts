@@ -5,6 +5,11 @@ import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/service'
 import { COOKIE_BO, jetonValide } from '@/lib/admin/session'
 import type { ClubId } from '@/domain/contrat'
+import {
+  doitRevoquerDeciplus,
+  envoyerJobDeciplus,
+  reservationVersJob,
+} from '@/lib/bot/forward'
 
 /**
  * Accès aux données du back-office.
@@ -222,6 +227,20 @@ export async function listerCoachsDeTest(): Promise<{ id: string; nom: string; s
 export async function annulerReservation(id: string): Promise<void> {
   await garde()
   const sb = createServiceClient()
+  const { data } = await sb
+    .from('coach_reservations')
+    .select(
+      'id, coach_id, club_id, space_id, starts_at, ends_at, qr_valid_from, qr_valid_to, deciplus_job_status',
+    )
+    .eq('id', id)
+    .maybeSingle()
+  if (data && doitRevoquerDeciplus(String(data.deciplus_job_status))) {
+    await envoyerJobDeciplus(reservationVersJob(data as Record<string, unknown>, 'coach_revoke')).catch(
+      (e) => {
+        console.warn('[deciplus] enqueue revoke BO', e instanceof Error ? e.message : e)
+      },
+    )
+  }
   const { error } = await sb.from('coach_reservations').delete().eq('id', id)
   if (error) throw new Error(`suppression : ${error.message}`)
 }

@@ -36,7 +36,9 @@ export async function actionEntrer(form: FormData) {
     ipHash: ipHash(ip),
     coachId: email ? emailHash(email) : undefined,
   })
-  if (!verdict.allowed) {
+  // Compteur HS (RPC absente, base down) : on n'enferme pas la direction.
+  // Un vrai dépassement 5/min reste refusé.
+  if (!verdict.allowed && !verdict.indisponible) {
     redirect('/admin/connexion?erreur=trop')
   }
 

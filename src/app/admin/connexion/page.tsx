@@ -22,7 +22,11 @@ export default async function ConnexionBackOffice({
     <main className="bo-porte">
       <form action={actionEntrer} className="bo-porte__carte">
         <h1>Back-office</h1>
-        <p className="bo-porte__sous">Même compte que le back-office BOXPLUS.</p>
+        <p className="bo-porte__sous">
+          Porte du <strong>back-office créneaux</strong> (<code>/admin</code>), pas
+          l’espace coach (<code>/auth/connexion</code>). E-mail + mot de passe
+          identiques à la boutique BOXPLUS.
+        </p>
 
         {!configuree ? (
           <p className="bo-porte__alerte" role="alert">

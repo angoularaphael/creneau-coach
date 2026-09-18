@@ -2,7 +2,8 @@ import 'server-only'
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
-import { createHmac, timingSafeEqual } from 'node:crypto'
+
+import { comparaisonConstante } from '@/lib/security/crypto'
 
 export type CompteBoxplus = {
   readonly email: string
@@ -39,14 +40,38 @@ function clientBoxplus(): SupabaseClient | null {
   return cache
 }
 
-function egalSecret(fourni: string, attendu: string): boolean {
-  if (!attendu) return false
-  const h = (v: string) => createHmac('sha256', attendu).update(v).digest()
-  try {
-    return timingSafeEqual(h(fourni), h(attendu))
-  } catch {
-    return false
+function stripQuotes(valeur: string): string {
+  return valeur.trim().replace(/^["']|["']$/g, '')
+}
+
+/**
+ * Mot de passe super-admin boutique.
+ *
+ * Un mot de passe qui commence par `#` est mangé par dotenv / Vercel (commentaire).
+ * D’où `BOXPLUS_SUPER_ADMIN_PASSWORD_B64` : base64 du vrai mot de passe.
+ * Alias `SUPER_ADMIN_*` = mêmes noms que BOXPLUS.
+ */
+export function motDePasseSuperAdmin(): string {
+  const b64 = stripQuotes(process.env.BOXPLUS_SUPER_ADMIN_PASSWORD_B64 ?? '')
+  if (b64) {
+    try {
+      const decoded = Buffer.from(b64, 'base64').toString('utf8')
+      if (decoded) return decoded
+    } catch {
+      /* ignore */
+    }
   }
+  for (const nom of ['BOXPLUS_SUPER_ADMIN_PASSWORD', 'SUPER_ADMIN_PASSWORD'] as const) {
+    const v = stripQuotes(process.env[nom] ?? '')
+    if (v) return v
+  }
+  return ''
+}
+
+export function emailSuperAdmin(): string {
+  return stripQuotes(
+    process.env.BOXPLUS_SUPER_ADMIN_EMAIL ?? process.env.SUPER_ADMIN_EMAIL ?? '',
+  ).toLowerCase()
 }
 
 /** Hash bcrypt fixe : même coût qu'un vrai refus, sans révéler si l'e-mail existe. */
@@ -60,6 +85,10 @@ export function boxplusConfigure(): boolean {
   return Boolean(urlBoxplus() && cleBoxplus())
 }
 
+export function superAdminConfigure(): boolean {
+  return Boolean(emailSuperAdmin() && motDePasseSuperAdmin())
+}
+
 export async function verifierCompteBoxplus(
   emailBrut: string,
   motDePasse: string,
@@ -67,13 +96,15 @@ export async function verifierCompteBoxplus(
   const email = emailBrut.trim().toLowerCase()
   if (!email || !motDePasse) return null
 
-  const superEmail = (process.env.BOXPLUS_SUPER_ADMIN_EMAIL ?? '').trim().toLowerCase()
-  const superPass = (process.env.BOXPLUS_SUPER_ADMIN_PASSWORD ?? '').trim().replace(/^["']|["']$/g, '')
-  if (superEmail && egalSecret(email, superEmail)) {
-    if (superPass && egalSecret(motDePasse, superPass)) {
+  const superEmail = emailSuperAdmin()
+  const superPass = motDePasseSuperAdmin()
+  if (superEmail && comparaisonConstante(email, superEmail) && superPass) {
+    if (comparaisonConstante(motDePasse, superPass)) {
       return { email, role: 'super_admin', name: 'Super administrateur' }
     }
-    return null
+    // Mauvais mot de passe super-admin : on tente quand même `app_users`
+    // (le même e-mail peut exister en table, et un `#` avalé par dotenv
+    // ne doit pas bloquer Guillaume / Brad / Eddy).
   }
 
   const sb = clientBoxplus()
@@ -82,7 +113,7 @@ export async function verifierCompteBoxplus(
   const { data, error } = await sb
     .from('app_users')
     .select('email, password_hash, role, name')
-    .eq('email', email)
+    .ilike('email', email)
     .maybeSingle()
 
   if (error || !data?.password_hash) {
@@ -93,7 +124,7 @@ export async function verifierCompteBoxplus(
   const ok = await bcrypt.compare(motDePasse, String(data.password_hash))
   if (!ok) return null
 
-  const roleBrut = data.role === 'super_admin' ? 'admin' : String(data.role || 'admin')
+  const roleBrut = data.role === 'super_admin' ? 'super_admin' : String(data.role || 'admin')
   if (!roleAutorise(roleBrut)) return null
 
   return {

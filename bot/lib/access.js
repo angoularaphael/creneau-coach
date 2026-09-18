@@ -1,10 +1,11 @@
 'use strict';
 
-const { logInfo, logWarn, logError } = require('./logger');
+const { logInfo, logWarn } = require('./logger');
+const { isCoachAccessAction } = require('./slot-note');
 
 async function callbackApp(job, payload) {
   const base = String(
-    job.status_callback_base || process.env.COACH_APP_URL || process.env.SITE_URL || ''
+    job.status_callback_base || process.env.COACH_APP_URL || process.env.SITE_URL || '',
   ).replace(/\/$/, '');
   const secret = String(process.env.SYNC_SECRET || '').trim();
   if (!base || !secret) {
@@ -28,11 +29,12 @@ async function callbackApp(job, payload) {
 }
 
 /**
- * Grant / revoke Deciplus.
- * IMAP (jeremyfidge) est le prérequis 2FA. Le RPA Playwright (fiche + note COACH-SLOT)
- * se branche ici dès que DECIPLUS_IMAP_PASS est en place.
+ * Grant / revoke Deciplus — robot Playwright (compte JUNIOR + IMAP jeremyfidge).
+ *
+ * `deps.runRpa` est injectable pour les tests. En prod : `./rpa`.runAccessJob
+ * (login, fiche membre, note COACH-SLOT GRANT/REVOKE).
  */
-async function processAccessJob(job) {
+async function processAccessJob(job, deps = {}) {
   const { isImapOtpConfigured, imapMissingReason } = require('./imap-otp');
   if (!isImapOtpConfigured()) {
     const err = new Error(imapMissingReason());
@@ -40,21 +42,42 @@ async function processAccessJob(job) {
     throw err;
   }
 
-  logInfo('Job reçu — IMAP OK, RPA Deciplus à enchaîner', {
+  if (!isCoachAccessAction(job.action)) {
+    throw new Error(`Action coach inconnue: ${job.action}`);
+  }
+
+  const runRpa = deps.runRpa || (await loadRpa());
+  const reservationId = job.reservation_id || job.order_id;
+  logInfo('Job Deciplus — RPA', {
     action: job.action,
-    order_id: job.order_id,
+    order_id: reservationId,
     club_id: job.club_id || job.gym,
   });
 
+  const result = await runRpa(job);
+  const status = result.status === 'granted' || result.status === 'revoked' ? result.status : 'error';
+
   await callbackApp(job, {
-    reservation_id: job.reservation_id || job.order_id,
-    deciplus_member_id: job.deciplus_member_id || null,
-    job_status: 'queued_imap_ready',
+    reservation_id: reservationId,
+    deciplus_member_id: result.deciplus_member_id || job.deciplus_member_id || null,
+    job_status: status,
     club_id: job.club_id || job.gym || null,
-    note: 'IMAP jeremyfidge configuré — grant/revoke Playwright à brancher',
+    error: result.error || null,
   });
 
-  return { status: 'queued_imap_ready', action: job.action };
+  return { status, action: result.action || job.action, deciplus_member_id: result.deciplus_member_id || null };
+}
+
+async function loadRpa() {
+  try {
+    return require('./rpa').runAccessJob;
+  } catch (err) {
+    const wrapped = new Error(
+      `Playwright / RPA indisponible (${err.message}). cd bot && npm install && npx playwright install chromium`,
+    );
+    wrapped.code = 'RPA_UNAVAILABLE';
+    throw wrapped;
+  }
 }
 
 module.exports = { callbackApp, processAccessJob };

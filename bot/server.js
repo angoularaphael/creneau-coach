@@ -52,6 +52,8 @@ function createBotServer() {
         host: cfg.host,
         missing: imapMissingReason(),
       },
+      rpa: 'playwright',
+      marker: 'COACH-SLOT',
       sync_secret: Boolean(secret()),
       stats: stats(),
     });
