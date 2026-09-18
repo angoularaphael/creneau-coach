@@ -3,7 +3,7 @@ import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-import { COOKIE_BO, jetonValide } from './session'
+import { COOKIE_BO, lireSession, type SessionBo } from './session'
 
 /**
  * Exige une session back-office valide, sinon renvoie vers la porte.
@@ -17,9 +17,10 @@ import { COOKIE_BO, jetonValide } from './session'
  *
  * Retirer l'une des deux laisse un trou. La redondance est le sujet.
  */
-export async function exigeSessionBackOffice(suite = '/admin'): Promise<void> {
-  const jeton = (await cookies()).get(COOKIE_BO)?.value
-  if (!jetonValide(jeton)) {
+export async function exigeSessionBackOffice(suite = '/admin'): Promise<SessionBo> {
+  const session = lireSession((await cookies()).get(COOKIE_BO)?.value)
+  if (!session) {
     redirect(`/admin/connexion?suite=${encodeURIComponent(suite)}`)
   }
+  return session
 }

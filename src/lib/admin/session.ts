@@ -2,25 +2,20 @@ import 'server-only'
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
+import { boxplusConfigure, type CompteBoxplus } from './boxplus'
+
 /**
- * Porte du back-office — mot de passe partagé, session signée.
+ * Session back-office — cookie signé, httpOnly, chemin `/admin`.
  *
- * Ce n'est PAS l'authentification définitive. Le cahier §1.1 prévoit deux rôles
- * staff — `manager_salle` (avec son `club_id`) et `direction` — portés par des
- * comptes Supabase, avec la RLS du §12 derrière. Ici, un seul mot de passe pour
- * toute l'équipe, et donc aucune isolation par club : qui entre voit les cinq.
- *
- * C'est assumé et temporaire. Ce que ça apporte quand même, et qui manquait
- * complètement il y a une heure : la route n'est plus ouverte à l'internet entier.
- *
- * Ce qui reste à faire, et qui est bloquant avant d'ouvrir aux responsables de salle :
- *   — un compte par personne, pas un mot de passe partagé ;
- *   — le périmètre club lu dans le JWT, jamais dans l'URL (test contractuel §13.2) ;
- *   — la lecture via le client à session, pour que la RLS s'applique.
+ * L'identité vient de BOXPLUS (`app_users` + super-admin env), pas d'un mot de
+ * passe partagé. Le cookie est le nôtre (SESSION_SECRET du coach) : on ne
+ * réutilise pas `bc_admin_session` de la boutique.
  */
 
 const COOKIE = 'bo_session'
-const DUREE_S = 8 * 60 * 60 // 8 h — une journée de travail, pas plus.
+const DUREE_S = 8 * 60 * 60
+
+export type SessionBo = CompteBoxplus
 
 function secret(): string {
   const s = process.env.SESSION_SECRET
@@ -30,77 +25,58 @@ function secret(): string {
   return s
 }
 
-function motDePasseAttendu(): string {
-  const p = process.env.ADMIN_PASSWORD
-  if (!p || p.length < 12) {
-    throw new Error('ADMIN_PASSWORD manquant ou trop court (12 caractères minimum).')
-  }
-  return p
-}
-
-/** Le back-office est-il configuré pour s'ouvrir ? Sert à afficher une erreur utile. */
 export function porteConfiguree(): boolean {
-  return Boolean(
-    process.env.SESSION_SECRET &&
-      process.env.SESSION_SECRET.length >= 32 &&
-      process.env.ADMIN_PASSWORD &&
-      process.env.ADMIN_PASSWORD.length >= 12,
+  const sessionOk = Boolean(process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32)
+  const superOk = Boolean(
+    (process.env.BOXPLUS_SUPER_ADMIN_EMAIL ?? '').trim() &&
+      (process.env.BOXPLUS_SUPER_ADMIN_PASSWORD ?? '').trim().replace(/^["']|["']$/g, ''),
   )
+  return sessionOk && (boxplusConfigure() || superOk)
 }
 
-/**
- * Comparaison en TEMPS CONSTANT.
- *
- * `a === b` sur une chaîne s'arrête au premier caractère différent : le temps de
- * réponse fuit la longueur du préfixe correct, et permet de deviner le mot de
- * passe caractère par caractère. On hache d'abord pour égaliser les longueurs,
- * parce que `timingSafeEqual` jette si les tampons diffèrent en taille — et la
- * taille est elle-même une information.
- */
-function memeMotDePasse(fourni: string, attendu: string): boolean {
-  const h = (v: string) => createHmac('sha256', secret()).update(v).digest()
-  return timingSafeEqual(h(fourni), h(attendu))
+function chargeValide(brut: unknown): SessionBo | null {
+  if (!brut || typeof brut !== 'object') return null
+  const o = brut as Record<string, unknown>
+  const email = String(o.email ?? '').trim().toLowerCase()
+  const role = String(o.role ?? '')
+  const name = String(o.name ?? email).slice(0, 80)
+  if (!email.includes('@') || email.length > 120) return null
+  if (role !== 'admin' && role !== 'super_admin') return null
+  return { email, role, name }
 }
 
-export function motDePasseValide(fourni: string): boolean {
-  try {
-    return memeMotDePasse(fourni, motDePasseAttendu())
-  } catch {
-    return false
-  }
-}
-
-/**
- * Jeton de session : `expiration.aléa.signature`.
- *
- * L'aléa rend deux sessions ouvertes à la même seconde distinctes, donc
- * révocables indépendamment le jour où on tiendra une liste de révocation.
- * La signature couvre les deux autres champs : ni l'expiration ni l'aléa ne
- * peuvent être retouchés sans invalider le jeton.
- */
-export function creerJeton(): { valeur: string; maxAge: number } {
+export function creerJeton(compte: SessionBo): { valeur: string; maxAge: number } {
   const exp = Math.floor(Date.now() / 1000) + DUREE_S
   const alea = randomBytes(16).toString('hex')
-  const charge = `${exp}.${alea}`
+  const payload = Buffer.from(JSON.stringify(compte), 'utf8').toString('base64url')
+  const charge = `${exp}.${alea}.${payload}`
   const signature = createHmac('sha256', secret()).update(charge).digest('hex')
   return { valeur: `${charge}.${signature}`, maxAge: DUREE_S }
 }
 
-export function jetonValide(valeur: string | undefined): boolean {
-  if (!valeur) return false
+export function lireSession(valeur: string | undefined): SessionBo | null {
+  if (!valeur) return null
   const parts = valeur.split('.')
-  if (parts.length !== 3) return false
-  const [exp, alea, signature] = parts as [string, string, string]
+  if (parts.length !== 4) return null
+  const [exp, alea, payload, signature] = parts as [string, string, string, string]
 
-  const attendue = createHmac('sha256', secret()).update(`${exp}.${alea}`).digest('hex')
+  const attendue = createHmac('sha256', secret()).update(`${exp}.${alea}.${payload}`).digest('hex')
   const a = Buffer.from(signature, 'hex')
   const b = Buffer.from(attendue, 'hex')
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return false
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null
 
-  // L'expiration n'est vérifiée QU'APRÈS la signature : sinon on répondrait
-  // différemment à un jeton forgé selon sa date, ce qui renseigne l'attaquant.
   const secondes = Number(exp)
-  return Number.isFinite(secondes) && secondes > Math.floor(Date.now() / 1000)
+  if (!Number.isFinite(secondes) || secondes <= Math.floor(Date.now() / 1000)) return null
+
+  try {
+    return chargeValide(JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')))
+  } catch {
+    return null
+  }
+}
+
+export function jetonValide(valeur: string | undefined): boolean {
+  return lireSession(valeur) !== null
 }
 
 export const COOKIE_BO = COOKIE

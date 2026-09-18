@@ -6,13 +6,9 @@ export const dynamic = 'force-dynamic'
 /**
  * Porte du back-office.
  *
- * Aucun lien ne pointe ici depuis le site public : la route se connaît, elle ne
- * se découvre pas. Ce n'est pas une mesure de sécurité — l'obscurité n'en est
- * jamais une — mais ça évite d'exposer une cible à tout visiteur de passage.
- *
- * Le message d'erreur est volontairement le même dans tous les cas de refus :
- * un texte différent selon que le mot de passe est faux ou que la porte est mal
- * configurée renseignerait qui essaie.
+ * E-mail + mot de passe identiques à BOXPLUS / gestion-manager (`app_users`).
+ * Le message de refus est le même dans tous les cas (compte inconnu, hash faux,
+ * porte mal configurée) : on ne renseigne pas qui essaie.
  */
 export default async function ConnexionBackOffice({
   searchParams,
@@ -26,12 +22,13 @@ export default async function ConnexionBackOffice({
     <main className="bo-porte">
       <form action={actionEntrer} className="bo-porte__carte">
         <h1>Back-office</h1>
-        <p className="bo-porte__sous">Réservé à l’équipe Boxing Center.</p>
+        <p className="bo-porte__sous">Même compte que le back-office BOXPLUS.</p>
 
         {!configuree ? (
           <p className="bo-porte__alerte" role="alert">
-            La porte n’est pas configurée. Renseigne <code>ADMIN_PASSWORD</code> (12 caractères
-            minimum) et <code>SESSION_SECRET</code> (32 minimum) dans <code>.env.local</code>.
+            La porte n’est pas configurée. Renseigne{' '}
+            <code>BOXPLUS_SUPABASE_URL</code>, <code>BOXPLUS_SUPABASE_SERVICE_ROLE_KEY</code> et{' '}
+            <code>SESSION_SECRET</code> (32 caractères minimum).
           </p>
         ) : null}
 
@@ -43,6 +40,20 @@ export default async function ConnexionBackOffice({
           </p>
         ) : null}
 
+        <label className="bo-porte__label" htmlFor="email">
+          E-mail
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="username"
+          autoFocus
+          inputMode="email"
+          className="bo-porte__champ"
+        />
+
         <label className="bo-porte__label" htmlFor="mdp">
           Mot de passe
         </label>
@@ -52,7 +63,6 @@ export default async function ConnexionBackOffice({
           type="password"
           required
           autoComplete="current-password"
-          autoFocus
           className="bo-porte__champ"
         />
         <input type="hidden" name="suite" value={suite ?? '/admin'} />

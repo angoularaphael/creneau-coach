@@ -119,7 +119,7 @@ export default async function BackOffice({
   // Next 16 : `searchParams` est une Promise, la compatibilité synchrone a été retirée.
   searchParams: Promise<{ club?: string; espace?: string; semaine?: string; resultat?: string }>
 }) {
-  await exigeSessionBackOffice()
+  const staff = await exigeSessionBackOffice()
 
   const params = await searchParams
   const clubs = await listerClubs()
@@ -170,12 +170,12 @@ export default async function BackOffice({
   return (
     <>
       <p className="bo__bandeau">
-        <strong>Accès direction</strong>
+        <strong>BOXPLUS</strong>
         <span>
-          Mot de passe partagé : <strong>aucune isolation par club</strong>, qui entre voit les
-          cinq. Convient à la direction, pas à un responsable de salle. Les comptes nominatifs
-          (<code>manager_salle</code> / <code>direction</code>) et la RLS par club restent à
-          brancher avant d’ouvrir la porte aux salles.
+          Connecté en tant que <strong>{staff.email}</strong>
+          {staff.role === 'super_admin' ? ' (super-admin)' : ''}. Mêmes comptes que la
+          boutique — pas d’isolation par club pour l’instant : qui entre voit les cinq
+          salles.
         </span>
         <form action={actionSortir} className="bo__sortir">
           <button className="bo__bouton bo__bouton--discret">Sortir</button>

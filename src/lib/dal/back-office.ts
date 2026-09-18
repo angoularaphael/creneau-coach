@@ -18,9 +18,10 @@ import type { ClubId } from '@/domain/contrat'
  * de `matcher`, ou une Server Function déplacée, retire sa couverture sans bruit.
  * La vraie frontière est ici.
  *
- * LIMITE CONNUE, À NE PAS OUBLIER : un seul mot de passe pour toute l'équipe, donc
- * aucune isolation par club. Qui entre voit les cinq clubs. C'est acceptable pour
- * la direction, ça ne l'est PAS pour un responsable de salle.
+ * LIMITE CONNUE, À NE PAS OUBLIER : les comptes viennent de BOXPLUS (`app_users`),
+ * mais la lecture métier passe encore par `service_role`. Qui entre voit les cinq
+ * clubs. C'est acceptable pour la direction, ça ne l'est PAS pour un responsable
+ * de salle tant que le périmètre club n'est pas dans la session.
  *
  * À faire avant d'ouvrir aux responsables de salle, et c'est bloquant :
  *   1. un compte Supabase par personne, rôle `manager_salle` | `direction` ;
