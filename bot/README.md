@@ -43,7 +43,8 @@ Succès = `IMAP OK` + nombre de mails Inbox 24 h.
 cd bot
 cp .env.example .env   # déjà prérempli en local
 npm install
-npm start
+node bootstrap.js      # comme BotHosting : charge .env, npm, start.js
+# ou : npm start
 ```
 
 - Health (public) : `http://localhost:20695/health` → `imap.configured: false` tant que `DECIPLUS_IMAP_PASS` est vide
@@ -54,6 +55,9 @@ Les jobs restent **en file** tant que l’IMAP n’est pas branché (pas d’éc
 
 ## BotHosting (prem-eu4)
 
-Voir [../deploy/prem-eu4](../deploy/prem-eu4) : clone `creneau-coach`, lance `bot/start.js`, port **20695**.
+1. Uploader **`bootstrap.js`** en tant que `/home/container/index.js` (c’est le même fichier que `bot/bootstrap.js` / racine du repo)
+2. Uploader `.env` à côté (copier `bot/.env.example`, remplir `DECIPLUS_PASSWORD`, `DECIPLUS_IMAP_PASS`, `SYNC_SECRET`)
+3. Startup panel : **`node index.js`** ou **`node bootstrap.js`**
+4. Port : **20695**
 
-Le `.env` du panel = copie de `.env.example` avec `DECIPLUS_PASSWORD`, `DECIPLUS_IMAP_PASS` et `SYNC_SECRET` remplis.
+Health : `http://prem-eu4.bot-hosting.net:20695/health`

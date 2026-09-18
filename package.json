@@ -7,6 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "bot": "node bot/start.js",
+    "bootstrap": "node bootstrap.js",
     "test": "node --test test/*.test.js"
   },
   "engines": {
