@@ -144,7 +144,7 @@ app.post('/api/v1/reservations/:id/checkout', async (req, res) => {
     }
     const provider = String(req.body?.provider || 'payplug').toLowerCase();
     if (provider === 'credit') {
-      return jsonError(res, 409, 'CONFLICT', 'Avoir : lot Eddy (solde serveur)');
+      return jsonError(res, 409, 'CONFLICT', 'Avoir : lot Junior (solde serveur)');
     }
     if (provider === 'paypal') {
       if (!paypal.isPaypalEnabled()) {

@@ -11,7 +11,9 @@ Personne n’invente un champ, un statut ou un prix. PR review du **responsable 
 |-----|-----|-----------|
 | A | **Raphael** | Paiement 1×, signatures, QR, Deciplus, webhooks, mails transactionnels |
 | B | **Brad** | Site public, 5 clubs, auth UI, espace coach, grille (consomme l’API) |
-| C | **Eddy** | Schéma + RLS, créneaux, holds, capacités, avoirs, back-office |
+| C | **Junior** | Schéma + RLS, créneaux, holds, capacités, avoirs, back-office |
+
+Eddy n’a **aucun** lot sur ce produit.
 
 Légende : `[ ]` à faire · `[~]` en cours · `[x]` livré · **bloque** = l’autre lot attend ça.
 
@@ -22,7 +24,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` livré · **bloque** = l’
 Sans ça, personne ne code en parallèle.
 
 - [ ] Repo app `coach-reservation` (Next.js 14), **pas** dans la boutique BOXPLUS
-- [ ] Projet / schéma Supabase `coach_*` (Eddy propose le SQL, Raphael + Brad relisent)
+- [x] Projet / schéma Supabase `coach_*` (`supabase/migrations`, Junior)
 - [ ] Rôles Auth : `coach` | `manager_salle` (+ `club_id`) | `direction` | `service`
 - [ ] Matrice RLS du cahier §12 appliquée + vue staff **sans** PDF / token QR / id Deciplus
 - [ ] Table `coach_audit_logs` append-only
@@ -42,7 +44,7 @@ Argent, juridique, porte. Secrets Payplug / PayPal / HMAC / Deciplus = toi. **Pa
 
 - [ ] Checkout Payplug **1×** (`POST /reservations/:id/checkout` `provider=payplug`)
 - [ ] Checkout PayPal **1×**
-- [ ] Checkout `provider=credit` si solde avoir ≥ montant serveur (Eddy fournit le solde)
+- [ ] Checkout `provider=credit` si solde avoir ≥ montant serveur (Junior fournit le solde)
 - [ ] Webhook Payplug signé + anti-replay `payment_id`
 - [ ] Webhook PayPal signé + `PAYPAL_WEBHOOK_ID`
 - [ ] `POST .../payment/sync` au retour navigateur (re-query prestataire, **pas** le querystring)
@@ -76,7 +78,7 @@ Argent, juridique, porte. Secrets Payplug / PayPal / HMAC / Deciplus = toi. **Pa
 - [ ] Callback bot → `deciplus_job_status` (id membre **jamais** aux managers)
 - [ ] Credentials Deciplus **uniquement** `bot/.env.example` / BotHosting
 - [ ] Cron retry grant + revoke rattrapage
-- [ ] Compte suspendu (event Eddy) → coupe QR + droits tout de suite
+- [ ] Compte suspendu (event Junior) → coupe QR + droits tout de suite
 - [ ] Alertes `deciplus.error` / `access.denied` → `ALERT_EMAIL`
 
 **Bloque la mise en ligne salles :** un créneau test Minimes, QR T−5, expiration, refus autre club.
@@ -128,7 +130,7 @@ Tout ce que le coach **voit**. Tu **consommes** l’API ; tu ne calcules pas le 
 - [ ] Écran signature (embed Raphael) après `awaiting_signature`
 - [ ] Mes réservations, mes avoirs (`credits_cents`), historique paiements (lecture)
 - [ ] QR + PDF seulement si `confirmed` — pas d’URL devinable
-- [ ] Annulation UI → `POST .../cancel` (Eddy décide 24 h)
+- [ ] Annulation UI → `POST .../cancel` (Junior décide 24 h)
 - [ ] CTA 44×44, 1 colonne mobile, boutons `width: 100%` petit écran
 
 ### 2.4 Sécu / tests Brad
@@ -138,19 +140,19 @@ Tout ce que le coach **voit**. Tu **consommes** l’API ; tu ne calcules pas le 
 - [ ] Headers CSP / clickjacking tunnel paiement + signature (avec Raphael)
 - [ ] Vérif visuelle 375 px et ~900 px sur chaque page livrée
 
-**Attend Eddy :** `GET /slots` + hold. **Attend Raphael :** checkout_url + pad + QR.
+**Attend Junior :** `GET /slots` + hold. **Attend Raphael :** checkout_url + pad + QR.
 
 ---
 
-## 3. Eddy — Lot C
+## 3. Junior — Lot C
 
 Moteur salles et BO. **Pas** Payplug, **pas** Deciplus, **pas** le pad.
 
 ### 3.1 Données + moteur
 
-- [ ] Migrations `coach_profiles`, `coach_clubs/spaces`, templates, blocks, tarifs, `coach_reservations`, `coach_credits`, `coach_settings`, audit
-- [ ] Seed 5 clubs + espaces (slugs boutique)
-- [ ] Blocages éducative défaut (mer+sam 15–17 h) ; **Portet paramétrable**
+- [x] Migrations `coach_profiles`, `coach_clubs/spaces`, templates, blocks, tarifs, `coach_reservations`, `coach_credits`, `coach_settings`, audit
+- [x] Seed 5 clubs + espaces (slugs boutique)
+- [x] Blocages éducative défaut (mer+sam 15–17 h) ; **Portet paramétrable**
 - [ ] `GET /clubs/:id/slots` (public : **sans** noms de coachs)
 - [ ] `POST /reservations` hold 10 min, `amount_cents` **figé**, `SELECT … FOR UPDATE`
 - [ ] Capacité 2 → `SLOT_FULL` (2 POST parallèles = 1× 201 + 1× 409)
@@ -173,7 +175,7 @@ Moteur salles et BO. **Pas** Payplug, **pas** Deciplus, **pas** le pad.
 - [ ] Avoirs : lecture direction
 - [ ] `GET /admin/audit` (manager = son club)
 
-### 3.3 Sécu / tests Eddy
+### 3.3 Sécu / tests Junior
 
 - [ ] RLS + tests : manager Minimes vs Portet
 - [ ] 4e hold → `ACTIVE_LIMIT`
@@ -192,7 +194,7 @@ Moteur salles et BO. **Pas** Payplug, **pas** Deciplus, **pas** le pad.
 
 Ordre obligatoire :
 
-1. [ ] Eddy : `GET /slots` + `POST /reservations` (hold)
+1. [ ] Junior : `GET /slots` + `POST /reservations` (hold)
 2. [ ] Brad : grille + bouton payer sur hold réel
 3. [ ] Raphael : Payplug test + pad + PDF privé
 4. [ ] Raphael : job Deciplus **seulement** sur `confirmed`
@@ -206,10 +208,10 @@ Ordre obligatoire :
 
 ```
 Semaine 0 (schéma + OpenAPI + RLS)
-        ├── Eddy : slots + hold + BO
+        ├── Junior : slots + hold + BO
         │         └── Brad : pages + tunnel UI
         └── Raphael : checkout / signature / QR / bot
-                      └── (attend hold + amount_cents + events Eddy)
+                      └── (attend hold + amount_cents + events Junior)
 Intégration ── tous ── recette salles
 ```
 
@@ -221,8 +223,8 @@ Hors lot (ne pas faire) : Stripe, Yousign, Calendly, Firebase, paiement fraction
 
 | Variables | Qui |
 |-----------|-----|
-| `SUPABASE_*`, métier `HOLD_TTL_*` / `CAPACITY_*` | Eddy |
+| `SUPABASE_*`, métier `HOLD_TTL_*` / `CAPACITY_*` | Junior |
 | `NEXT_PUBLIC_SITE_URL`, `CLOUDINARY_*` | Brad |
 | `PAYPLUG_*`, `PAYPAL_*`, `QR_HMAC_SECRET`, `SYNC_SECRET`, `COACH_BOT_URL`, Resend, `ALERT_*` | Raphael |
 | `DECIPLUS_USER` / `PASSWORD` / IMAP | Raphael **sur BotHosting seulement** |
-| `MANAGER_EMAIL_*` | Eddy (adresses) + Raphael (envoi) |
+| `MANAGER_EMAIL_*` | Junior (adresses) + Raphael (envoi) |

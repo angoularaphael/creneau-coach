@@ -3,7 +3,7 @@ info:
   title: Boxing Center — API réservation coachs
   version: 1.0.0
   description: |
-    Contrat v1 (Europe/Paris). Lots : Eddy (créneaux/BO), Brad (UI), Raphael (paiement/signature/QR/Deciplus).
+    Contrat v1 (Europe/Paris). Lots : Junior (créneaux/BO/Supabase), Brad (UI), Raphael (paiement/signature/QR/Deciplus).
     Cahier lisible : CAHIER-API.md
   contact:
     name: Boxing Center
@@ -301,7 +301,7 @@ paths:
                 $ref: "#/components/schemas/ReservationList"
     post:
       tags: [reservations]
-      summary: Hold 10 min (Eddy)
+      summary: Hold 10 min (Junior)
       operationId: createReservation
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -344,7 +344,7 @@ paths:
   /reservations/{id}/cancel:
     post:
       tags: [reservations]
-      summary: Annulation > 24 h → avoir (Eddy)
+      summary: Annulation > 24 h → avoir (Junior)
       operationId: cancelReservation
       parameters:
         - $ref: "#/components/parameters/ReservationId"

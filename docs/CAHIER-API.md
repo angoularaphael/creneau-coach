@@ -14,7 +14,7 @@ Ce document est le **contrat bloquant** entre les 3 lots. Personne n’invente u
 |-----|-------------|----------------|
 | A | Raphael | Paiement, signatures, QR, Deciplus, webhooks, e-mails transactionnels |
 | B | Brad | Pages publiques, auth UI, espace coach, consommation des GET |
-| C | Eddy | Clubs, créneaux, holds, capacités, avoirs, back-office, RLS |
+| C | Junior | Clubs, créneaux, holds, capacités, avoirs, back-office, RLS |
 
 ---
 
@@ -82,7 +82,7 @@ Un coach **B** qui demande la résa de **A** reçoit `404 NOT_FOUND`, jamais `40
 
 - UUID v4 pour toutes les PK exposées.
 - Montants en **centimes** (`amount_cents`: `1000` = 10,00 €).
-- Prix **uniquement** calculé serveur (Eddy). Le front affiche `amount_cents` renvoyé, il ne le calcule pas.
+- Prix **uniquement** calculé serveur (Junior). Le front affiche `amount_cents` renvoyé, il ne le calcule pas.
 - IDs clubs = slugs boutique : `minimes` | `st-cyprien` | `etats-unis` | `ramonville` | `portet`.
 
 ### 1.5 Rate limits (par IP + par `coach_id` si session)
@@ -113,14 +113,14 @@ held → awaiting_payment → awaiting_signature → confirmed → consumed
 
 | Statut | Qui le pose | Signification |
 |--------|-------------|---------------|
-| `held` | Eddy | Place bloquée 10 min, pas payée |
-| `awaiting_payment` | Eddy après hold OK | Alias possible de `held` (même sémantique) ; le contrat utilise `held` |
+| `held` | Junior | Place bloquée 10 min, pas payée |
+| `awaiting_payment` | Junior après hold OK | Alias possible de `held` (même sémantique) ; le contrat utilise `held` |
 | `awaiting_signature` | Raphael (webhook payé) | Payé, docs non signés |
 | `confirmed` | Raphael (signature OK) | QR générable + job Deciplus |
-| `consumed` | Cron Eddy (fin de créneau passé) | Créneau écoulé |
-| `expired` | Cron Eddy | Hold sans paiement |
+| `consumed` | Cron Junior (fin de créneau passé) | Créneau écoulé |
+| `expired` | Cron Junior | Hold sans paiement |
 | `payment_failed` | Raphael | Payplug/PayPal refusé → place libérée |
-| `cancelled_credit` | Eddy | Annulation > 24 h, avoir créé |
+| `cancelled_credit` | Junior | Annulation > 24 h, avoir créé |
 | `no_show` | Direction | Marquage manuel |
 
 **Actives** (comptent dans la limite 3) : `held`, `awaiting_signature`, `confirmed`.
@@ -325,7 +325,7 @@ Demande d’effacement. Soft-delete profil ; **conservation légale** PDF signé
 
 ---
 
-## 6. Réservations — Eddy (Brad consomme, Raphael enchaîne)
+## 6. Réservations — Junior (Brad consomme, Raphael enchaîne)
 
 ### `POST /reservations`
 
@@ -364,7 +364,7 @@ Serveur :
 }
 ```
 
-Cron Eddy : `held` + `hold_expires_at < now()` → `expired`, libère la place.
+Cron Junior : `held` + `hold_expires_at < now()` → `expired`, libère la place.
 
 ### `GET /reservations`
 
@@ -387,7 +387,7 @@ Owner ou direction. Idempotency-Key.
 - Si `held` : libération, pas d’avoir.
 - Si `awaiting_signature` ou `confirmed` **et** `now < starts_at − 24h` : `cancelled_credit` + ligne `coach_credits`. **Pas de remboursement Payplug.**
 - Si `now >= starts_at − 24h` : `409 CANCEL_TOO_LATE`.
-- Si `confirmed` : Eddy notifie Raphael (`reservation.cancelled`) → révocation Deciplus + invalidation QR.
+- Si `confirmed` : Junior notifie Raphael (`reservation.cancelled`) → révocation Deciplus + invalidation QR.
 
 ---
 
@@ -548,7 +548,7 @@ Cron Raphael : si `confirmed` et `now ∈ [nbf, exp]` et job pas `granted` → r
 
 ---
 
-## 10. Back-office — Eddy
+## 10. Back-office — Junior
 
 Préfixe `/admin`. Rôles `manager_salle` | `direction`.
 
@@ -617,15 +617,15 @@ Bus interne (table `coach_events` ou file). Producteurs → consommateurs.
 
 | Event | Producteur | Consommateurs |
 |-------|------------|---------------|
-| `reservation.held` | Eddy | — |
+| `reservation.held` | Junior | — |
 | `reservation.paid` | Raphael | mail coach « signez » ; notif salle |
 | `reservation.confirmed` | Raphael | mail + QR ; notif salle ; job grant |
-| `reservation.cancelled` | Eddy | mail avoir ; notif salle ; Raphael revoke |
+| `reservation.cancelled` | Junior | mail avoir ; notif salle ; Raphael revoke |
 | `reservation.payment_failed` | Raphael | mail coach ; notif salle |
 | `signature.missing` (cron J-1 si unpaid docs) | Raphael | mail + notif salle |
 | `deciplus.error` | Raphael | alerte direction |
 | `access.denied` | Raphael | alerte direction |
-| `coach.suspended` | Eddy | Raphael revoke all |
+| `coach.suspended` | Junior | Raphael revoke all |
 
 Les e-mails **ne contiennent pas** le secret HMAC. QR en pièce jointe image OK. Pas de `deciplus_member_id` dans le mail salle.
 

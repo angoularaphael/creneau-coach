@@ -5,6 +5,7 @@ Contrat d’équipe (semaine 0) :
 - [Cahier d’API](docs/CAHIER-API.md)
 - [Répartition des tâches](docs/REPARTITION-TACHES.md)
 - [OpenAPI 3.1](docs/openapi.yaml)
+- [Schéma Supabase](supabase/) — Junior, tables `coach_*`
 - [`.env.example`](.env.example) — `COACH_BOT_URL=http://prem-eu4.bot-hosting.net:20695`
 - BotHosting créneau : [bot/](bot/) — vendeur **JUNIOR**, IMAP **jeremyfidge@gmail.com**, `http://prem-eu4.bot-hosting.net:20695`
 - Appel panel : [`bootstrap.js`](bootstrap.js) → `/home/container/index.js` (`node bootstrap.js`)
