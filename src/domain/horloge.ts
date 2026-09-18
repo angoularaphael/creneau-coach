@@ -29,7 +29,6 @@
  * introduisant volontairement une erreur de type, qui a bien été signalée).
  */
 
-// @ts-expect-error TS5097 -- Node exige l'extension .ts, tsconfig ne l'autorise pas encore.
 import { FUSEAU_METIER } from './contrat.ts'
 
 export const FUSEAU = FUSEAU_METIER

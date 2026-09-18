@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import {
   signInAction,
   signUpAction,
@@ -20,7 +21,7 @@ function SubmitButton({ label }: { label: string }) {
 const initial: AuthActionState = {};
 
 export function SignUpForm() {
-  const [state, action] = useFormState(signUpAction, initial);
+  const [state, action] = useActionState(signUpAction, initial);
 
   return (
     <form action={action} className="auth-form">
@@ -84,7 +85,7 @@ export function SignUpForm() {
 }
 
 export function SignInForm({ next = '/espace-coach' }: { next?: string }) {
-  const [state, action] = useFormState(signInAction, initial);
+  const [state, action] = useActionState(signInAction, initial);
 
   return (
     <form action={action} className="auth-form">

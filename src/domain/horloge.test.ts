@@ -26,7 +26,6 @@ import {
   joursCivils,
   offsetParisIso,
   partiesParis,
-  // @ts-expect-error TS5097 -- Node exige l'extension .ts (voir l'en-tête de horloge.ts).
 } from './horloge.ts'
 
 /** Raccourci : l'instant d'une heure murale Paris dont on sait qu'elle existe. */

@@ -59,10 +59,23 @@ function urlCible() {
 
 const estLocale = (url) => /@(127\.0\.0\.1|localhost|\[::1\])[:/]/.test(url)
 
+/**
+ * N'exécute QUE les migrations du lot C : `0000_` à `9999_`.
+ *
+ * Le dossier contient aussi `20260918…_coach_schema.sql` et compagnie, un second
+ * schéma `coach_*` écrit en parallèle par Raphael (commit 04726be). Les deux jeux
+ * créent les mêmes tables : les enchaîner casse la base.
+ *
+ * On ne supprime pas ses fichiers — ce n'est pas au lot C de trancher lequel des
+ * deux schémas vit. On se contente de ne pas les lancer. Le jour où la décision
+ * est prise, soit on retire le jeu perdant, soit on élargit ce filtre.
+ */
+const MOTIF_LOT_C = /^\d{4}_.*\.sql$/
+
 function migrationsDisponibles() {
   if (!existsSync(DOSSIER_MIGRATIONS)) return []
   return readdirSync(DOSSIER_MIGRATIONS)
-    .filter((f) => f.endsWith('.sql'))
+    .filter((f) => MOTIF_LOT_C.test(f))
     .sort()
     .map((nom) => {
       const sql = readFileSync(join(DOSSIER_MIGRATIONS, nom), 'utf8')
@@ -101,10 +114,42 @@ async function main() {
     )
   `)
 
+  const toutes = migrationsDisponibles()
+
+  /**
+   * `--adopt <nom>` : enregistre toutes les migrations JUSQU'À `<nom>` comme déjà
+   * appliquées, SANS les exécuter.
+   *
+   * Sert quand une base a reçu le schéma autrement — SQL collé dans l'éditeur
+   * Supabase, `all.sql`, restauration. Les objets sont là mais la table de suivi
+   * ne l'est pas : sans adoption, la migration suivante tenterait de recréer des
+   * tables existantes et échouerait.
+   *
+   * On n'adopte JAMAIS tout seul : c'est une affirmation de l'opérateur (« je
+   * garantis que ces migrations sont déjà dans cette base »), pas une déduction.
+   * Se tromper ici laisse un trou silencieux dans le schéma.
+   */
+  const adopter = valeurOption('--adopt')
+  if (adopter) {
+    const fin = toutes.findIndex((m) => m.nom === adopter)
+    if (fin === -1) {
+      console.error(`REFUS : --adopt ${adopter} — cette migration n'existe pas sur le disque.`)
+      await client.end()
+      process.exit(4)
+    }
+    for (const { nom, empreinte } of toutes.slice(0, fin + 1)) {
+      await client.query(
+        `insert into coach_migrations (nom, empreinte) values ($1, $2)
+         on conflict (nom) do update set empreinte = excluded.empreinte`,
+        [nom, empreinte],
+      )
+    }
+    console.log(`adoption  : ${fin + 1} migration(s) marquée(s) appliquées sans exécution`)
+  }
+
   const deja = new Map(
     (await client.query('select nom, empreinte from coach_migrations')).rows.map((r) => [r.nom, r.empreinte]),
   )
-  const toutes = migrationsDisponibles()
   if (toutes.length === 0) {
     console.log('aucune migration dans supabase/migrations/')
     await client.end()

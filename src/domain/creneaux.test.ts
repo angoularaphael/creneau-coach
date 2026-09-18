@@ -21,7 +21,6 @@ import {
   type CreneauInterne,
   type RegleBlocage,
   type ReservationDuCreneau,
-  // @ts-expect-error TS5097 -- Node exige l'extension .ts (voir l'en-tête de horloge.ts).
 } from './creneaux.ts'
 import {
   HEURES_CREUSES,
@@ -29,9 +28,7 @@ import {
   HEURES_PLEINES,
   REGLAGES_DEFAUT,
   tarifDeLHeure,
-  // @ts-expect-error TS5097 -- idem.
 } from './contrat.ts'
-// @ts-expect-error TS5097 -- idem.
 import { instantDepuisParis, partiesParis } from './horloge.ts'
 
 function instant(a: number, mo: number, j: number, h: number, mi = 0): number {

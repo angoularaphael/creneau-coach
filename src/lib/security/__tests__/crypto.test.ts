@@ -10,7 +10,6 @@ import {
   hashCorpsBrut,
   hmacHex,
   sha256Hex,
-  // @ts-expect-error TS5097 -- Node exige l'extension .ts ; `allowImportingTsExtensions`
   // n'est pas activé dans tsconfig.json, qui n'appartient pas à ce lot. Ce
   // `@ts-expect-error` supprime exactement TS5097 et rien d'autre : les types de
   // `crypto.ts` continuent d'être vérifiés à travers lui. Même convention que

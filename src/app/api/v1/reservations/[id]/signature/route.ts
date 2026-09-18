@@ -1,3 +1,5 @@
+// Next 16 : `params` est une Promise, la compatibilite synchrone a ete retiree.
+// https://nextjs.org/docs/app/guides/upgrading/version-16
 import { NextRequest } from 'next/server';
 import { getSessionMe } from '@/lib/auth/session';
 import { jsonError, jsonOk } from '@/lib/api/http';
@@ -8,7 +10,8 @@ export const dynamic = 'force-dynamic';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function POST(req: NextRequest, { params }: Ctx) {
+export async function POST(req: NextRequest, ctx: Ctx) {
+  const params = await ctx.params;
   const me = await getSessionMe();
   if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
 
@@ -31,7 +34,8 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   }
 }
 
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(_req: Request, ctx: Ctx) {
+  const params = await ctx.params;
   const me = await getSessionMe();
   if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
   const { id } = await params;

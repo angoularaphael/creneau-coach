@@ -8,8 +8,8 @@ import { ClubSlotsToolbar } from './SlotsToolbar';
 import { getSessionMe } from '@/lib/auth/session';
 
 type Props = {
-  params: { club_id: string };
-  searchParams: { space_id?: string; from?: string; to?: string };
+  params: Promise<{ club_id: string }>;
+  searchParams: Promise<{ space_id?: string; from?: string; to?: string }>;
 };
 
 function todayParis(): string {
@@ -28,9 +28,10 @@ function addDaysIso(isoDate: string, days: number): string {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  if (!isClubId(params.club_id)) return { title: 'Club' };
+  const { club_id } = await params;
+  if (!isClubId(club_id)) return { title: 'Club' };
   try {
-    const club = await getClub(params.club_id);
+    const club = await getClub(club_id);
     return { title: club.name };
   } catch {
     return { title: 'Club' };
@@ -38,27 +39,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ClubDetailPage({ params, searchParams }: Props) {
-  if (!isClubId(params.club_id)) notFound();
+  const { club_id } = await params;
+  const sp = await searchParams;
+  if (!isClubId(club_id)) notFound();
 
-  const club = await getClub(params.club_id).catch(() => null);
+  const club = await getClub(club_id).catch(() => null);
   if (!club) notFound();
 
   const me = await getSessionMe().catch(() => null);
   const loggedIn = Boolean(me && me.status === 'active');
 
   const from =
-    searchParams.from && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.from)
-      ? searchParams.from
+    sp.from && /^\d{4}-\d{2}-\d{2}$/.test(sp.from)
+      ? sp.from
       : todayParis();
   const to =
-    searchParams.to && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.to)
-      ? searchParams.to
+    sp.to && /^\d{4}-\d{2}-\d{2}$/.test(sp.to)
+      ? sp.to
       : addDaysIso(from, 6);
 
   const spaceId =
-    searchParams.space_id &&
-    club.spaces.some((s) => s.id === searchParams.space_id)
-      ? searchParams.space_id
+    sp.space_id &&
+    club.spaces.some((s) => s.id === sp.space_id)
+      ? sp.space_id
       : club.spaces[0]?.id;
 
   const grid = await listSlots(club.id, {

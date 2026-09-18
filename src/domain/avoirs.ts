@@ -26,14 +26,12 @@
  * ordonné. Ce fichier décide, la base garantit.
  */
 
-// @ts-expect-error TS5097 -- Node exige l'extension .ts (voir l'en-tête de horloge.ts).
 import { type CodeErreur, type Statut } from './contrat.ts'
 import {
   canTransition,
   type Acteur,
   type Decision,
   type Faits,
-  // @ts-expect-error TS5097 -- idem.
 } from './etats.ts'
 
 export type StatutAvoir = 'available' | 'consumed' | 'expired'

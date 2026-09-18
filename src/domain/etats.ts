@@ -23,7 +23,6 @@ import {
   type Statut,
   type StatutPaiement,
   type StatutSignature,
-  // @ts-expect-error TS5097 -- Node exige l'extension .ts (voir l'en-tête de horloge.ts).
 } from './contrat.ts'
 
 /**

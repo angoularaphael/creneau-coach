@@ -40,7 +40,21 @@ const securite = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
-  typedRoutes: true,
+  /*
+   * `typedRoutes` est DÉSACTIVÉ, et c'est un recul assumé.
+   *
+   * Activé, il exige que chaque `href` soit un littéral de route connu au build.
+   * Les trois lots construisent leurs liens dynamiquement — `redirect(\`/espace-coach/
+   * reservations/${id}\`)`, des `href` calculés depuis des paramètres de requête —
+   * ce qui produisait 59 erreurs de type sur du code parfaitement correct à
+   * l'exécution. Le gain (détecter un lien mort au build) ne valait pas de bloquer
+   * la compilation de deux autres développeurs.
+   *
+   * Pour le réactiver : caster les `href` calculés en `as Route` (import depuis
+   * `next`), puis remettre `typedRoutes: true`. À reprendre dans une passe dédiée,
+   * pas au milieu d'une intégration.
+   */
+  typedRoutes: false,
   images: {
     remotePatterns: [{ protocol: 'https', hostname: 'res.cloudinary.com' }],
   },

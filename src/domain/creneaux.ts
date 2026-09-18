@@ -28,7 +28,6 @@ import {
   type ClubId,
   type Statut,
   type Tarif,
-  // @ts-expect-error TS5097 -- idem.
 } from './contrat.ts'
 import {
   instantDepuisParis,
@@ -36,7 +35,6 @@ import {
   joursCivils,
   partiesParis,
   analyserJourCivil,
-  // @ts-expect-error TS5097 -- idem.
 } from './horloge.ts'
 
 /** CAHIER §4 / openapi `SlotState`. L'ordre de précédence est fixé en §2.5. */

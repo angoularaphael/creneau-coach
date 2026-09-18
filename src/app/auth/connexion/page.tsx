@@ -5,12 +5,13 @@ import { authMode } from '@/lib/auth/config';
 
 export const metadata: Metadata = { title: 'Connexion' };
 
-type Props = { searchParams: { next?: string; error?: string } };
+type Props = { searchParams: Promise<{ next?: string; error?: string }> };
 
-export default function SignInPage({ searchParams }: Props) {
+export default async function SignInPage({ searchParams }: Props) {
   const mode = authMode();
-  const next = searchParams.next?.startsWith('/')
-    ? searchParams.next
+  const params = await searchParams;
+  const next = params.next?.startsWith('/')
+    ? params.next
     : '/espace-coach';
 
   return (
@@ -20,7 +21,7 @@ export default function SignInPage({ searchParams }: Props) {
         <p>Espace coach Boxing Center.</p>
       </header>
       <section className="section" style={{ paddingTop: 0, maxWidth: 480 }}>
-        {searchParams.error === 'callback' ? (
+        {params.error === 'callback' ? (
           <p className="form-error" role="alert">
             Lien de confirmation invalide ou expiré.
           </p>

@@ -1,3 +1,5 @@
+// Next 16 : `params` est une Promise, la compatibilite synchrone a ete retiree.
+// https://nextjs.org/docs/app/guides/upgrading/version-16
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -10,9 +12,10 @@ import { MockPayButton } from './MockPayButton';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Paiement' };
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ id: string }> };
 
-export default async function MockPayPage({ params }: Props) {
+export default async function MockPayPage(ctx: Props) {
+  const params = await ctx.params;
   const me = await getSessionMe();
   if (!me) redirect(`/auth/connexion?next=/espace-coach/reservations/${params.id}/paiement-mock`);
 

@@ -1,3 +1,5 @@
+// Next 16 : `params` est une Promise, la compatibilite synchrone a ete retiree.
+// https://nextjs.org/docs/app/guides/upgrading/version-16
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -8,9 +10,10 @@ import { SignaturePad } from './SignaturePad';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Signature' };
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ id: string }> };
 
-export default async function SignaturePage({ params }: Props) {
+export default async function SignaturePage(ctx: Props) {
+  const params = await ctx.params;
   const me = await getSessionMe();
   if (!me) {
     redirect(

@@ -11,7 +11,22 @@ import { rafraichirSession } from '@/lib/supabase/proxy'
  * Ici : rafraîchir la session Supabase, et renvoyer un anonyme hors des pages privées.
  */
 
-const SURFACES_PRIVEES = ['/admin', '/espace-coach']
+/**
+ * ⚠️ `/admin` N'EST VOLONTAIREMENT PAS DANS CETTE LISTE POUR L'INSTANT.
+ *
+ * Le back-office est ouvert sans mot de passe le temps d'éprouver le moteur
+ * (créneaux, capacités, blocages, holds) sur de vraies données. C'est une
+ * décision de développement, pas un oubli.
+ *
+ * La porte n'est pas pour autant grande ouverte : `src/lib/dal/back-office.ts`
+ * REFUSE de répondre dès que `NODE_ENV === 'production'`, parce qu'il lit la base
+ * avec la clé `service_role` qui ignore la RLS. Une mise en ligne dans cet état
+ * ne donne pas un back-office ouvert : elle donne une page en erreur.
+ *
+ * Pour refermer : remettre '/admin' ci-dessous, et remplacer le garde-fou de
+ * `back-office.ts` par le contrôle de rôle réel (manager_salle | direction).
+ */
+const SURFACES_PRIVEES = ['/espace-coach']
 const MOCK_COOKIE = 'coach_mock_session'
 
 function estPrive(chemin: string) {
