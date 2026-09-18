@@ -1,37 +1,41 @@
 import 'server-only'
 
+import { cookies } from 'next/headers'
+
 import { createServiceClient } from '@/lib/supabase/service'
+import { COOKIE_BO, jetonValide } from '@/lib/admin/session'
 import type { ClubId } from '@/domain/contrat'
 
 /**
- * Accès aux données du back-office — VERSION DE DÉVELOPPEMENT, SANS AUTHENTIFICATION.
+ * Accès aux données du back-office.
  *
  * ────────────────────────────────────────────────────────────────────────────
- * CE FICHIER PARLE À LA BASE AVEC `service_role`, QUI IGNORE TOUTE LA RLS.
+ * CE FICHIER LIT LA BASE AVEC `service_role`, QUI IGNORE TOUTE LA RLS.
  *
- * Il n'existe que pour éprouver le moteur (grille, capacités, blocages, holds)
- * pendant le développement, avant que l'authentification staff soit branchée.
+ * C'est pour ça que `garde()` s'exécute au début de CHAQUE fonction exportée, et
+ * qu'elle vérifie la SIGNATURE du jeton, pas seulement sa présence. Le proxy ne
+ * fait qu'un filtrage d'ergonomie : la documentation Next avertit qu'un changement
+ * de `matcher`, ou une Server Function déplacée, retire sa couverture sans bruit.
+ * La vraie frontière est ici.
  *
- * D'où le garde-fou ci-dessous : en production, ce module refuse de répondre.
- * Le pire scénario d'un déploiement accidentel est donc une page en erreur,
- * jamais un back-office ouvert sur les données de vrais coachs.
+ * LIMITE CONNUE, À NE PAS OUBLIER : un seul mot de passe pour toute l'équipe, donc
+ * aucune isolation par club. Qui entre voit les cinq clubs. C'est acceptable pour
+ * la direction, ça ne l'est PAS pour un responsable de salle.
  *
- * À FAIRE AVANT LA MISE EN LIGNE, et c'est bloquant :
- *   1. lire la session staff (`manager_salle` | `direction`) ;
- *   2. passer par le client à session, pour que la RLS du cahier §12 s'applique ;
- *   3. forcer le périmètre club du manager depuis son JWT, jamais depuis l'URL —
- *      c'est le test contractuel §13.2 (manager Minimes demandant Portet → 404) ;
- *   4. remettre '/admin' dans `SURFACES_PRIVEES` de `src/proxy.ts` ;
- *   5. supprimer ce fichier au profit de `src/lib/dal/staff.ts`, qui fait déjà
+ * À faire avant d'ouvrir aux responsables de salle, et c'est bloquant :
+ *   1. un compte Supabase par personne, rôle `manager_salle` | `direction` ;
+ *   2. le périmètre club lu dans le JWT, JAMAIS dans l'URL — test contractuel §13.2
+ *      (manager Minimes demandant `?club_id=portet` → 404) ;
+ *   3. lecture via le client à session, pour que la RLS du cahier §12 s'applique ;
+ *   4. suppression de ce fichier au profit de `src/lib/dal/staff.ts`, qui fait déjà
  *      tout ça correctement.
  * ────────────────────────────────────────────────────────────────────────────
  */
-function garde(): void {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      "Back-office de développement : indisponible en production. L'authentification " +
-        "staff (manager_salle | direction) doit être branchée avant toute mise en ligne.",
-    )
+async function garde(): Promise<void> {
+  const jeton = (await cookies()).get(COOKIE_BO)?.value
+  if (!jetonValide(jeton)) {
+    // Message identique dans tous les cas : ni « expiré », ni « signature fausse ».
+    throw new Error('Back-office : accès refusé.')
   }
 }
 
@@ -54,7 +58,7 @@ export type Creneau = {
 }
 
 export async function listerClubs(): Promise<Club[]> {
-  garde()
+  await garde()
   const sb = createServiceClient()
 
   const [{ data: clubs, error: e1 }, { data: espaces, error: e2 }] = await Promise.all([
@@ -84,7 +88,7 @@ export async function lireGrille(
   du: string,
   au: string,
 ): Promise<Creneau[]> {
-  garde()
+  await garde()
   const sb = createServiceClient()
   const { data, error } = await sb.rpc('coach_slot_grid', {
     p_club_id: clubId,
@@ -118,7 +122,7 @@ export type ReservationBO = {
  * le jour où quelqu'un ajoute une colonne, sans que personne ne le remarque.
  */
 export async function listerReservations(clubId: ClubId, du: string, au: string): Promise<ReservationBO[]> {
-  garde()
+  await garde()
   const sb = createServiceClient()
   const { data, error } = await sb
     .from('coach_reservations')
@@ -141,7 +145,7 @@ export async function bloquerCreneau(
   startsAt: string,
   raison = 'educative',
 ): Promise<void> {
-  garde()
+  await garde()
   const sb = createServiceClient()
   const { error } = await sb
     .from('coach_slot_blocks')
@@ -150,7 +154,7 @@ export async function bloquerCreneau(
 }
 
 export async function debloquerCreneau(clubId: ClubId, spaceId: string, startsAt: string): Promise<void> {
-  garde()
+  await garde()
   const sb = createServiceClient()
   const { error } = await sb
     .from('coach_slot_blocks')
@@ -175,7 +179,7 @@ export async function poserHoldDeTest(
   spaceId: string,
   startsAt: string,
 ): Promise<{ ok: boolean; code?: string; message?: string }> {
-  garde()
+  await garde()
   const sb = createServiceClient()
   const { data, error } = await sb.rpc('coach_create_hold_as', {
     p_coach_id: coachId,
@@ -191,7 +195,7 @@ export async function poserHoldDeTest(
 
 /** Les coachs de test disponibles pour poser des holds depuis le back-office. */
 export async function listerCoachsDeTest(): Promise<{ id: string; nom: string; status: string }[]> {
-  garde()
+  await garde()
   const sb = createServiceClient()
   const { data, error } = await sb
     .from('coach_profiles')
@@ -207,7 +211,7 @@ export async function listerCoachsDeTest(): Promise<{ id: string; nom: string; s
 }
 
 export async function annulerReservation(id: string): Promise<void> {
-  garde()
+  await garde()
   const sb = createServiceClient()
   const { error } = await sb.from('coach_reservations').delete().eq('id', id)
   if (error) throw new Error(`suppression : ${error.message}`)

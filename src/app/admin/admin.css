@@ -387,3 +387,88 @@
   content: '●';
   color: var(--ok);
 }
+
+/* ---- La porte ------------------------------------------------------------ */
+
+.bo-porte {
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+
+.bo-porte__carte {
+  width: min(24rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+}
+
+.bo-porte__carte h1 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.75rem;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.bo-porte__sous {
+  margin: 0 0 0.75rem;
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+}
+
+.bo-porte__label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+}
+
+.bo-porte__champ {
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+  font: inherit;
+}
+
+.bo-porte__champ:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.bo-porte__bouton {
+  margin-top: 0.75rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bo-porte__bouton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bo-porte__alerte {
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--warn);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+  font-size: 0.8125rem;
+}
+
+.bo__sortir {
+  margin-left: auto;
+}

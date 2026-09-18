@@ -8,6 +8,7 @@ import {
   type Creneau,
 } from '@/lib/dal/back-office'
 import { HEURES_CRENEAUX, formaterCentimes, type ClubId } from '@/domain/contrat'
+import { exigeSessionBackOffice } from '@/lib/admin/garde'
 import {
   actionBloquer,
   actionDebloquer,
@@ -15,6 +16,7 @@ import {
   actionSupprimerReservation,
   actionCreerCoachDeTest,
 } from './actions'
+import { actionSortir } from './connexion/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -91,6 +93,8 @@ export default async function BackOffice({
   // Next 16 : `searchParams` est une Promise, la compatibilité synchrone a été retirée.
   searchParams: Promise<{ club?: string; espace?: string; semaine?: string; resultat?: string }>
 }) {
+  await exigeSessionBackOffice()
+
   const params = await searchParams
   const clubs = await listerClubs()
 
@@ -134,12 +138,16 @@ export default async function BackOffice({
   return (
     <>
       <p className="bo__bandeau">
-        <strong>Banc d’essai</strong>
+        <strong>Accès direction</strong>
         <span>
-          Back-office ouvert sans mot de passe, le temps d’éprouver le moteur. Il lit la base avec
-          la clé <code>service_role</code>, qui ignore la RLS — il refuse donc de répondre en
-          production. L’authentification staff (manager de salle / direction) reste à brancher.
+          Mot de passe partagé : <strong>aucune isolation par club</strong>, qui entre voit les
+          cinq. Convient à la direction, pas à un responsable de salle. Les comptes nominatifs
+          (<code>manager_salle</code> / <code>direction</code>) et la RLS par club restent à
+          brancher avant d’ouvrir la porte aux salles.
         </span>
+        <form action={actionSortir} className="bo__sortir">
+          <button className="bo__bouton bo__bouton--discret">Sortir</button>
+        </form>
       </p>
 
       {params.resultat ? (
