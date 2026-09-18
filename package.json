@@ -17,6 +17,7 @@
     "lint:fix": "eslint --fix",
     "test": "node --test test/*.test.js",
     "test:moteur": "node --test --experimental-strip-types src/domain/*.test.ts",
+    "test:securite": "node --test --experimental-strip-types --conditions=react-server src/lib/security/__tests__/*.test.ts",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:reset": "node scripts/db-migrate.mjs --reset",
     "db:test": "node scripts/db-test.mjs",
@@ -35,6 +36,7 @@
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
     "zod": "4.6.5"
   },
   "devDependencies": {
