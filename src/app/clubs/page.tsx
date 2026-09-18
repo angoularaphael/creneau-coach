@@ -1,13 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { listClubs } from '@/lib/api/client';
+import { listerClubsPublic } from '@/lib/dal/clubs';
+import { notFound } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Nos clubs',
 };
+export const dynamic = 'force-dynamic';
 
 export default async function ClubsPage() {
-  const clubs = await listClubs();
+  const clubs = await listerClubsPublic();
+  if (!clubs.ok) notFound();
 
   return (
     <>
@@ -18,7 +21,7 @@ export default async function ClubsPage() {
 
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="club-list">
-          {clubs.map((club) => (
+          {clubs.valeur.map((club) => (
             <Link key={club.id} href={`/clubs/${club.id}`} className="club-link">
               <h3>{club.name}</h3>
               <p className="meta">{club.city}</p>

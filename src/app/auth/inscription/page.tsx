@@ -12,7 +12,7 @@ export default function SignUpPage() {
     <>
       <header className="page-hero">
         <h1>Inscription coach</h1>
-        <p>Compte personnel — cookies de session httpOnly, jamais de JWT en localStorage.</p>
+        <p>Compte personnel — cookies de session httpOnly.</p>
       </header>
       <section className="section" style={{ paddingTop: 0, maxWidth: 480 }}>
         {mode === 'unset' ? (

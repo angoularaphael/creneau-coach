@@ -2,6 +2,7 @@
 
 import { createBrowserClient } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { cleAnonPublique, urlPubliqueSupabase } from './public-env'
 
 /**
  * Client navigateur — le SEUL fichier de `lib/supabase` sans `import 'server-only'`,
@@ -23,8 +24,8 @@ let cache: SupabaseClient | null = null
 
 export function clientNavigateur(): SupabaseClient {
   if (cache) return cache
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const cle = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const url = urlPubliqueSupabase()
+  const cle = cleAnonPublique()
   if (!url || !cle) {
     throw new Error(
       '[supabase] NEXT_PUBLIC_SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_ANON_KEY manquante.',

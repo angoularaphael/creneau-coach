@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getClub, listSlots } from '@/lib/api/client';
+import { lireClubPublic, lireGrillePublic } from '@/lib/dal/clubs';
 import { isClubId } from '@/lib/clubs';
 import { SlotGrid } from '@/components/SlotGrid';
 import { ClubSlotsToolbar } from './SlotsToolbar';
@@ -30,12 +30,9 @@ function addDaysIso(isoDate: string, days: number): string {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { club_id } = await params;
   if (!isClubId(club_id)) return { title: 'Club' };
-  try {
-    const club = await getClub(club_id);
-    return { title: club.name };
-  } catch {
-    return { title: 'Club' };
-  }
+  const club = await lireClubPublic(club_id);
+  if (!club.ok) return { title: 'Club' };
+  return { title: club.valeur.name };
 }
 
 export default async function ClubDetailPage({ params, searchParams }: Props) {
@@ -43,8 +40,9 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
   const sp = await searchParams;
   if (!isClubId(club_id)) notFound();
 
-  const club = await getClub(club_id).catch(() => null);
-  if (!club) notFound();
+  const clubRes = await lireClubPublic(club_id);
+  if (!clubRes.ok) notFound();
+  const club = clubRes.valeur;
 
   const me = await getSessionMe().catch(() => null);
   const loggedIn = Boolean(me && me.status === 'active');
@@ -64,11 +62,13 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
       ? sp.space_id
       : club.spaces[0]?.id;
 
-  const grid = await listSlots(club.id, {
+  const grille = await lireGrillePublic({
+    clubId: club.id,
+    spaceId,
     from,
     to,
-    space_id: spaceId,
   });
+  const grid = grille.ok ? grille.valeur : { club_id: club.id, space_id: spaceId, slots: [] };
 
   return (
     <>

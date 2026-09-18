@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { authMode } from '@/lib/auth/config';
 import { validatePassword } from '@/lib/auth/password';
+import { cheminInterneSur } from '@/lib/auth/redirect';
 import {
   clearMockSession,
   createMockUser,
@@ -10,6 +11,8 @@ import {
   setMockSession,
 } from '@/lib/auth/mock-store';
 import { createClient } from '@/lib/supabase/server';
+import { checkRateLimit, emailHash, ipHash } from '@/lib/security';
+import { headers } from 'next/headers';
 
 export type AuthActionState = {
   error?: string;
@@ -72,7 +75,6 @@ export async function signUpAction(
       data: {
         first_name,
         last_name,
-        role: 'coach',
         consent_cgu_at: new Date().toISOString(),
         consent_privacy_at: new Date().toISOString(),
       },
@@ -103,6 +105,19 @@ export async function signInAction(
     return { error: 'E-mail et mot de passe requis.' };
   }
 
+  const hdrs = await headers();
+  const ip =
+    hdrs.get('x-vercel-forwarded-for') ??
+    hdrs.get('x-forwarded-for') ??
+    'unknown';
+  const limite = await checkRateLimit('login', {
+    ipHash: ipHash(ip),
+    coachId: emailHash(email),
+  }).catch(() => ({ allowed: true } as const));
+  if (!limite.allowed) {
+    return { error: 'Trop de tentatives. Réessayez dans une minute.' };
+  }
+
   const mode = authMode();
   if (mode === 'unset') {
     return {
@@ -117,14 +132,14 @@ export async function signInAction(
       return { error: 'Identifiants incorrects.' };
     }
     await setMockSession(user.id);
-    redirect(next.startsWith('/') ? next : '/espace-coach');
+    redirect(cheminInterneSur(next));
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
 
-  redirect(next.startsWith('/') ? next : '/espace-coach');
+  redirect(cheminInterneSur(next));
 }
 
 export async function signOutAction() {

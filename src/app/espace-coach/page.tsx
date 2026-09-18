@@ -4,11 +4,11 @@ import type { Metadata } from 'next';
 import { getSessionMe } from '@/lib/auth/session';
 import { signOutAction } from '@/app/auth/actions';
 import { formatCents } from '@/lib/api/client';
-import {
-  listPaymentsForCoach,
-  listReservationsForCoach,
-} from '@/lib/mock/reservations';
-import { getClub } from '@/lib/clubs';
+import { listerReservations } from '@/lib/dal/reservations';
+import { versReservationPublique } from '@/lib/dal/map';
+import { exigerSession } from '@/lib/dal/acteur';
+import { contextePage } from '@/lib/dal/page';
+import { nomClub } from '@/lib/clubs';
 
 export const metadata: Metadata = { title: 'Espace coach' };
 export const dynamic = 'force-dynamic';
@@ -54,8 +54,23 @@ export default async function CoachHomePage() {
     me.profile?.email ||
     'Coach';
 
-  const reservations = listReservationsForCoach(me.id);
-  const payments = listPaymentsForCoach(me.id);
+  const ctx = contextePage('/espace-coach');
+  const session = await exigerSession(ctx, { lectureSeule: true });
+  const reservations = session.ok
+    ? await listerReservations(ctx, session.valeur.supabase, { limit: 50 }, {
+        clubId: null,
+        coachId: session.valeur.acteur.id,
+      }).then((r) =>
+        r.ok
+          ? r.valeur.items.map((row) =>
+              versReservationPublique(row as unknown as Record<string, unknown>),
+            )
+          : [],
+      )
+    : [];
+  const payments = reservations.filter(
+    (r) => r.payment_status === 'paid' || r.payment_status === 'waived_credit',
+  );
 
   return (
     <>
@@ -83,14 +98,14 @@ export default async function CoachHomePage() {
         ) : (
           <div className="club-list">
             {reservations.map((r) => {
-              const club = getClub(r.club_id);
+              const clubName = nomClub(r.club_id);
               return (
                 <Link
                   key={r.id}
                   href={`/espace-coach/reservations/${r.id}`}
                   className="club-link"
                 >
-                  <h3>{club?.name ?? r.club_id}</h3>
+                  <h3>{clubName}</h3>
                   <p className="meta">{when(r.starts_at)}</p>
                   <p className="muted" style={{ marginTop: '0.5rem' }}>
                     {formatCents(r.amount_cents)} · <code>{r.status}</code>
@@ -112,12 +127,14 @@ export default async function CoachHomePage() {
           <ul className="muted" style={{ paddingLeft: '1.1rem' }}>
             {payments.map((p) => (
               <li key={p.id}>
-                {formatCents(p.amount_cents)} · {p.provider} · {p.status} ·{' '}
-                {new Intl.DateTimeFormat('fr-FR', {
-                  timeZone: 'Europe/Paris',
-                  dateStyle: 'short',
-                  timeStyle: 'short',
-                }).format(new Date(p.created_at))}
+                {formatCents(p.amount_cents)} · {p.payment_provider ?? '—'} · {p.payment_status} ·{' '}
+                  {p.created_at
+                    ? new Intl.DateTimeFormat('fr-FR', {
+                        timeZone: 'Europe/Paris',
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      }).format(new Date(p.created_at))
+                    : ''}
               </li>
             ))}
           </ul>

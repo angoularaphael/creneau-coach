@@ -261,3 +261,116 @@ export async function listerReservations(
 
   return succes({ items, nextCursor: dernier ? dernier.created_at : null })
 }
+
+const STATUTS_ACTIFS_SQL = ['held', 'awaiting_signature', 'confirmed'] as const
+
+export async function compterActives(
+  ctx: ContexteRequete,
+  supabase: SupabaseClient,
+  coachId: string,
+): Promise<ResultatDal<number>> {
+  const { count, error } = await supabase
+    .from('coach_reservations')
+    .select('id', { count: 'exact', head: true })
+    .eq('coach_id', coachId)
+    .in('status', [...STATUTS_ACTIFS_SQL])
+    .or(`status.neq.held,hold_expires_at.gt.${new Date().toISOString()}`)
+
+  if (error) {
+    console.error(`[${ctx.requestId}] compte actives`, { code: error.code })
+    return echec(erreur('CONFLICT', {}))
+  }
+  return succes(count ?? 0)
+}
+
+export async function payerParAvoir(
+  ctx: ContexteRequete,
+  supabase: SupabaseClient,
+  reservationId: string,
+): Promise<ResultatDal<unknown>> {
+  const { data, error } = await supabase.rpc('coach_apply_credit_payment', {
+    p_reservation_id: reservationId,
+  })
+  if (error) {
+    console.error(`[${ctx.requestId}] coach_apply_credit_payment`, { code: error.code })
+    return echec(erreur('CONFLICT', {}))
+  }
+  const reponse = data as EnveloppeRpc
+  const refus = depuisEnveloppe(reponse, ctx.requestId)
+  if (refus) return echec(refus)
+  return succes((reponse as { reservation?: unknown }).reservation ?? reponse)
+}
+
+export async function marquerSigne(
+  ctx: ContexteRequete,
+  supabase: SupabaseClient,
+  entree: { readonly reservationId: string; readonly pdfPath: string; readonly qrJti: string },
+): Promise<ResultatDal<unknown>> {
+  const { data, error } = await supabase.rpc('coach_mark_signed', {
+    p_reservation_id: entree.reservationId,
+    p_pdf_path: entree.pdfPath,
+    p_qr_jti: entree.qrJti,
+  })
+  if (error) {
+    console.error(`[${ctx.requestId}] coach_mark_signed`, { code: error.code })
+    return echec(erreur('CONFLICT', {}))
+  }
+  const reponse = data as EnveloppeRpc
+  const refus = depuisEnveloppe(reponse, ctx.requestId)
+  if (refus) return echec(refus)
+  return succes((reponse as { reservation?: unknown }).reservation ?? reponse)
+}
+
+export type QrSecret = {
+  club_id: string
+  qr_jti: string
+  qr_valid_from: string
+  qr_valid_to: string
+}
+
+export async function lireQrPourMoi(
+  ctx: ContexteRequete,
+  supabase: SupabaseClient,
+  reservationId: string,
+): Promise<ResultatDal<QrSecret>> {
+  const { data, error } = await supabase.rpc('coach_qr_for_me', {
+    p_reservation_id: reservationId,
+  })
+  if (error) {
+    console.error(`[${ctx.requestId}] coach_qr_for_me`, { code: error.code })
+    return echec(erreur('CONFLICT', {}))
+  }
+  const reponse = data as EnveloppeRpc
+  const refus = depuisEnveloppe(reponse, ctx.requestId)
+  if (refus) return echec(refus)
+  const ok = reponse as { ok: true } & QrSecret
+  return succes({
+    club_id: String(ok.club_id),
+    qr_jti: String(ok.qr_jti),
+    qr_valid_from: String(ok.qr_valid_from),
+    qr_valid_to: String(ok.qr_valid_to),
+  })
+}
+
+export type DocumentCourant = {
+  id: string
+  kind: string
+  title: string
+  version: string
+}
+
+export async function listerDocumentsCourants(
+  ctx: ContexteRequete,
+  supabase: SupabaseClient,
+): Promise<ResultatDal<DocumentCourant[]>> {
+  const { data, error } = await supabase
+    .from('coach_documents')
+    .select('id, kind, title, version')
+    .eq('is_current', true)
+    .returns<DocumentCourant[]>()
+  if (error) {
+    console.error(`[${ctx.requestId}] documents`, { code: error.code })
+    return echec(erreur('CONFLICT', {}))
+  }
+  return succes(data ?? [])
+}

@@ -1,12 +1,13 @@
+import { cleAnonPublique, urlPubliqueSupabase } from '@/lib/supabase/public-env';
+
 export function isSupabaseConfigured(): boolean {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim(),
-  );
+  return Boolean(urlPubliqueSupabase() && cleAnonPublique());
 }
 
-/** Mode démo Brad sans projet Supabase (cookie httpOnly, pas de JWT localStorage). */
+/** Mock local uniquement. Jamais en production, jamais si Supabase est configuré. */
 export function isAuthMockEnabled(): boolean {
+  if (process.env.NODE_ENV === 'production') return false;
+  if (isSupabaseConfigured()) return false;
   return process.env.COACH_AUTH_MOCK === '1';
 }
 

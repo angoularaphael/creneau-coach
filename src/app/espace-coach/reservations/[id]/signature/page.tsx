@@ -1,10 +1,11 @@
-// Next 16 : `params` est une Promise, la compatibilite synchrone a ete retiree.
-// https://nextjs.org/docs/app/guides/upgrading/version-16
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getSessionMe } from '@/lib/auth/session';
-import { getReservationForCoach } from '@/lib/mock/reservations';
+import { lireReservation } from '@/lib/dal/reservations';
+import { versReservationPublique } from '@/lib/dal/map';
+import { exigerSession } from '@/lib/dal/acteur';
+import { contextePage } from '@/lib/dal/page';
 import { SignaturePad } from './SignaturePad';
 
 export const dynamic = 'force-dynamic';
@@ -21,8 +22,12 @@ export default async function SignaturePage(ctx: Props) {
     );
   }
 
-  const reservation = getReservationForCoach(params.id, me.id);
-  if (!reservation) notFound();
+  const req = contextePage(`/espace-coach/reservations/${params.id}/signature`);
+  const session = await exigerSession(req, { lectureSeule: true });
+  if (!session.ok) notFound();
+  const lecture = await lireReservation(req, session.valeur.supabase, session.valeur.acteur, params.id);
+  if (!lecture.ok) notFound();
+  const reservation = versReservationPublique(lecture.valeur as unknown as Record<string, unknown>);
 
   if (reservation.status === 'confirmed') {
     redirect(`/espace-coach/reservations/${params.id}/qr`);

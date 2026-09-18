@@ -8,16 +8,6 @@ import type {
   SlotGrid,
 } from './types';
 import { ApiError } from './types';
-import {
-  getClub as getClubLocal,
-  listClubs as listClubsLocal,
-} from '@/lib/clubs';
-import { buildMockSlotGrid } from '@/lib/mock/slots';
-import type { ClubId } from './types';
-
-function useHttp(): boolean {
-  return process.env.COACH_API_HTTP === '1';
-}
 
 export function apiBase(): string {
   if (typeof window === 'undefined') {
@@ -52,9 +42,6 @@ export function newIdempotencyKey(): string {
 }
 
 export async function listClubs(): Promise<ClubSummary[]> {
-  if (!useHttp() && typeof window === 'undefined') {
-    return listClubsLocal();
-  }
   const res = await fetch(`${apiBase()}/clubs`, {
     headers: { Accept: 'application/json' },
     next: { revalidate: 60 },
@@ -64,15 +51,6 @@ export async function listClubs(): Promise<ClubSummary[]> {
 }
 
 export async function getClub(clubId: string): Promise<ClubDetail> {
-  if (!useHttp() && typeof window === 'undefined') {
-    const club = getClubLocal(clubId);
-    if (!club) {
-      throw new ApiError(404, {
-        error: { code: 'NOT_FOUND', message: 'Club introuvable.' },
-      });
-    }
-    return club;
-  }
   const res = await fetch(`${apiBase()}/clubs/${encodeURIComponent(clubId)}`, {
     headers: { Accept: 'application/json' },
     next: { revalidate: 60 },
@@ -84,21 +62,6 @@ export async function listSlots(
   clubId: string,
   params: { from: string; to: string; space_id?: string },
 ): Promise<SlotGrid> {
-  if (!useHttp() && typeof window === 'undefined') {
-    const grid = buildMockSlotGrid(
-      clubId as ClubId,
-      params.from,
-      params.to,
-      params.space_id,
-    );
-    if (!grid) {
-      throw new ApiError(404, {
-        error: { code: 'NOT_FOUND', message: 'Club ou espace introuvable.' },
-      });
-    }
-    return grid;
-  }
-
   const q = new URLSearchParams({ from: params.from, to: params.to });
   if (params.space_id) q.set('space_id', params.space_id);
 
@@ -201,7 +164,6 @@ export async function postContact(input: {
   await parseJson(res);
 }
 
-/** Affiche amount_cents serveur — jamais recalculé. */
 export function formatCents(amountCents: number): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',

@@ -65,17 +65,26 @@ export function SignaturePad({ reservationId }: { reservationId: string }) {
 
     setBusy(true);
     try {
+      const docsRes = await fetch(`/api/v1/reservations/${reservationId}/signature`, {
+        headers: { Accept: 'application/json' },
+      });
+      const docsBody = await docsRes.json().catch(() => null);
+      const document_ids = Array.isArray(docsBody?.documents)
+        ? docsBody.documents.map((d: { id: string }) => d.id)
+        : [];
+      if (document_ids.length < 3) {
+        throw new ApiError(409, {
+          error: { code: 'CONFLICT', message: 'Documents contractuels indisponibles.' },
+        });
+      }
+
       const res = await fetch(`/api/v1/reservations/${reservationId}/signature`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           consent: true,
           signature_image,
-          document_ids: [
-            '00000000-0000-4000-8000-000000000001',
-            '00000000-0000-4000-8000-000000000002',
-            '00000000-0000-4000-8000-000000000003',
-          ],
+          document_ids,
         }),
       });
       const body = await res.json().catch(() => null);
@@ -96,8 +105,8 @@ export function SignaturePad({ reservationId }: { reservationId: string }) {
   return (
     <div className="auth-form">
       <p className="muted">
-        Pad Brad — PDF privé / hash SHA-256 = Lot Raphael. Passage{' '}
-        <code>awaiting_signature → confirmed</code> ici.
+        Pad de signature. Le PDF privé / hash SHA-256 est enregistré serveur.
+        Passage <code>awaiting_signature → confirmed</code> ici.
       </p>
       <canvas
         ref={canvasRef}

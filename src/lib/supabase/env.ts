@@ -31,7 +31,10 @@ export function urlSupabase(): string {
 
 /** Clé anonyme : elle part au navigateur, c'est prévu. La RLS fait le travail. */
 export function cleAnon(): string {
-  return exiger('NEXT_PUBLIC_SUPABASE_ANON_KEY', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  return exiger(
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  )
 }
 
 /**

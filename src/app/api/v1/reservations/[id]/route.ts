@@ -1,22 +1,25 @@
-// Next 16 : `params` est une Promise, la compatibilite synchrone a ete retiree.
-// https://nextjs.org/docs/app/guides/upgrading/version-16
-import { getSessionMe } from '@/lib/auth/session';
-import { jsonError, jsonOk } from '@/lib/api/http';
-import { getReservationForCoach } from '@/lib/mock/reservations';
+import { lireReservation } from '@/lib/dal/reservations'
+import { versReservationPublique } from '@/lib/dal/map'
+import { exigerSession } from '@/lib/dal/acteur'
+import { contexteRequete } from '@/lib/security'
+import { reponseDepuisErreur, reponseJson } from '@/lib/http/erreurs'
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
-type Ctx = { params: Promise<{ id: string }> };
+type Ctx = { params: Promise<{ id: string }> }
 
-export async function GET(_req: Request, ctx: Ctx) {
-  const params = await ctx.params;
-  const me = await getSessionMe();
-  if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
+export async function GET(req: Request, ctxRoute: Ctx) {
+  const ctx = contexteRequete(req)
+  const session = await exigerSession(ctx, { lectureSeule: true })
+  if (!session.ok) return reponseDepuisErreur(session.erreur, ctx.requestId)
 
-  const { id } = await params;
-  const reservation = getReservationForCoach(id, me.id);
-  if (!reservation) {
-    return jsonError(404, 'NOT_FOUND', 'Réservation introuvable.');
-  }
-  return jsonOk(reservation);
+  const { id } = await ctxRoute.params
+  const lecture = await lireReservation(ctx, session.valeur.supabase, session.valeur.acteur, id)
+  if (!lecture.ok) return reponseDepuisErreur(lecture.erreur, ctx.requestId)
+
+  return reponseJson(
+    versReservationPublique(lecture.valeur as unknown as Record<string, unknown>),
+    200,
+    ctx.requestId,
+  )
 }

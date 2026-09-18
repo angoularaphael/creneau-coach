@@ -1,43 +1,51 @@
-// Next 16 : `params` est une Promise, la compatibilite synchrone a ete retiree.
-// https://nextjs.org/docs/app/guides/upgrading/version-16
-import { getSessionMe } from '@/lib/auth/session';
-import { jsonError, jsonOk } from '@/lib/api/http';
-import {
-  buildMockQrPng,
-  getReservationForCoach,
-} from '@/lib/mock/reservations';
+import type { ClubId } from '@/lib/api/types'
+import { lireQrPourMoi } from '@/lib/dal/reservations'
+import { exigerSession } from '@/lib/dal/acteur'
+import { pngQr } from '@/lib/qr-access'
+import { contexteRequete } from '@/lib/security'
+import { reponseDepuisErreur, reponseErreur, reponseJson } from '@/lib/http/erreurs'
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
-type Ctx = { params: Promise<{ id: string }> };
+type Ctx = { params: Promise<{ id: string }> }
 
-export async function GET(_req: Request, ctx: Ctx) {
-  const params = await ctx.params;
-  const me = await getSessionMe();
-  if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
+export async function GET(req: Request, ctxRoute: Ctx) {
+  const ctx = contexteRequete(req)
+  const session = await exigerSession(ctx, { lectureSeule: true })
+  if (!session.ok) return reponseDepuisErreur(session.erreur, ctx.requestId)
 
-  const { id } = await params;
-  const r = getReservationForCoach(id, me.id);
-  if (!r) return jsonError(404, 'NOT_FOUND', 'Réservation introuvable.');
+  const { id } = await ctxRoute.params
+  const secret = await lireQrPourMoi(ctx, session.valeur.supabase, id)
+  if (!secret.ok) return reponseDepuisErreur(secret.erreur, ctx.requestId)
 
-  if (r.status !== 'confirmed') {
-    return jsonError(409, 'CONFLICT', 'QR disponible seulement si confirmed.', {
-      status: r.status,
-    });
+  let png: string
+  try {
+    png = await pngQr(
+      secret.valeur.qr_jti,
+      secret.valeur.club_id,
+      secret.valeur.qr_valid_from,
+      secret.valeur.qr_valid_to,
+    )
+  } catch {
+    return reponseErreur('CONFLICT', {}, 'QR indisponible.', ctx.requestId)
   }
 
-  const now = Date.now();
-  const from = r.qr_valid_from ? new Date(r.qr_valid_from).getTime() : 0;
-  const to = r.qr_valid_to ? new Date(r.qr_valid_to).getTime() : 0;
-  let state: 'waiting' | 'active' | 'expired' = 'waiting';
-  if (now >= from && now <= to) state = 'active';
-  if (now > to) state = 'expired';
+  const now = Date.now()
+  const from = new Date(secret.valeur.qr_valid_from).getTime()
+  const to = new Date(secret.valeur.qr_valid_to).getTime()
+  let state: 'waiting' | 'active' | 'expired' = 'waiting'
+  if (now >= from && now <= to) state = 'active'
+  if (now > to) state = 'expired'
 
-  return jsonOk({
-    png_data_url: buildMockQrPng(r),
-    valid_from: r.qr_valid_from,
-    valid_to: r.qr_valid_to,
-    club_id: r.club_id,
-    state,
-  });
+  return reponseJson(
+    {
+      png_data_url: png,
+      valid_from: secret.valeur.qr_valid_from,
+      valid_to: secret.valeur.qr_valid_to,
+      club_id: secret.valeur.club_id as ClubId,
+      state,
+    },
+    200,
+    ctx.requestId,
+  )
 }

@@ -20,8 +20,8 @@ export default async function ProfilePage() {
         </p>
         <h1>Mon profil</h1>
         <p>
-          E-mail : {me.profile?.email ?? '—'} (non modifiable ici). Pas de JWT en
-          localStorage.
+          E-mail : {me.profile?.email ?? '—'} (non modifiable ici). Session
+          cookie httpOnly.
         </p>
       </header>
       <section className="section" style={{ paddingTop: 0 }}>

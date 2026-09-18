@@ -1,60 +1,103 @@
-// Next 16 : `params` est une Promise, la compatibilite synchrone a ete retiree.
-// https://nextjs.org/docs/app/guides/upgrading/version-16
-import { NextRequest } from 'next/server';
-import { getSessionMe } from '@/lib/auth/session';
-import { jsonError, jsonOk } from '@/lib/api/http';
-import { checkoutReservation } from '@/lib/mock/reservations';
-import { ApiError, type PaymentProvider } from '@/lib/api/types';
+import { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic';
+import { jsonError } from '@/lib/api/http'
+import { lireReservation, payerParAvoir } from '@/lib/dal/reservations'
+import { versReservationPublique } from '@/lib/dal/map'
+import { exigerSession } from '@/lib/dal/acteur'
+import { lireMonProfil } from '@/lib/dal/profil'
+import { creerPaiementPayplug } from '@/lib/payments/payplug'
+import {
+  checkRateLimit,
+  contexteRequete,
+  lireCleIdempotence,
+  lireCorps,
+  schemas,
+  valider,
+} from '@/lib/security'
+import { reponse429 } from '@/lib/security/rate-limit'
+import { reponseDepuisErreur, reponseErreur, reponseJson } from '@/lib/http/erreurs'
 
-type Ctx = { params: Promise<{ id: string }> };
+export const dynamic = 'force-dynamic'
 
-const PROVIDERS = new Set(['payplug', 'paypal', 'credit']);
+type Ctx = { params: Promise<{ id: string }> }
 
-export async function POST(req: NextRequest, ctx: Ctx) {
-  const params = await ctx.params;
-  const me = await getSessionMe();
-  if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
-  if (me.status === 'suspended') {
-    return jsonError(403, 'SUSPENDED', 'Compte suspendu.');
+export async function POST(req: NextRequest, ctxRoute: Ctx) {
+  const ctx = contexteRequete(req)
+  const session = await exigerSession(ctx)
+  if (!session.ok) return reponseDepuisErreur(session.erreur, ctx.requestId)
+
+  const limite = await checkRateLimit('checkout', {
+    ipHash: ctx.ipHash,
+    coachId: session.valeur.acteur.id,
+  })
+  if (!limite.allowed) return reponse429(limite, ctx.requestId)
+
+  const cle = lireCleIdempotence(req)
+  if (!cle) {
+    return jsonError(400, 'VALIDATION_ERROR', 'Header Idempotency-Key (UUID v4) requis.')
   }
 
-  const key =
-    req.headers.get('Idempotency-Key') || req.headers.get('idempotency-key');
-  if (!key) {
-    return jsonError(400, 'VALIDATION_ERROR', 'Header Idempotency-Key requis.');
+  const corps = await lireCorps(req, ctx.requestId)
+  if (!corps.ok) return corps.reponse
+  const body = valider(schemas.CheckoutBody, corps.json, ctx.requestId)
+  if (!body.ok) return body.reponse
+
+  const { id } = await ctxRoute.params
+  const { supabase, acteur } = session.valeur
+
+  if (body.data.provider === 'credit') {
+    const paye = await payerParAvoir(ctx, supabase, id)
+    if (!paye.ok) return reponseDepuisErreur(paye.erreur, ctx.requestId)
+    const resa = versReservationPublique(paye.valeur as Record<string, unknown>)
+    return reponseJson(
+      {
+        reservation_id: resa.id,
+        provider: 'credit',
+        status: resa.status,
+      },
+      200,
+      ctx.requestId,
+    )
   }
 
-  let body: { provider?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return jsonError(400, 'VALIDATION_ERROR', 'JSON invalide.');
+  const lecture = await lireReservation(ctx, supabase, acteur, id)
+  if (!lecture.ok) return reponseDepuisErreur(lecture.erreur, ctx.requestId)
+  const resa = versReservationPublique(lecture.valeur as unknown as Record<string, unknown>)
+
+  if (resa.status !== 'held') {
+    return reponseErreur('CONFLICT', { status: resa.status }, undefined, ctx.requestId)
   }
 
-  if (!body.provider || !PROVIDERS.has(body.provider)) {
-    return jsonError(400, 'VALIDATION_ERROR', 'provider invalide.');
-  }
-
-  try {
-    const { id } = await params;
-    const result = checkoutReservation(
-      me.id,
-      id,
-      body.provider as PaymentProvider,
-      key,
-    );
-    return jsonOk({
-      reservation_id: result.reservation.id,
-      provider: body.provider,
-      checkout_url: result.checkout_url,
-      status: result.reservation.status,
-    });
-  } catch (err) {
-    if (err instanceof ApiError) {
-      return jsonError(err.status, err.code, err.message, err.details);
+  if (body.data.provider === 'payplug') {
+    const profil = await lireMonProfil(ctx, supabase, acteur)
+    const hosted = await creerPaiementPayplug({
+      reservation: resa,
+      profil: profil.ok ? profil.valeur : null,
+    })
+    if (!hosted) {
+      return reponseErreur(
+        'PAYMENT_REQUIRED',
+        { provider: 'payplug' },
+        'Paiement carte non configuré. Utilisez un avoir ou contactez Boxing Center.',
+        ctx.requestId,
+      )
     }
-    throw err;
+    return reponseJson(
+      {
+        reservation_id: resa.id,
+        provider: 'payplug',
+        checkout_url: hosted.checkout_url,
+        status: resa.status,
+      },
+      200,
+      ctx.requestId,
+    )
   }
+
+  return reponseErreur(
+    'PAYMENT_REQUIRED',
+    { provider: body.data.provider },
+    'Ce prestataire n’est pas encore branché. Utilisez un avoir ou Payplug.',
+    ctx.requestId,
+  )
 }

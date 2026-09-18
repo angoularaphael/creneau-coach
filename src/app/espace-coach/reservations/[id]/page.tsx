@@ -1,12 +1,13 @@
-// Next 16 : `params` est une Promise, la compatibilite synchrone a ete retiree.
-// https://nextjs.org/docs/app/guides/upgrading/version-16
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getSessionMe } from '@/lib/auth/session';
-import { getReservationForCoach } from '@/lib/mock/reservations';
+import { lireReservation } from '@/lib/dal/reservations';
+import { versReservationPublique } from '@/lib/dal/map';
+import { exigerSession } from '@/lib/dal/acteur';
+import { contextePage } from '@/lib/dal/page';
+import { nomClub } from '@/lib/clubs';
 import { ReservationActions } from './ReservationActions';
-import { getClub } from '@/lib/clubs';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,10 +21,13 @@ export default async function ReservationPage(ctx: Props) {
   if (!me) redirect(`/auth/connexion?next=/espace-coach/reservations/${params.id}`);
   if (me.status === 'suspended') redirect('/espace-coach/suspendu');
 
-  const reservation = getReservationForCoach(params.id, me.id);
-  if (!reservation) notFound();
+  const req = contextePage(`/espace-coach/reservations/${params.id}`);
+  const session = await exigerSession(req, { lectureSeule: true });
+  if (!session.ok) notFound();
 
-  const club = getClub(reservation.club_id);
+  const lecture = await lireReservation(req, session.valeur.supabase, session.valeur.acteur, params.id);
+  if (!lecture.ok) notFound();
+  const reservation = versReservationPublique(lecture.valeur as unknown as Record<string, unknown>);
 
   return (
     <>
@@ -31,7 +35,7 @@ export default async function ReservationPage(ctx: Props) {
         <p className="muted">
           <Link href="/espace-coach">Espace coach</Link> / réservation
         </p>
-        <h1>{club?.name ?? reservation.club_id}</h1>
+        <h1>{nomClub(reservation.club_id)}</h1>
         <p>
           Espace <code>{reservation.space_id}</code> · jamais de prix inventé
           côté client.

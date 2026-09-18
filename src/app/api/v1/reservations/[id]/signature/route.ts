@@ -1,51 +1,77 @@
-// Next 16 : `params` est une Promise, la compatibilite synchrone a ete retiree.
-// https://nextjs.org/docs/app/guides/upgrading/version-16
-import { NextRequest } from 'next/server';
-import { getSessionMe } from '@/lib/auth/session';
-import { jsonError, jsonOk } from '@/lib/api/http';
-import { getReservationForCoach, signReservation } from '@/lib/mock/reservations';
-import { ApiError } from '@/lib/api/types';
+import { NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic';
+import { lireReservation, listerDocumentsCourants, marquerSigne } from '@/lib/dal/reservations'
+import { versReservationPublique } from '@/lib/dal/map'
+import { exigerSession } from '@/lib/dal/acteur'
+import { nouvelJti } from '@/lib/qr-access'
+import {
+  checkRateLimit,
+  contexteRequete,
+  lireCorps,
+  schemas,
+  valider,
+} from '@/lib/security'
+import { reponse429 } from '@/lib/security/rate-limit'
+import { reponseDepuisErreur, reponseErreur, reponseJson } from '@/lib/http/erreurs'
 
-type Ctx = { params: Promise<{ id: string }> };
+export const dynamic = 'force-dynamic'
 
-export async function POST(req: NextRequest, ctx: Ctx) {
-  const params = await ctx.params;
-  const me = await getSessionMe();
-  if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
+type Ctx = { params: Promise<{ id: string }> }
 
-  let body: { consent?: boolean; signature_image?: string; document_ids?: string[] };
-  try {
-    body = await req.json();
-  } catch {
-    return jsonError(400, 'VALIDATION_ERROR', 'JSON invalide.');
-  }
+export async function GET(req: Request, ctxRoute: Ctx) {
+  const ctx = contexteRequete(req)
+  const session = await exigerSession(ctx, { lectureSeule: true })
+  if (!session.ok) return reponseDepuisErreur(session.erreur, ctx.requestId)
 
-  try {
-    const { id } = await params;
-    const reservation = signReservation(me.id, id, body.consent === true);
-    return jsonOk(reservation);
-  } catch (err) {
-    if (err instanceof ApiError) {
-      return jsonError(err.status, err.code, err.message, err.details);
-    }
-    throw err;
-  }
+  const { id } = await ctxRoute.params
+  const lecture = await lireReservation(ctx, session.valeur.supabase, session.valeur.acteur, id)
+  if (!lecture.ok) return reponseDepuisErreur(lecture.erreur, ctx.requestId)
+
+  const docs = await listerDocumentsCourants(ctx, session.valeur.supabase)
+  if (!docs.ok) return reponseDepuisErreur(docs.erreur, ctx.requestId)
+
+  return reponseJson({ documents: docs.valeur }, 200, ctx.requestId)
 }
 
-export async function GET(_req: Request, ctx: Ctx) {
-  const params = await ctx.params;
-  const me = await getSessionMe();
-  if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
-  const { id } = await params;
-  const r = getReservationForCoach(id, me.id);
-  if (!r) return jsonError(404, 'NOT_FOUND', 'Réservation introuvable.');
-  return jsonOk({
-    documents: [
-      { id: '00000000-0000-4000-8000-000000000001', kind: 'cgv', title: 'CGV', version: '2026-09' },
-      { id: '00000000-0000-4000-8000-000000000002', kind: 'reglement', title: 'Règlement intérieur', version: '2026-09' },
-      { id: '00000000-0000-4000-8000-000000000003', kind: 'decharge', title: 'Décharge', version: '2026-09' },
-    ],
-  });
+export async function POST(req: NextRequest, ctxRoute: Ctx) {
+  const ctx = contexteRequete(req)
+  const session = await exigerSession(ctx)
+  if (!session.ok) return reponseDepuisErreur(session.erreur, ctx.requestId)
+
+  const limite = await checkRateLimit('signature', {
+    ipHash: ctx.ipHash,
+    coachId: session.valeur.acteur.id,
+  })
+  if (!limite.allowed) return reponse429(limite, ctx.requestId)
+
+  const corps = await lireCorps(req, ctx.requestId)
+  if (!corps.ok) return corps.reponse
+  const body = valider(schemas.SignatureBody, corps.json, ctx.requestId)
+  if (!body.ok) return body.reponse
+
+  const docs = await listerDocumentsCourants(ctx, session.valeur.supabase)
+  if (!docs.ok) return reponseDepuisErreur(docs.erreur, ctx.requestId)
+  const attendus = new Set(docs.valeur.map((d) => d.id))
+  if (body.data.document_ids.length < 3 || !body.data.document_ids.every((id) => attendus.has(id))) {
+    return reponseErreur(
+      'VALIDATION_ERROR',
+      { issues: [{ path: 'document_ids', code: 'mismatch' }] },
+      'Les 3 documents courants sont obligatoires.',
+      ctx.requestId,
+    )
+  }
+
+  const { id } = await ctxRoute.params
+  const signe = await marquerSigne(ctx, session.valeur.supabase, {
+    reservationId: id,
+    pdfPath: `signatures/${id}.pdf`,
+    qrJti: nouvelJti(),
+  })
+  if (!signe.ok) return reponseDepuisErreur(signe.erreur, ctx.requestId)
+
+  return reponseJson(
+    versReservationPublique(signe.valeur as Record<string, unknown>),
+    200,
+    ctx.requestId,
+  )
 }
