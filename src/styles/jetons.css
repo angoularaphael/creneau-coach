@@ -1,0 +1,165 @@
+/*
+  JETONS — Boxing Center · réservation de créneaux coachs.
+
+  THÈSE : L'HEURE EST UN OBJET DE PRÉCISION.
+
+  Les sites des salles vendent un abonnement — un engagement qui se renouvelle.
+  Celui-ci vend une heure dans une pièce, et une heure qui ne part pas est perdue.
+  Mardi 15 h à Ramonville ne repassera jamais.
+
+  D'où la collision qui tient tout le site : l'horlogerie rencontre la donnée.
+  Un horloger traite l'heure comme une pièce mécanique — cadran, index, graduation,
+  tolérance. Un site de données traite le chiffre comme un objet graphique. Aucun
+  site de réservation n'a jamais croisé les deux : ils font tous des formulaires.
+  Ici la grille de créneaux est un mouvement, pas un calendrier.
+
+  RÉFÉRENCES (couches empruntées, jamais la forme) :
+    patek.com            la structure de données produit et la graduation
+    richardmille.com     la technicité comme esthétique — on montre le mécanisme
+    accurat.it           la donnée comme objet graphique
+    koenigsegg.com       l'ingénierie comme récit, sur fond sombre
+    darkroom.engineering les courbes et la densité de timing
+    boxing-center-muret  la loi de rejeu au scroll, la discipline du mono
+
+  LOI DE COULEUR — tranchée par Eddy, 18 septembre 2026.
+  Quatre couleurs, pas une de plus : le bleu Boxing Center, le noir, le blanc,
+  et le brun Boxing Center. Pas de papier crème : c'est la signature de Muret,
+  et deux sites de la famille ne doivent jamais donner la même sensation.
+
+  Le brun ne dit pas « boxe ». Il dit « cette heure est prenable ». Il n'apparaît
+  que sur ce qui se décide. Si deux choses sont brunes sur un écran, aucune n'est vue.
+
+  CONTRASTES MESURÉS (formule WCAG 2.1, calculés — pas estimés) :
+    blanc  #f5f5f5 sur noir   #080808 .... 18,9:1
+    blanc  #f5f5f5 sur encre  #1e2044 .... 14,1:1
+    brume  #a8abc4 sur noir   #080808 .... 8,9:1   (AA petit texte)
+    brun   #c98a4b sur noir   #080808 .... 7,4:1   (AA petit texte)
+    brun   #b8763a sur noir   #080808 .... 5,5:1   (AA petit texte)
+    encre  #1e2044 sur blanc  #f5f5f5 .... 13,4:1  (polarité inversée)
+*/
+
+:root {
+  /* ── Les quatre couleurs ───────────────────────────────────────────── */
+  --noir: #080808;          /* le fond. Le vrai noir, pas un gris de logiciel. */
+  --noir-leve: #101018;     /* les surfaces qui se décollent du fond */
+  --encre: #1e2044;         /* le bleu Boxing Center — structure et profondeur */
+  --encre-haute: #2a2d59;   /* l'encre éclairée : bords, survols */
+  --encre-basse: #14162e;   /* l'encre dans l'ombre : creux, rainures */
+  --blanc: #f5f5f5;         /* le texte */
+  --brume: #a8abc4;         /* le texte secondaire — bleuté, jamais gris neutre */
+  --brume-basse: #6f7392;   /* les légendes, les unités */
+
+  /* Le brun Boxing Center. Seconde couleur du logo officiel.
+     `--brun-texte` pour les mots, `--brun` pour les aplats et les traits. */
+  --brun: #b8763a;
+  --brun-texte: #c98a4b;    /* éclairci pour tenir AA sur le noir */
+  --brun-profond: #7a3d16;
+  --brun-voile: rgba(184, 118, 58, 0.14);
+
+  /* Les traits. L'encre sert de filet, jamais un gris arbitraire. */
+  --trait: rgba(168, 171, 196, 0.16);
+  --trait-fort: rgba(168, 171, 196, 0.32);
+  --trait-brun: rgba(184, 118, 58, 0.38);
+
+  /* ── Graduation ─────────────────────────────────────────────────────
+     L'unité du site est l'heure. Tout espacement est un multiple de la
+     hauteur d'un créneau : la page se mesure en heures, comme un cadran. */
+  --heure: 3.5rem;
+  --e1: 0.25rem;
+  --e2: 0.5rem;
+  --e3: 0.75rem;
+  --e4: 1rem;
+  --e6: 1.5rem;
+  --e8: 2rem;
+  --e12: 3rem;
+  --e16: 4rem;
+  --e24: 6rem;
+  --largeur: 78rem;
+
+  /* ── Typographie ────────────────────────────────────────────────────
+     Bebas Neue est la police de titres officielle de la marque : condensée,
+     capitales, chasse serrée. On la garde.
+
+     La donnée est en MONOSPACE — heures, prix, capacités, états, compteurs.
+     C'est la discipline de la famille, et c'est ce qui fait qu'un tableau se
+     lit en colonne au lieu de danser. Le grotesque ne porte que la prose. */
+  --police-titre: var(--font-display), 'Bebas Neue', Oswald, Impact, sans-serif;
+  --police-texte: var(--font-body), 'Montserrat', system-ui, -apple-system, sans-serif;
+  --police-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, monospace;
+
+  --t-micro: clamp(0.6875rem, 0.66rem + 0.14vw, 0.75rem);
+  --t-petit: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);
+  --t-base: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --t-lead: clamp(1.125rem, 1.02rem + 0.52vw, 1.4375rem);
+  --t-h3: clamp(1.25rem, 1.09rem + 0.8vw, 1.75rem);
+  --t-h2: clamp(1.875rem, 1.4rem + 2.2vw, 3.25rem);
+  --t-h1: clamp(2.5rem, 1.4rem + 5.2vw, 5.5rem);
+  --t-cadran: clamp(3rem, 0.9rem + 10.5vw, 9rem);
+
+  /* ── Mouvement ──────────────────────────────────────────────────────
+     SIGNATURE : LE REMPLISSAGE.
+
+     Muret entre par la montée franche ; Colomiers autrement ; aucun site de la
+     famille n'entre de la même façon, et c'est délibéré — c'est ce qui empêche
+     deux sites de donner la même sensation au scroll.
+
+     Ici, rien ne glisse : les choses se REMPLISSENT. Un bloc arrive comme une
+     aiguille balaie un cadran, par un masque qui s'ouvre de gauche à droite,
+     très légèrement monté. C'est la grammaire de l'heure qui se prend, et c'est
+     la même que le liseré du hold qui se vide dans le planning. Une seule idée
+     de mouvement sur tout le produit. */
+  --mouv-y: 0.75rem;
+  --mouv-duree: 620ms;
+  --mouv-decalage: 80ms;
+  --mouv-courbe: cubic-bezier(0.22, 0.61, 0.24, 1);
+  --d-rapide: 160ms;
+  --d-moyen: 300ms;
+  --d-lent: 620ms;
+  --e-sortie: cubic-bezier(0.22, 0.61, 0.24, 1);
+
+  /* Polarité par défaut : nuit. Une section peut basculer en encre. */
+  --fond: var(--noir);
+  --texte: var(--blanc);
+  --texte-faible: var(--brume);
+}
+
+/* Une section en polarité encre : le bleu devient le fond, pas un accent. */
+[data-polarite='encre'] {
+  --fond: var(--encre);
+  --texte: var(--blanc);
+  --texte-faible: rgba(245, 245, 245, 0.66);
+  --trait: rgba(245, 245, 245, 0.16);
+}
+
+/* ── Le rejeu au scroll ───────────────────────────────────────────────
+   Repris de `boxing-center-muret/src/scripts/mouvement.ts`, à la demande
+   d'Eddy : un bloc rejoue son entrée quand on remonte au-dessus puis qu'on
+   redescend. Une page parcourue deux fois n'est pas morte à la seconde.
+
+   L'état par défaut est VISIBLE : sans JavaScript, sans observateur, ou si le
+   script échoue, la page est lisible. L'animation est un ajout, jamais une
+   condition d'affichage. C'est la différence entre un site qui bouge et un
+   site qui disparaît quand un script tombe. */
+.bloc-scene {
+  --i: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bloc-scene.arme {
+    opacity: 0;
+    transform: translateY(var(--mouv-y));
+    /* Le masque : le bloc se remplit de gauche à droite. */
+    clip-path: inset(0 100% 0 0);
+  }
+
+  .bloc-scene.vu {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
+    transition:
+      opacity var(--mouv-duree) var(--mouv-courbe),
+      transform var(--mouv-duree) var(--mouv-courbe),
+      clip-path var(--mouv-duree) var(--mouv-courbe);
+    transition-delay: calc(var(--i) * var(--mouv-decalage));
+  }
+}

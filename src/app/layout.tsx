@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Bebas_Neue, Libre_Franklin } from 'next/font/google';
+import { Bebas_Neue, Montserrat } from 'next/font/google';
 import { Shell } from '@/components/Shell';
 import { JsonLd } from '@/components/JsonLd';
+import { Mouvement } from '@/components/Mouvement';
+import '@/styles/jetons.css';
 import '@/styles/boxing-center.css';
 
 const display = Bebas_Neue({
@@ -11,7 +13,9 @@ const display = Bebas_Neue({
   display: 'swap',
 });
 
-const body = Libre_Franklin({
+// Montserrat : la police de texte officielle de la marque. Libre Franklin
+// n'en fait pas partie — c'était un choix par défaut, pas une décision.
+const body = Montserrat({
   subsets: ['latin'],
   variable: '--font-body',
   display: 'swap',
@@ -46,6 +50,7 @@ export default async function RootLayout({
     <html lang="fr" className={`${display.variable} ${body.variable}`}>
       <body>
         <JsonLd />
+        <Mouvement />
         <Shell>{children}</Shell>
       </body>
     </html>
