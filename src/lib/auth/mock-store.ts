@@ -16,7 +16,7 @@ type MockUser = {
   credits_cents: number;
 };
 
-/** Process memory — démo locale uniquement (Eddy = vraie table coach_profiles). */
+/** Process memory — démo locale uniquement (Junior = vraie table coach_profiles). */
 const g = globalThis as unknown as { __coachMockUsers?: Map<string, MockUser> };
 if (!g.__coachMockUsers) g.__coachMockUsers = new Map();
 const users = g.__coachMockUsers;

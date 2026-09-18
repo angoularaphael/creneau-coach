@@ -15,6 +15,6 @@ export async function GET() {
     account: me,
     reservations: [],
     payments: [],
-    note: 'Export mock Lot B — Eddy complétera résas / paiements sans secrets.',
+    note: 'Export mock Lot B — Junior complétera résas / paiements sans secrets.',
   });
 }

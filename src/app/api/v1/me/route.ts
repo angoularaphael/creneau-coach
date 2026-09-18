@@ -81,6 +81,6 @@ export async function DELETE() {
   if (!me) {
     return jsonError(401, 'UNAUTHENTICATED', 'Session requise.');
   }
-  // Eddy / direction traiteront ; UI confirme la prise en compte
+  // Junior / direction traiteront ; UI confirme la prise en compte
   return new Response(null, { status: 202 });
 }

@@ -1,0 +1,173 @@
+{
+  "_lisez_moi": [
+    "LA carte de routes publiques. Source unique : le sitemap, la navigation, le fil",
+    "d'Ariane et scripts/check-seo.mjs lisent CE fichier et rien d'autre.",
+    "Format JSON (et non TypeScript) pour une seule raison : check-seo.mjs est un .mjs",
+    "qui tourne sans compilation, et la duplication de la liste dans deux fichiers est",
+    "le defaut n1 des socles SEO. Le typage et les garde-fous sont dans routes.ts.",
+    "status 'draft' = la route est servie, elle sort en noindex, elle n'est PAS dans le",
+    "sitemap. Passer une route en 'live' est un geste explicite, fait quand son contenu",
+    "est valide par la direction. Voir .research/spec-05-seo.md §6 et §15.2."
+  ],
+
+  "prefixesPrives": ["/admin", "/espace-coach", "/api"],
+
+  "cheminsAuth": ["/connexion", "/inscription", "/verification"],
+
+  "clubs": [
+    { "slug": "toulouse-minimes", "clubId": "minimes", "nom": "Minimes", "ville": "Toulouse" },
+    { "slug": "toulouse-st-cyprien", "clubId": "st-cyprien", "nom": "Saint-Cyprien", "ville": "Toulouse" },
+    { "slug": "toulouse-etats-unis", "clubId": "etats-unis", "nom": "États-Unis", "ville": "Toulouse" },
+    { "slug": "ramonville", "clubId": "ramonville", "nom": "Ramonville", "ville": "Ramonville-Saint-Agne" },
+    { "slug": "portet-sur-garonne", "clubId": "portet", "nom": "Portet-sur-Garonne", "ville": "Portet-sur-Garonne" }
+  ],
+
+  "routes": [
+    {
+      "path": "/",
+      "title": "Louer une salle de boxe à Toulouse quand on est coach indépendant",
+      "titreAbsolu": "Louer une salle de boxe à Toulouse · Boxing Center",
+      "description": "Réservez un créneau dans cinq salles Boxing Center autour de Toulouse. Tarif à l’heure, réservation en ligne, accès au club le jour même.",
+      "intent": "location salle coach indépendant Toulouse",
+      "status": "draft",
+      "inNav": true
+    },
+    {
+      "path": "/clubs",
+      "title": "Les cinq clubs",
+      "description": "Comparer les cinq salles du réseau : espaces disponibles, équipement, créneaux ouverts aux coachs indépendants.",
+      "intent": "comparer les clubs disponibles",
+      "status": "draft",
+      "inNav": true
+    },
+    {
+      "path": "/clubs/toulouse-minimes",
+      "title": "Salle de Minimes",
+      "description": "Espaces, équipement et créneaux disponibles à la salle Boxing Center de Minimes, à Toulouse.",
+      "intent": "louer un espace de coaching à Minimes",
+      "status": "draft",
+      "inNav": false
+    },
+    {
+      "path": "/clubs/toulouse-st-cyprien",
+      "title": "Salle de Saint-Cyprien",
+      "description": "Espaces, équipement et créneaux disponibles à la salle Boxing Center de Saint-Cyprien, à Toulouse.",
+      "intent": "louer un espace de coaching à Saint-Cyprien",
+      "status": "draft",
+      "inNav": false
+    },
+    {
+      "path": "/clubs/toulouse-etats-unis",
+      "title": "Salle d’États-Unis",
+      "description": "Trois espaces à États-Unis : Boxe, MMA-Sol et Fitness. Plannings et capacités par espace, à Toulouse.",
+      "intent": "réserver Boxe, MMA ou Fitness à États-Unis",
+      "status": "draft",
+      "inNav": false
+    },
+    {
+      "path": "/clubs/ramonville",
+      "title": "Salle de Ramonville",
+      "description": "Espaces, équipement et créneaux disponibles à la salle Boxing Center de Ramonville-Saint-Agne.",
+      "intent": "louer un espace de coaching à Ramonville",
+      "status": "draft",
+      "inNav": false
+    },
+    {
+      "path": "/clubs/portet-sur-garonne",
+      "title": "Salle de Portet-sur-Garonne",
+      "description": "Deux espaces à Portet-sur-Garonne : Boxe-Fitness et MMA-Sol. Plannings, capacités et règles particulières.",
+      "intent": "réserver Boxe-Fitness ou MMA à Portet",
+      "status": "draft",
+      "inNav": false
+    },
+    {
+      "path": "/comment-ca-marche",
+      "title": "Comment ça marche",
+      "description": "Créer un compte, choisir un créneau, payer, signer les documents, entrer dans le club. Le parcours complet, étape par étape.",
+      "intent": "comprendre le parcours",
+      "status": "draft",
+      "inNav": true
+    },
+    {
+      "path": "/tarifs",
+      "title": "Tarifs",
+      "description": "Heures creuses et heures pleines, ce qui est inclus, comment fonctionne un avoir. Les prix sont affichés, il n’y a pas à appeler pour les connaître.",
+      "intent": "connaître les prix",
+      "status": "draft",
+      "inNav": true
+    },
+    {
+      "path": "/devenir-coach-partenaire",
+      "title": "Devenir coach partenaire",
+      "description": "Profil attendu, diplômes, assurance, validation du dossier et responsabilités du coach indépendant dans le réseau.",
+      "intent": "conditions d’accès au service",
+      "status": "draft",
+      "inNav": true
+    },
+    {
+      "path": "/acces-qr-deciplus",
+      "title": "L’accès au club",
+      "description": "Comment l’accès au club fonctionne le jour de votre créneau, ce qu’il couvre, ses limites, et qui contacter si la porte refuse.",
+      "intent": "comprendre l’accès au club",
+      "status": "draft",
+      "inNav": false
+    },
+    {
+      "path": "/annulation-avoirs",
+      "title": "Annulation et avoirs",
+      "description": "La règle des 24 heures, ce qui donne lieu à un avoir, ce qui n’en donne pas, et comment l’avoir est utilisé sur une prochaine réservation.",
+      "intent": "comprendre la règle de 24 h",
+      "status": "draft",
+      "inNav": false
+    },
+    {
+      "path": "/faq",
+      "title": "Questions fréquentes",
+      "description": "Les questions posées par les coachs indépendants sur la réservation, le paiement, l’accès au club et l’annulation.",
+      "intent": "questions fréquentes",
+      "status": "draft",
+      "inNav": true
+    },
+    {
+      "path": "/contact",
+      "title": "Contact",
+      "description": "Qui contacter selon votre sujet : réservation, accès au club, facturation, ou dossier de coach partenaire.",
+      "intent": "obtenir de l’aide",
+      "status": "draft",
+      "inNav": true
+    },
+
+    {
+      "path": "/conditions-generales",
+      "title": "Conditions générales",
+      "description": "Conditions générales de vente et d’utilisation du service de réservation de créneaux.",
+      "intent": "contrat",
+      "status": "draft",
+      "inNav": true
+    },
+    {
+      "path": "/reglement-interieur",
+      "title": "Règlement intérieur",
+      "description": "Règlement intérieur applicable dans les clubs du réseau Boxing Center.",
+      "intent": "règles club",
+      "status": "draft",
+      "inNav": true
+    },
+    {
+      "path": "/confidentialite",
+      "title": "Confidentialité",
+      "description": "Traitement des données personnelles, droits des personnes, durées de conservation et sous-traitants.",
+      "intent": "RGPD",
+      "status": "draft",
+      "inNav": true
+    },
+    {
+      "path": "/mentions-legales",
+      "title": "Mentions légales",
+      "description": "Éditeur du site, directeur de la publication et hébergeur.",
+      "intent": "éditeur/hébergeur",
+      "status": "draft",
+      "inNav": true
+    }
+  ]
+}

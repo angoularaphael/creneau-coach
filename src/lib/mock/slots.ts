@@ -77,7 +77,7 @@ function slotIso(isoDate: string, hour: number): { starts_at: string; ends_at: s
 }
 
 /**
- * Grille fake contrat-compatible (Eddy livrera le vrai moteur).
+ * Grille fake contrat-compatible (Junior livrera le vrai moteur).
  * Lun–sam 10h–19h, tarifs cahier, éducative mer+sam 15–17 (sauf Portet).
  */
 export function buildMockSlotGrid(

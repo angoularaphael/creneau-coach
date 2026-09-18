@@ -2,38 +2,55 @@
   "name": "coach-reservation",
   "version": "1.0.0",
   "private": true,
-  "description": "Plateforme réservation coachs Boxing Center — Next.js (Brad) + API Express Lot A (Raphael)",
+  "description": "Plateforme réservation coachs Boxing Center — Next.js + API Lot A (Raphael) + moteur Junior",
+  "main": "server.js",
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev -p 3041",
     "build": "next build",
-    "start": "next start -p 3000",
+    "start": "next start -p 3041",
+    "start:legacy": "node server.js",
     "api:raphael": "node server.js",
     "bot": "node bot/start.js",
     "bootstrap": "node bootstrap.js",
+    "typecheck": "tsc --noEmit",
+    "typegen": "next typegen",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
     "test": "node --test test/*.test.js",
     "test:slots": "node --test test/slots-contract.test.mjs",
     "test:auth": "node --test test/auth-contract.test.mjs",
     "test:tunnel": "node --test test/tunnel-contract.test.mjs",
-    "test:lot-b": "node --test test/slots-contract.test.mjs test/auth-contract.test.mjs test/tunnel-contract.test.mjs"
+    "test:lot-b": "node --test test/slots-contract.test.mjs test/auth-contract.test.mjs test/tunnel-contract.test.mjs",
+    "test:moteur": "node --test --experimental-strip-types src/domain/*.test.ts",
+    "test:securite": "node --test --experimental-strip-types --conditions=react-server src/lib/security/__tests__/*.test.ts",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:reset": "node scripts/db-migrate.mjs --reset",
+    "db:test": "node scripts/db-test.mjs",
+    "mcp": "node mcp/server.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.9.0"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.116.0",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.116.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "next": "^14.2.18",
+    "next": "16.3.5",
     "pdfkit": "^0.19.1",
     "qrcode": "^1.5.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "typescript": "^5.7.2"
+    "@types/node": "22.20.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "10.10.0",
+    "eslint-config-next": "16.3.5",
+    "pg": "8.23.0",
+    "typescript": "5.9.3"
   }
 }

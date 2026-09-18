@@ -16,13 +16,18 @@ const body = Libre_Franklin({
   display: 'swap',
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3041';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'Boxing Center — Réservation coachs',
     template: '%s · Boxing Center',
   },
   description:
     'Réservez un créneau coach dans les 5 clubs Boxing Center : Minimes, Saint-Cyprien, États-Unis, Ramonville, Portet.',
+  applicationName: 'Boxing Center Coachs',
+  robots: { index: false, follow: false },
 };
 
 export const viewport: Viewport = {

@@ -10,7 +10,7 @@ import { countActiveForCoach } from '@/lib/mock/reservations';
 
 /**
  * Session courante → Me (contrat GET /me).
- * Eddy branchera coach_profiles ; ici profil depuis user_metadata / mock.
+ * Junior branchera coach_profiles ; ici profil depuis user_metadata / mock.
  */
 export async function getSessionMe(): Promise<Me | null> {
   const mode = authMode();

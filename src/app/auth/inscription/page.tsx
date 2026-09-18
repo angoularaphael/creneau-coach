@@ -17,7 +17,7 @@ export default function SignUpPage() {
       <section className="section" style={{ paddingTop: 0, maxWidth: 480 }}>
         {mode === 'unset' ? (
           <p className="note">
-            Auth non configurée. Eddy : renseigner{' '}
+            Auth non configurée. Junior : renseigner{' '}
             <code>NEXT_PUBLIC_SUPABASE_URL</code> +{' '}
             <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>. Brad en local :{' '}
             <code>COACH_AUTH_MOCK=1</code>.
