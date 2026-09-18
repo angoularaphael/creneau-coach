@@ -21,7 +21,6 @@ import {
   type ContexteCreation,
   type Decision,
   type Faits,
-  // @ts-expect-error TS5097 -- Node exige l'extension .ts (voir l'en-tête de horloge.ts).
 } from './etats.ts'
 import {
   CODES_ERREUR,
@@ -29,9 +28,7 @@ import {
   type Statut,
   type StatutPaiement,
   type StatutSignature,
-  // @ts-expect-error TS5097 -- idem.
 } from './contrat.ts'
-// @ts-expect-error TS5097 -- idem.
 import { occupeUnSiege } from './creneaux.ts'
 
 const MAINTENANT = 1_800_000_000_000
