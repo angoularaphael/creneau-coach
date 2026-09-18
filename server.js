@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const { getReservation, getReservationByJti, upsertReservation, paymentSeen, markPayment } = require('./lib/store');
 const payplug = require('./lib/payplug');
@@ -21,7 +22,10 @@ function jsonError(res, status, code, message, details) {
 
 function syncOk(req) {
   const header = String(req.headers['x-sync-secret'] || req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  return Boolean(SYNC) && header === SYNC;
+  if (!SYNC || !header) return false;
+  const a = crypto.createHash('sha256').update(header).digest();
+  const b = crypto.createHash('sha256').update(SYNC).digest();
+  return crypto.timingSafeEqual(a, b);
 }
 
 function markPaid(reservation, provider, paymentId) {
@@ -63,6 +67,14 @@ async function confirmAndGrant(reservation) {
 }
 
 const app = express();
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
 app.use((req, res, next) => {
   if (req.path === '/api/v1/webhooks/payplug') {
     const chunks = [];
@@ -82,12 +94,20 @@ app.use((req, res, next) => {
 });
 
 app.get('/health', (_req, res) => {
-  res.json({
-    ok: true,
-    service: 'coach-reservation',
-    lot: 'raphael',
-    bot: process.env.COACH_BOT_URL || 'http://prem-eu4.bot-hosting.net:20695',
-  });
+  res.json({ ok: true });
+});
+
+/** En prod, l'API métier vit sur Next/Vercel. Express ne garde que health, webhooks et /internal. */
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV !== 'production' || process.env.COACH_EXPRESS_LEGACY === '1') {
+    return next();
+  }
+  const ouvert =
+    req.path === '/health' ||
+    req.path.startsWith('/api/v1/webhooks/') ||
+    req.path.startsWith('/api/v1/internal/');
+  if (ouvert) return next();
+  return jsonError(res, 404, 'NOT_FOUND', 'Introuvable.');
 });
 
 app.use('/sign', express.static(path.join(__dirname, 'public')));
@@ -97,7 +117,7 @@ app.get('/sign/:id', (req, res) => {
 });
 
 app.post('/api/v1/dev/seed-reservation', (req, res) => {
-  if (process.env.NODE_ENV === 'production' && !syncOk(req)) {
+  if (!syncOk(req)) {
     return jsonError(res, 401, 'UNAUTHENTICATED', 'seed interdit');
   }
   const id = req.body.id || `resa-${Date.now()}`;
@@ -210,19 +230,8 @@ app.post('/api/v1/webhooks/payplug', async (req, res) => {
   return res.json({ ok: true, pending: true });
 });
 
-app.post('/api/v1/webhooks/paypal', (req, res) => {
-  const event = String(req.body?.event_type || '');
-  const custom =
-    req.body?.resource?.purchase_units?.[0]?.custom_id || req.body?.resource?.custom_id || '';
-  if (!custom) return res.json({ ok: true, ignored: true });
-  const row = getReservation(custom);
-  if (!row) return res.json({ ok: true, unknown: true });
-  if (event.includes('CAPTURE.COMPLETED') || event.includes('CHECKOUT.ORDER.APPROVED')) {
-    const paid = markPaid(row, 'paypal', req.body?.resource?.id || row.payment_id);
-    mailSign(paid).catch(() => {});
-    return res.json({ ok: true, status: paid.status });
-  }
-  return res.json({ ok: true });
+app.post('/api/v1/webhooks/paypal', (_req, res) => {
+  return jsonError(res, 401, 'WEBHOOK_INVALID', 'Webhook PayPal non branché (signature requise).');
 });
 
 app.post('/api/v1/reservations/:id/payment/sync', async (req, res) => {
@@ -371,5 +380,5 @@ app.post('/api/v1/internal/deciplus/callback', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[coach-reservation] Raphael API → :${PORT}  bot=${process.env.COACH_BOT_URL || 'http://prem-eu4.bot-hosting.net:20695'}`);
+  console.log(`[coach-reservation] API Express → :${PORT}`);
 });

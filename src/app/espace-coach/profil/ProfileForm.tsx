@@ -24,6 +24,8 @@ export function ProfileForm({ me }: { me: Me }) {
     try {
       const res = await fetch('/api/v1/me', {
         method: 'PATCH',
+        credentials: 'same-origin',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(patch),
       });
@@ -42,7 +44,11 @@ export function ProfileForm({ me }: { me: Me }) {
 
   async function onExport() {
     setErr(null);
-    const res = await fetch('/api/v1/me/export', { headers: { Accept: 'application/json' } });
+    const res = await fetch('/api/v1/me/export', {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
     if (!res.ok) {
       setErr('Export impossible.');
       return;
@@ -61,7 +67,11 @@ export function ProfileForm({ me }: { me: Me }) {
 
   async function onDeleteRequest() {
     if (!window.confirm('Demander la suppression de votre compte ?')) return;
-    const res = await fetch('/api/v1/me', { method: 'DELETE' });
+    const res = await fetch('/api/v1/me', {
+      method: 'DELETE',
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
     if (res.status === 202) {
       setMsg('Demande de suppression enregistrée (202).');
     } else {
@@ -122,6 +132,7 @@ export function ProfileForm({ me }: { me: Me }) {
               fd.set('file', file);
               const res = await fetch('/api/v1/me/photo', {
                 method: 'POST',
+                credentials: 'same-origin',
                 body: fd,
               });
               const body = await res.json().catch(() => null);

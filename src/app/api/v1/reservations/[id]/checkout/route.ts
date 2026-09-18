@@ -5,12 +5,14 @@ import { lireReservation, payerParAvoir } from '@/lib/dal/reservations'
 import { versReservationPublique } from '@/lib/dal/map'
 import { exigerSession } from '@/lib/dal/acteur'
 import { lireMonProfil } from '@/lib/dal/profil'
+import { estUrlCheckoutSure } from '@/lib/paiement-url'
 import { creerPaiementPayplug } from '@/lib/payments/payplug'
 import {
   checkRateLimit,
   contexteRequete,
   lireCleIdempotence,
   lireCorps,
+  refusOrigine,
   schemas,
   valider,
 } from '@/lib/security'
@@ -23,6 +25,8 @@ type Ctx = { params: Promise<{ id: string }> }
 
 export async function POST(req: NextRequest, ctxRoute: Ctx) {
   const ctx = contexteRequete(req)
+  const etrangere = refusOrigine(req, ctx.requestId)
+  if (etrangere) return etrangere
   const session = await exigerSession(ctx)
   if (!session.ok) return reponseDepuisErreur(session.erreur, ctx.requestId)
 
@@ -74,7 +78,7 @@ export async function POST(req: NextRequest, ctxRoute: Ctx) {
       reservation: resa,
       profil: profil.ok ? profil.valeur : null,
     })
-    if (!hosted) {
+    if (!hosted || !estUrlCheckoutSure(hosted.checkout_url)) {
       return reponseErreur(
         'PAYMENT_REQUIRED',
         { provider: 'payplug' },

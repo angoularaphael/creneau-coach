@@ -8,6 +8,7 @@ import {
   setMockSession,
 } from '@/lib/auth/mock-store';
 import { jsonError, jsonOk } from '@/lib/api/http';
+import { contexteRequete, refusOrigine } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest) {
   if (!isAuthMockEnabled()) {
     return jsonError(404, 'NOT_FOUND', 'Introuvable.');
   }
+  const ctx = contexteRequete(req);
+  const etrangere = refusOrigine(req, ctx.requestId);
+  if (etrangere) return etrangere;
 
   let body: {
     action?: string;

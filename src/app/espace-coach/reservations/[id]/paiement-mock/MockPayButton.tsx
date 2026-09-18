@@ -17,7 +17,12 @@ export function MockPayButton({ reservationId }: { reservationId: string }) {
     try {
       const res = await fetch(
         `/api/v1/reservations/${reservationId}/payment/sync`,
-        { method: 'POST', headers: { Accept: 'application/json' } },
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+        },
       );
       const body = await res.json().catch(() => null);
       if (!res.ok) {

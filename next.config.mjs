@@ -47,6 +47,9 @@ const securite = [
   // Remplacé par `frame-ancestors` sur les navigateurs récents ; gardé pour les autres.
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()' },
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
+  { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
 ];
 
 /** @type {import('next').NextConfig} */
@@ -77,11 +80,17 @@ const nextConfig = {
       {
         // Surfaces privées : noindex au niveau réseau, en plus des metadata et de robots.ts.
         source: '/admin/:path*',
-        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0' },
+        ],
       },
       {
         source: '/espace-coach/:path*',
-        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0' },
+        ],
       },
     ];
   },

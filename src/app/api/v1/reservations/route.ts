@@ -9,6 +9,7 @@ import {
   contexteRequete,
   lireCleIdempotence,
   lireCorps,
+  refusOrigine,
   reponse429,
   schemas,
   valider,
@@ -53,6 +54,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const ctx = contexteRequete(req)
+  const etrangere = refusOrigine(req, ctx.requestId)
+  if (etrangere) return etrangere
   const session = await exigerSession(ctx)
   if (!session.ok) return reponseDepuisErreur(session.erreur, ctx.requestId)
 

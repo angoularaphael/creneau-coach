@@ -66,6 +66,7 @@ export function SignaturePad({ reservationId }: { reservationId: string }) {
     setBusy(true);
     try {
       const docsRes = await fetch(`/api/v1/reservations/${reservationId}/signature`, {
+        credentials: 'same-origin',
         headers: { Accept: 'application/json' },
       });
       const docsBody = await docsRes.json().catch(() => null);
@@ -80,6 +81,7 @@ export function SignaturePad({ reservationId }: { reservationId: string }) {
 
       const res = await fetch(`/api/v1/reservations/${reservationId}/signature`, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           consent: true,

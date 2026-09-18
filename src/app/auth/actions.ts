@@ -81,7 +81,7 @@ export async function signUpAction(
     },
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: 'Inscription impossible. Réessayez ou connectez-vous.' };
   if (!data.session) {
     return {
       ok: true,
@@ -113,7 +113,7 @@ export async function signInAction(
   const limite = await checkRateLimit('login', {
     ipHash: ipHash(ip),
     coachId: emailHash(email),
-  }).catch(() => ({ allowed: true } as const));
+  });
   if (!limite.allowed) {
     return { error: 'Trop de tentatives. Réessayez dans une minute.' };
   }
@@ -137,7 +137,7 @@ export async function signInAction(
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: error.message };
+  if (error) return { error: 'Identifiants incorrects.' };
 
   redirect(cheminInterneSur(next));
 }

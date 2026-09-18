@@ -45,7 +45,7 @@ export type RegleLimite = {
 
 /** Limites du cahier §1.5. Une seule source de vérité. */
 export const RATE_LIMITS = {
-  login: { limit: 5, windowSeconds: 60, failClosed: false },
+  login: { limit: 5, windowSeconds: 60, failClosed: true },
   reservations: { limit: 10, windowSeconds: 60, failClosed: false },
   checkout: { limit: 5, windowSeconds: 60, failClosed: false },
   signature: { limit: 10, windowSeconds: 60, failClosed: false },

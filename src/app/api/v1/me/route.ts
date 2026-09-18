@@ -4,7 +4,7 @@ import { getSessionMe } from '@/lib/auth/session'
 import { jsonError, jsonOk } from '@/lib/api/http'
 import { majMonProfil } from '@/lib/dal/profil'
 import { exigerSession } from '@/lib/dal/acteur'
-import { contexteRequete, lireCorps, schemas, valider } from '@/lib/security'
+import { contexteRequete, lireCorps, refusOrigine, schemas, valider } from '@/lib/security'
 import { reponseDepuisErreur, reponseJson } from '@/lib/http/erreurs'
 
 export const dynamic = 'force-dynamic'
@@ -20,6 +20,8 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   const ctx = contexteRequete(req)
+  const etrangere = refusOrigine(req, ctx.requestId)
+  if (etrangere) return etrangere
   const session = await exigerSession(ctx)
   if (!session.ok) return reponseDepuisErreur(session.erreur, ctx.requestId)
 
@@ -48,8 +50,11 @@ export async function PATCH(req: NextRequest) {
   return reponseJson(me, 200, ctx.requestId)
 }
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  const ctx = contexteRequete(req)
+  const etrangere = refusOrigine(req, ctx.requestId)
+  if (etrangere) return etrangere
   const me = await getSessionMe()
   if (!me) return jsonError(401, 'UNAUTHENTICATED', 'Session requise.')
-  return new Response(null, { status: 202 })
+  return new Response(null, { status: 202, headers: { 'x-request-id': ctx.requestId } })
 }

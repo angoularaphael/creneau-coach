@@ -20,6 +20,15 @@ export function apiBase(): string {
   return '/api/v1';
 }
 
+function apiFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(input, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    ...init,
+    headers: { Accept: 'application/json', ...(init.headers as Record<string, string> | undefined) },
+  });
+}
+
 async function parseJson<T>(res: Response): Promise<T> {
   const body = (await res.json().catch(() => null)) as T | ApiErrorBody | null;
   if (!res.ok) {
@@ -35,26 +44,21 @@ async function parseJson<T>(res: Response): Promise<T> {
 }
 
 export function newIdempotencyKey(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return `idem-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return crypto.randomUUID();
 }
 
 export async function listClubs(): Promise<ClubSummary[]> {
-  const res = await fetch(`${apiBase()}/clubs`, {
-    headers: { Accept: 'application/json' },
+  const res = await apiFetch(`${apiBase()}/clubs`, {
     next: { revalidate: 60 },
-  });
+  } as RequestInit);
   const data = await parseJson<{ clubs: ClubSummary[] }>(res);
   return data.clubs;
 }
 
 export async function getClub(clubId: string): Promise<ClubDetail> {
-  const res = await fetch(`${apiBase()}/clubs/${encodeURIComponent(clubId)}`, {
-    headers: { Accept: 'application/json' },
+  const res = await apiFetch(`${apiBase()}/clubs/${encodeURIComponent(clubId)}`, {
     next: { revalidate: 60 },
-  });
+  } as RequestInit);
   return parseJson<ClubDetail>(res);
 }
 
@@ -65,12 +69,8 @@ export async function listSlots(
   const q = new URLSearchParams({ from: params.from, to: params.to });
   if (params.space_id) q.set('space_id', params.space_id);
 
-  const res = await fetch(
+  const res = await apiFetch(
     `${apiBase()}/clubs/${encodeURIComponent(clubId)}/slots?${q}`,
-    {
-      headers: { Accept: 'application/json' },
-      cache: 'no-store',
-    },
   );
   return parseJson<SlotGrid>(res);
 }
@@ -79,7 +79,7 @@ export async function createReservation(
   body: CreateReservation,
   idempotencyKey = newIdempotencyKey(),
 ): Promise<Reservation> {
-  const res = await fetch(`${apiBase()}/reservations`, {
+  const res = await apiFetch(`${apiBase()}/reservations`, {
     method: 'POST',
     headers: {
       Accept: 'application/json',
@@ -92,7 +92,7 @@ export async function createReservation(
 }
 
 export async function getReservation(id: string): Promise<Reservation> {
-  const res = await fetch(`${apiBase()}/reservations/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`${apiBase()}/reservations/${encodeURIComponent(id)}`, {
     headers: { Accept: 'application/json' },
     cache: 'no-store',
   });
@@ -100,7 +100,7 @@ export async function getReservation(id: string): Promise<Reservation> {
 }
 
 export async function listMyReservations(): Promise<Reservation[]> {
-  const res = await fetch(`${apiBase()}/reservations`, {
+  const res = await apiFetch(`${apiBase()}/reservations`, {
     headers: { Accept: 'application/json' },
     cache: 'no-store',
   });
@@ -113,7 +113,7 @@ export async function checkoutReservation(
   provider: PaymentProvider,
   idempotencyKey = newIdempotencyKey(),
 ) {
-  const res = await fetch(
+  const res = await apiFetch(
     `${apiBase()}/reservations/${encodeURIComponent(id)}/checkout`,
     {
       method: 'POST',
@@ -137,7 +137,7 @@ export async function cancelReservation(
   id: string,
   idempotencyKey = newIdempotencyKey(),
 ): Promise<Reservation> {
-  const res = await fetch(
+  const res = await apiFetch(
     `${apiBase()}/reservations/${encodeURIComponent(id)}/cancel`,
     {
       method: 'POST',
@@ -155,7 +155,7 @@ export async function postContact(input: {
   email: string;
   message: string;
 }): Promise<void> {
-  const res = await fetch(`${apiBase()}/contact`, {
+  const res = await apiFetch(`${apiBase()}/contact`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(input),

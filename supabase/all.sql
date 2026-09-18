@@ -3209,3 +3209,8 @@ create policy coach_private_update_own on storage.objects
     )
   );
 
+-- 0022 — authenticated n'écrit pas coach_reservations en direct.
+revoke insert, update, delete on public.coach_reservations from authenticated;
+drop policy if exists coach_reservations_insert_self on public.coach_reservations;
+drop policy if exists coach_reservations_update on public.coach_reservations;
+

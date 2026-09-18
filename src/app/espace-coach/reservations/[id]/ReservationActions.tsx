@@ -9,6 +9,7 @@ import {
   checkoutReservation,
   formatCents,
 } from '@/lib/api/client';
+import { estUrlCheckoutSure } from '@/lib/paiement-url';
 
 function when(iso: string) {
   return new Intl.DateTimeFormat('fr-FR', {
@@ -28,8 +29,12 @@ export function ReservationActions({ reservation }: { reservation: Reservation }
     setError(null);
     try {
       const res = await checkoutReservation(reservation.id, provider);
-      if (res.checkout_url) {
+      if (res.checkout_url && estUrlCheckoutSure(res.checkout_url)) {
         window.location.href = res.checkout_url;
+        return;
+      }
+      if (res.checkout_url) {
+        setError('URL de paiement refusée.');
         return;
       }
       router.push(`/espace-coach/reservations/${reservation.id}/signature`);

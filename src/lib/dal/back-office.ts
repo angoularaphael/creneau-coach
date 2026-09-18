@@ -184,6 +184,9 @@ export async function poserHoldDeTest(
   spaceId: string,
   startsAt: string,
 ): Promise<{ ok: boolean; code?: string; message?: string }> {
+  if (process.env.NODE_ENV === 'production') {
+    return { ok: false, code: 'FORBIDDEN', message: 'Indisponible en production.' }
+  }
   await garde()
   const sb = createServiceClient()
   const { data, error } = await sb.rpc('coach_create_hold_as', {

@@ -4,6 +4,7 @@ import {
   checkRateLimit,
   contexteRequete,
   lireCorps,
+  refusOrigine,
   schemas,
   valider,
 } from '@/lib/security'
@@ -14,6 +15,8 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const ctx = contexteRequete(req)
+  const etrangere = refusOrigine(req, ctx.requestId)
+  if (etrangere) return etrangere
   const limite = await checkRateLimit('contact', { ipHash: ctx.ipHash })
   if (!limite.allowed) return reponse429(limite, ctx.requestId)
 

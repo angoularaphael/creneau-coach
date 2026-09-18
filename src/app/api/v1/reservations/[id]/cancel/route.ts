@@ -8,6 +8,7 @@ import {
   checkRateLimit,
   contexteRequete,
   lireCleIdempotence,
+  refusOrigine,
 } from '@/lib/security'
 import { reponse429 } from '@/lib/security/rate-limit'
 import { reponseDepuisErreur, reponseJson } from '@/lib/http/erreurs'
@@ -18,6 +19,8 @@ type Ctx = { params: Promise<{ id: string }> }
 
 export async function POST(req: NextRequest, ctxRoute: Ctx) {
   const ctx = contexteRequete(req)
+  const etrangere = refusOrigine(req, ctx.requestId)
+  if (etrangere) return etrangere
   const session = await exigerSession(ctx)
   if (!session.ok) return reponseDepuisErreur(session.erreur, ctx.requestId)
 
