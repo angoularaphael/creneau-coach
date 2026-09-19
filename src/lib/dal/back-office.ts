@@ -123,6 +123,19 @@ export type ReservationBO = {
   readonly signature_status: string
   readonly deciplus_job_status: string
   readonly hold_expires_at: string | null
+  /**
+   * Le nom du coach — cahier §20 : « consulter le nom des coachs réservés ».
+   *
+   * La liste ne portait que `coach_id`, un UUID. Un responsable de salle qui
+   * regarde son planning du samedi voulait savoir QUI vient ; il lisait
+   * « 7f3a9c12-… ». L'exigence était au cahier depuis le début et la donnée
+   * était en base : il manquait la jointure.
+   *
+   * `null` quand le profil a été effacé (droit à l'oubli) : la réservation
+   * survit à la personne, et c'est voulu — la comptabilité en dépend.
+   */
+  readonly coach_nom: string | null
+  readonly coach_statut: string | null
 }
 
 /**
@@ -138,7 +151,12 @@ export async function listerReservations(clubId: ClubId, du: string, au: string)
   const { data, error } = await sb
     .from('coach_reservations')
     .select(
-      'id, coach_id, club_id, space_id, starts_at, amount_cents, status, payment_status, signature_status, deciplus_job_status, hold_expires_at',
+      'id, coach_id, club_id, space_id, starts_at, amount_cents, status, payment_status,' +
+        ' signature_status, deciplus_job_status, hold_expires_at,' +
+        // Jointure explicite, colonnes nommées une par une : le cahier §10
+        // interdit au personnel de voir le PDF de signature, le jeton QR et
+        // l'identifiant Deciplus. On ne ramène donc PAS tout le profil.
+        ' coach_profiles!inner ( first_name, last_name, status )',
     )
     .eq('club_id', clubId)
     .gte('starts_at', du)
@@ -146,7 +164,23 @@ export async function listerReservations(clubId: ClubId, du: string, au: string)
     .order('starts_at')
     .limit(200)
   if (error) throw new Error(`réservations : ${error.message}`)
-  return (data ?? []) as ReservationBO[]
+
+  type Brut = Omit<ReservationBO, 'coach_nom' | 'coach_statut'> & {
+    coach_profiles: { first_name: string | null; last_name: string | null; status: string } | null
+  }
+
+  return (data ?? []).map((r) => {
+    const { coach_profiles: p, ...reste } = r as unknown as Brut
+    const nom = [p?.first_name, p?.last_name].filter(Boolean).join(' ').trim()
+    return {
+      ...reste,
+      // Un profil sans prénom ni nom existe : l'inscription les collecte, mais
+      // rien n'empêche une ligne créée autrement. On ne veut pas d'une case
+      // vide muette — on dit que le nom manque.
+      coach_nom: nom || null,
+      coach_statut: p?.status ?? null,
+    }
+  })
 }
 
 /** Bloque un créneau — cahier §10, `POST /admin/slot-blocks`. */

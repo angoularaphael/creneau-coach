@@ -115,6 +115,81 @@ const dateParis = new Intl.DateTimeFormat('fr-FR', {
   month: '2-digit',
 })
 
+/**
+ * LES STATUTS EN FRANÇAIS, ET LEUR TON.
+ *
+ * La liste affichait `held`, `awaiting_signature`, `requires_action` — les
+ * valeurs de la base, telles quelles. Un responsable de salle n'a pas à
+ * apprendre le vocabulaire du moteur pour lire son planning du samedi.
+ *
+ * Le TON n'est pas décoratif : il dit s'il y a quelque chose À FAIRE.
+ *   neutre  — c'est normal, ne rien faire ;
+ *   attente — ça se débloquera seul, ou ça expirera ;
+ *   alerte  — quelqu'un doit intervenir ;
+ *   ok      — c'est réglé.
+ *
+ * Un libellé inconnu retombe sur la valeur brute plutôt que sur une case vide :
+ * le jour où le moteur ajoute un statut, on le VOIT au lieu de croire qu'il n'y
+ * a rien.
+ */
+const LIBELLE_STATUT: Record<string, string> = {
+  held: 'Place tenue',
+  awaiting_signature: 'À signer',
+  confirmed: 'Confirmée',
+  consumed: 'Séance passée',
+  expired: 'Expirée',
+  payment_failed: 'Paiement échoué',
+  cancelled_credit: 'Annulée, avoir émis',
+  no_show: 'Absent',
+}
+
+/* Valeurs relevées dans la base, pas devinées : `coach_payment_status`,
+   `coach_signature_status`, `coach_deciplus_status`. Un premier jet écrit de
+   mémoire disait `pending`, `refunded`, `credited` — aucun n'existe. Le repli
+   sur la valeur brute l'a montré à l'écran dès la première réservation
+   affichée : c'est à ça qu'il sert. */
+const LIBELLE_PAIEMENT: Record<string, string> = {
+  unpaid: 'Pas payé',
+  paid: 'Payé',
+  failed: 'Paiement échoué',
+  waived_credit: 'Réglé par avoir',
+}
+
+const LIBELLE_SIGNATURE: Record<string, string> = {
+  none: 'Pas encore signé',
+  signed: 'Documents signés',
+}
+
+const LIBELLE_QR: Record<string, string> = {
+  none: 'QR non généré',
+  queued: 'QR en cours',
+  granted: 'QR actif',
+  revoked: 'QR retiré',
+  error: 'QR en échec',
+}
+
+/** Les statuts où plus aucune action n'est possible. */
+const ESTCLOS = new Set(['expired', 'consumed', 'cancelled_credit', 'no_show'])
+
+type Ton = 'neutre' | 'attente' | 'alerte' | 'ok'
+
+const tonStatut = (v: string): Ton =>
+  v === 'confirmed' || v === 'consumed'
+    ? 'ok'
+    : v === 'payment_failed' || v === 'no_show'
+      ? 'alerte'
+      : v === 'held' || v === 'awaiting_signature'
+        ? 'attente'
+        : 'neutre'
+
+const tonPaiement = (v: string): Ton =>
+  v === 'paid' || v === 'waived_credit' ? 'ok' : v === 'failed' ? 'alerte' : 'attente'
+
+const tonSignature = (v: string): Ton => (v === 'signed' ? 'ok' : 'attente')
+
+const tonQr = (v: string): Ton =>
+  v === 'granted' ? 'ok' : v === 'error' ? 'alerte' : v === 'queued' ? 'attente' : 'neutre'
+
 export default async function BackOffice({
   searchParams,
 }: {
@@ -493,19 +568,51 @@ export default async function BackOffice({
           {reservations.length === 0 ? (
             <p className="bo__vide-texte">Aucune réservation sur cette semaine.</p>
           ) : (
-            <ul className="bo__liste">
+            <ul className="bo__resas">
               {reservations.map((r) => (
-                <li key={r.id} className="bo__ligne">
-                  <span>
-                    {dateParis.format(new Date(r.starts_at))} ·{' '}
-                    {murParis(new Date(r.starts_at)).heure}h · {r.space_id}
-                  </span>
-                  <span className="bo__etiquette">{r.status}</span>
-                  <span className="bo__etiquette">{r.payment_status}</span>
-                  <form action={actionSupprimerReservation}>
+                <li key={r.id} className="bo__resa">
+                  <div className="bo__resa__quand">
+                    <b>{dateParis.format(new Date(r.starts_at))}</b>
+                    <span>
+                      {murParis(new Date(r.starts_at)).heure}h · {r.space_id}
+                    </span>
+                  </div>
+
+                  {/* LE NOM, EN PREMIER ET EN GRAND.
+                      C'est ce qu'un responsable de salle cherche : qui vient
+                      samedi à 14h. Il lisait un UUID. */}
+                  <div className="bo__resa__qui">
+                    <b>{r.coach_nom ?? 'Nom non renseigné'}</b>
+                    {r.coach_statut === 'suspended' ? (
+                      <span className="bo__etat" data-ton="alerte">
+                        Compte suspendu
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {/* Une réservation close ne réclame plus rien : ses états
+                      passent en sourdine. Sans ça, six réservations expirées
+                      affichent douze alertes qu'on ne peut plus traiter — et
+                      on apprend à ignorer les alertes. */}
+                  <div className="bo__resa__etats" data-close={ESTCLOS.has(r.status)}>
+                    <span className="bo__etat" data-ton={tonStatut(r.status)}>
+                      {LIBELLE_STATUT[r.status] ?? r.status}
+                    </span>
+                    <span className="bo__etat" data-ton={tonPaiement(r.payment_status)}>
+                      {LIBELLE_PAIEMENT[r.payment_status] ?? r.payment_status}
+                    </span>
+                    <span className="bo__etat" data-ton={tonSignature(r.signature_status)}>
+                      {LIBELLE_SIGNATURE[r.signature_status] ?? r.signature_status}
+                    </span>
+                    <span className="bo__etat" data-ton={tonQr(r.deciplus_job_status)}>
+                      {LIBELLE_QR[r.deciplus_job_status] ?? r.deciplus_job_status}
+                    </span>
+                  </div>
+
+                  <form action={actionSupprimerReservation} className="bo__resa__action">
                     <input type="hidden" name="id" value={r.id} />
                     <button className="bo__bouton bo__bouton--discret" title="Supprimer (essai)">
-                      ×
+                      Supprimer
                     </button>
                   </form>
                 </li>
