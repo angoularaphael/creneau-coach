@@ -35,7 +35,7 @@ export default function SignUpPage() {
         </p>
       </header>
 
-      <section className="section section--etroite" style={{ paddingTop: 0 }}>
+      <section className="section section--etroite">
         {mode === 'unset' ? (
           <p className="note">
             La création de compte est momentanément indisponible. Réessayez dans

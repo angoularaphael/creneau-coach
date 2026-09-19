@@ -19,7 +19,7 @@ export default async function ClubsPage() {
         <p>Cinq salles Boxing Center — choisissez votre club pour voir la grille.</p>
       </header>
 
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <div className="club-list">
           {clubs.valeur.map((club) => (
             <Link key={club.id} href={`/clubs/${club.id}`} className="club-link">

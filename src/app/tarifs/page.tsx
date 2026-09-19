@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: 'Tarifs' };
 
 export default function TarifsPage() {
   return (
-    <>
+    <div data-geste="rebond">
       <header className="page-hero page-hero--visuel" data-visuel="tarifs">
         <p className="sur mono">Sans abonnement</p>
         <h1>Deux prix, c’est tout</h1>
@@ -15,7 +15,7 @@ export default function TarifsPage() {
           avant que vous ne payiez, et il ne bouge plus une fois votre créneau réservé.
         </p>
       </header>
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <div className="club-list">
           <div className="club-link">
             <h3>Heures creuses</h3>
@@ -42,6 +42,6 @@ export default function TarifsPage() {
           </Link>
         </p>
       </section>
-    </>
+    </div>
   );
 }

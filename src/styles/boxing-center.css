@@ -1471,3 +1471,344 @@ p {
     transition: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LE HERO N'ÉTAIT PAS OUBLIÉ : IL ÉTAIT EXCLU.
+
+   `Mouvement.tsx` ignore `.hero` volontairement — un bloc au-dessus de la
+   ligne de flottaison ne peut pas « entrer au défilement », il est déjà là.
+   Sauf que personne ne lui avait donné d'entrée de remplacement. Résultat :
+   tout bougeait sauf la première chose qu'on voit.
+
+   Il entre donc À L'AFFICHAGE, et en CASCADE : le surtitre, puis chaque ligne
+   du titre, puis la phrase, puis les boutons, puis le prix. C'est ça,
+   « progressivement » — pas un fondu global, une arrivée en ordre.
+
+   Tout est en CSS pur. Une entrée qui dépend de JavaScript est une entrée qui
+   ne joue pas quand le script arrive en retard, c'est-à-dire exactement sur
+   les connexions où la première impression compte le plus.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@keyframes entree-hero {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Le titre ne monte pas : il se DÉCOUVRE, ligne par ligne, comme un rideau
+   qu'on tire. C'est le même geste que le remplissage des sections — la page
+   parle une seule langue. */
+@keyframes decouvre-ligne {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
+}
+
+.hero-titre .ligne {
+  display: block;
+  animation: decouvre-ligne 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.hero-titre .ligne:nth-child(1) { animation-delay: 0.12s; }
+.hero-titre .ligne:nth-child(2) { animation-delay: 0.3s; }
+
+.hero-sous { animation: entree-hero 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) 0.52s both; }
+.hero-actions { animation: entree-hero 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) 0.66s both; }
+.hero-prix { animation: entree-hero 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) 0.78s both; }
+
+/* Les en-têtes des pages intérieures entrent de la même façon : un site qui
+   change de geste d'une page à l'autre se lit comme deux sites. */
+.page-hero > * { animation: entree-hero 0.72s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+.page-hero > *:nth-child(1) { animation-delay: 0.1s; }
+.page-hero > *:nth-child(2) { animation-delay: 0.24s; }
+.page-hero > *:nth-child(3) { animation-delay: 0.38s; }
+.page-hero > *:nth-child(4) { animation-delay: 0.5s; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LE REBOND — le geste demandé pour « Comment ça marche » et « Tarifs ».
+
+   Le bloc tombe, touche, remonte, retouche, remonte encore moins haut, et se
+   pose. Deux rebonds francs puis un troisième presque imperceptible : sans ce
+   dernier, l'arrêt est net et ça ressemble à un bug plutôt qu'à un poids.
+
+   Il FAUT une `animation` et pas une `transition` : une transition va d'un
+   état à l'autre, elle ne sait pas revenir en arrière deux fois en chemin.
+   C'est pour ça que le geste précédent paraissait expédié — il n'y avait
+   qu'un trajet, et il était court.
+
+   Une seconde trente. C'est lent volontairement : un rebond rapide n'est pas
+   un rebond, c'est une secousse.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@keyframes rebond {
+  0%   { opacity: 0; transform: translateY(-38px); }
+  26%  { opacity: 1; transform: translateY(0); }
+  30%  { animation-timing-function: cubic-bezier(0.3, 0, 0.6, 1); }
+  44%  { transform: translateY(-19px); }
+  58%  { transform: translateY(0); }
+  72%  { transform: translateY(-8px); }
+  86%  { transform: translateY(0); }
+  93%  { transform: translateY(-2.5px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Sur ces pages, on remplace le remplissage par le rebond. Le masque est
+   désactivé : deux gestes en même temps se contredisent et donnent une
+   bouillie. Un geste, un seul, par page. */
+[data-geste='rebond'] .bloc-scene.arme:not(.vu) {
+  opacity: 0;
+  transform: translateY(-38px);
+  clip-path: none;
+}
+
+[data-geste='rebond'] .bloc-scene.arme.vu {
+  clip-path: none;
+  transition: none;
+  animation: rebond 1.3s cubic-bezier(0.34, 1.1, 0.5, 1) both;
+  animation-delay: calc(min(var(--i), 4) * 110ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-titre .ligne,
+  .hero-sous,
+  .hero-actions,
+  .hero-prix,
+  .page-hero > *,
+  [data-geste='rebond'] .bloc-scene.arme.vu {
+    animation: none;
+  }
+
+  [data-geste='rebond'] .bloc-scene.arme:not(.vu) {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LE CALENDRIER.
+
+   Mobile d'abord, et ce n'est pas une formule : six colonnes sur 375 px font
+   des colonnes de quarante pixels. Illisible, et surtout intouchable — la
+   cible tombe sous les 48 px qu'un pouce sait viser. Sur téléphone c'est donc
+   un agenda vertical, un jour après l'autre, avec l'en-tête du jour collant.
+
+   À partir de 60rem, le MÊME balisage bascule en grille jour × heure. Les
+   créneaux sont posés à leur heure réelle par `--haut` et `--duree`, en heures
+   décimales : un cours de 12h40 à 13h20 occupe exactement sa place, et pas une
+   case arrondie. C'est ce qui permet de faire cohabiter les cours du club et
+   les heures louables sans mentir sur la durée.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.cal {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* La colonne des heures n'existe qu'en grille. Sur téléphone chaque créneau
+   porte déjà son horaire écrit : la répéter serait du bruit. */
+.cal__heures { display: none; }
+
+.cal__titre-jour {
+  position: sticky;
+  top: 3.25rem;
+  z-index: 2;
+  margin: 0 0 0.5rem;
+  padding: 0.4rem 0;
+  font-family: var(--pile-titre);
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-hot);
+  background: var(--fond, var(--bg));
+  border-bottom: 1px solid var(--line);
+}
+
+.cal__jour-court { display: none; }
+
+.cal__piste {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.cal__creneau {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  font-family: var(--pile-texte);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+.cal__creneau:hover:not(:disabled) {
+  background: var(--bg-soft);
+  border-left-color: var(--accent-hot);
+  transform: translateX(2px);
+}
+
+.cal__creneau:disabled { cursor: default; }
+
+/* Les états. Le cuivre ne marque QUE ce qui est achetable : c'est le seul
+   endroit du site où la couleur chaude veut dire « ici, il y a une décision ».
+   Un cours du club est une information, pas une offre — il reste éteint. */
+.cal__creneau[data-etat='full'],
+.cal__creneau[data-etat='past'] {
+  border-left-color: transparent;
+  background: transparent;
+  color: var(--ink-muted);
+  opacity: 0.55;
+}
+
+.cal__creneau[data-etat='blocked'] {
+  border-left-color: var(--ink-muted);
+  background: rgba(168, 171, 196, 0.07);
+  color: var(--ink-muted);
+}
+
+.cal__h {
+  font-family: var(--pile-mono, var(--pile-texte));
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.cal__prix {
+  font-family: var(--pile-titre);
+  font-size: 1rem;
+  color: var(--accent-hot);
+  white-space: nowrap;
+}
+
+.cal__etat {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cal__legende {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  margin-top: 1.25rem;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.cal__pastille {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  border: 1px solid var(--line);
+}
+
+.cal__pastille[data-etat='open'] { background: var(--accent); border-color: var(--accent); }
+.cal__pastille[data-etat='full'] { background: transparent; opacity: 0.55; }
+.cal__pastille[data-etat='blocked'] { background: rgba(168, 171, 196, 0.35); }
+.cal__pastille[data-etat='past'] { background: transparent; opacity: 0.3; }
+
+/* ── LA GRILLE, à partir de la tablette ─────────────────────────────── */
+@media (min-width: 60rem) {
+  .cal {
+    grid-template-columns: 3.25rem repeat(var(--jours), minmax(0, 1fr));
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--bg-elevated);
+  }
+
+  /* Chaque heure est une ligne d'une hauteur fixe. Tout le placement en
+     dépend : `--heure` est la seule constante de la grille. */
+  .cal__heures {
+    --heure: 3.4rem;
+    display: block;
+    position: relative;
+    border-right: 1px solid var(--line);
+  }
+
+  .cal__heure {
+    position: absolute;
+    top: calc(var(--h) * var(--heure));
+    right: 0.5rem;
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
+    transform: translateY(-0.4em);
+  }
+
+  .cal__jour {
+    border-left: 1px solid var(--line);
+    min-width: 0;
+  }
+
+  .cal__titre-jour {
+    top: 0;
+    margin: 0;
+    padding: 0.55rem 0.5rem;
+    text-align: center;
+    font-size: 0.72rem;
+    background: var(--bg-soft);
+  }
+
+  .cal__jour-court { display: inline; }
+  .cal__jour-long { display: none; }
+
+  .cal__piste {
+    --heure: 3.4rem;
+    display: block;
+    position: relative;
+    /* La piste fait la hauteur de l'amplitude réelle, pas une hauteur devinée. */
+    height: calc(var(--fin, 12) * var(--heure));
+    min-height: calc(8 * var(--heure));
+    /* Les lignes d'heures, dessinées et non balisées : un fond répété coûte
+       moins qu'une douzaine d'éléments vides par jour et par semaine. */
+    background-image: linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 100% var(--heure);
+  }
+
+  .cal__creneau {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    top: calc(var(--haut) * var(--heure));
+    height: calc(var(--duree) * var(--heure) - 3px);
+    min-height: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.1rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.72rem;
+    overflow: hidden;
+  }
+
+  .cal__creneau:hover:not(:disabled) { transform: none; }
+
+  .cal__h { font-size: 0.68rem; }
+  .cal__prix { font-size: 0.85rem; }
+  .cal__etat { font-size: 0.62rem; }
+}

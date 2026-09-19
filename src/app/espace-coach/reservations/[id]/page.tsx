@@ -43,7 +43,7 @@ export default async function ReservationPage(ctx: Props) {
           côté client.
         </p>
       </header>
-      <section className="section" style={{ paddingTop: 0, maxWidth: 520 }}>
+      <section className="section" style={{ maxWidth: 520 }}>
         <ReservationActions reservation={reservation} paiementsTest={paiementsTest} />
       </section>
     </>

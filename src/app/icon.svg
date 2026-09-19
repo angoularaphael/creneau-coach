@@ -1,25 +1,54 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Boxing Center">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="coachings">
   <!--
-    Favicon — la langue de la famille Boxing Center.
+    Favicon — « coachings ».
 
-    Les sites frères (Muret, Colomiers, Cugnaux, Labège, L'Union, Castelginest…)
-    partagent tous la même construction : carré encre, anneau cuivre, monogramme
-    blanc. Deux salles ne portent jamais les mêmes lettres ; c'est ce qui les
-    distingue dans une barre d'onglets.
+    Il disait BC. Il doit dire coachings.
 
-    Ici les lettres sont BC, parce que ce produit n'est pas une salle : c'est la
-    plateforme de réservation de tout le réseau. Le cuivre est la seconde couleur
-    du logo officiel et n'appartient à aucune salle en particulier — il est donc
-    exactement à sa place sur la surface qui les réunit.
+    Toute la famille Boxing Center (Muret, Colomiers, Cugnaux, Labège, L'Union,
+    Castelginest…) partage la même construction : carré encre, anneau cuivre,
+    monogramme blanc. On ne jette pas cette langue-là — c'est elle qui fait
+    reconnaître le réseau dans une barre d'onglets.
 
-    Le logo officiel complet (BOXING CENTER arqué) ne se lit pas à 16 px : c'est
-    précisément pourquoi la famille a ce système. Le vrai logo est dans l'en-tête,
-    en fichier, jamais recomposé en texte.
+    Alors l'anneau ne change pas de nature : il S'OUVRE. Un anneau cuivre avec
+    une brèche à droite est un « c ». Le produit se nomme, la famille se
+    reconnaît, et rien n'est ajouté par-dessus.
+
+    Pourquoi un tracé et pas du texte : un favicon en `<text>` dépend d'une
+    police que la machine du visiteur possède ou non. Le même fichier sortirait
+    en Arial chez l'un et en Times chez l'autre. Une lettre dessinée sort pareil
+    partout, à toutes les tailles, sans rien télécharger.
+
+    Pourquoi pas le mot entier : « coachings » à 16 px est une bouillie grise.
+    C'est exactement la raison d'être des monogrammes. Le mot complet vit dans
+    l'en-tête du site, en toutes lettres, là où il y a la place de le lire.
   -->
-  <rect width="192" height="192" fill="#1e2044"/>
-  <circle cx="96" cy="96" r="66" fill="none" stroke="#b8763a" stroke-width="13"/>
-  <text x="96" y="97"
-        font-family="Bebas Neue, Oswald, Haettenschweiler, Impact, sans-serif"
-        font-size="74" font-weight="700" letter-spacing="1"
-        fill="#f3efe6" text-anchor="middle" dominant-baseline="central">BC</text>
+  <rect width="192" height="192" rx="26" fill="#14162e"/>
+
+  <!--
+    Le « c ». Un cercle tracé en pointillé d'un seul tiret : la longueur du
+    tiret couvre 280° et le vide fait la brèche. Pivoté de -40° pour que
+    l'ouverture regarde vers la droite, comme un c se lit.
+    Circonférence = 2·π·58 ≈ 364,4 — d'où 283 de tiret et 82 de vide.
+
+    La rotation se calcule, elle ne se devine pas : en SVG le tracé démarre à
+    3 h et tourne dans le sens des aiguilles. Le vide occupe donc 280°→360°,
+    c'est-à-dire en haut à droite. Pour qu'il se centre sur 3 h — là où un « c »
+    s'ouvre — il faut le décaler de 40°, pas de −40. Le premier essai ouvrait la
+    lettre vers le haut et donnait un fer à cheval.
+  -->
+  <circle
+    cx="96" cy="96" r="58"
+    fill="none"
+    stroke="#c98a4b"
+    stroke-width="20"
+    stroke-linecap="round"
+    stroke-dasharray="283 82"
+    transform="rotate(40 96 96)"
+  />
+
+  <!--
+    Le filet sous la lettre : la signature du logo officiel, qui souligne
+    CENTER. Il rattache ce mark au vrai logo sans le recomposer.
+  -->
+  <rect x="58" y="166" width="76" height="7" rx="3.5" fill="#f5f5f5"/>
 </svg>

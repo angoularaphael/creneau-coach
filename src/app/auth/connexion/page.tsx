@@ -25,7 +25,7 @@ export default async function SignInPage({ searchParams }: Props) {
           Retrouvez vos réservations, vos avoirs et le QR qui vous ouvre la porte.
         </p>
       </header>
-      <section className="section section--etroite" style={{ paddingTop: 0 }}>
+      <section className="section section--etroite">
         {params.error === 'callback' ? (
           <p className="form-error" role="alert">
             Ce lien de confirmation n’est plus valable. Demandez-en un nouveau.

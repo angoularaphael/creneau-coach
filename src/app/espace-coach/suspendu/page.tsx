@@ -17,7 +17,7 @@ export default async function SuspendedPage() {
           réactiver votre compte avant que vous puissiez reprendre des créneaux.
         </p>
       </header>
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <p className="note">
           Contactez l’équipe pour débloquer la situation
           {me?.profile?.email ? (

@@ -12,7 +12,7 @@ export default function PrivacyPage() {
           confidentialité non pré-cochés à l’inscription.
         </p>
       </header>
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <p>
           Les données de compte et de réservation sont traitées pour la
           réservation de créneaux coach, le paiement, la signature électronique et

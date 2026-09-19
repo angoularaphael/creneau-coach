@@ -151,12 +151,25 @@ page**, **laid**, **ne tiendra pas au référencement**.
 
 ## 7. Ce qui reste à faire
 
-### En cours
-- [ ] **Images dédiées héros + OG pour toutes les pages publiques**, à partir des
-      vraies photos en référence.
-- [ ] Déposer le lot complet dans le dossier de téléversement.
+### Fait le 18 septembre
+- [x] **Images dédiées héros + OG pour toutes les pages publiques**, produites à
+      partir des vraies photos de chaque salle passées en référence.
+      → `public/visuels/` (site) et `src/lib/seo/fonds/` (vignettes sociales).
+- [x] Lot complet en pleine définition pour téléversement manuel :
+      **`visuels-a-televerser/`** à la racine. Non versionné, c'est un dossier
+      de livraison locale.
+- [x] Les 5 clubs ont chacun le visuel fait à partir de LEUR salle.
+- [x] Vignette sociale : palette de marque (le rouge framboise `#e11d48` est
+      parti) et fond photo par page. 10 routes, toutes vérifiées en 200.
+- [x] Le back-office avait perdu toute politique de sécurité quand `/admin` est
+      sorti du proxy. Rebouché.
 
-### Pages encore non retravaillées
+**Leçon inscrite :** le premier jet d'images disait « videz la salle, enlevez
+les affiches, aucune enseigne ». Il poursuivait « ça ne doit pas ressembler à
+une salle de sport » et il a effacé Boxing Center. La bonne consigne est
+l'inverse : **on garde la salle, on ne refait que la photographie.**
+
+### Pages encore non retravaillées (contenu, pas visuel)
 - [ ] `/clubs` (liste)
 - [ ] `/tarifs`
 - [ ] `/contact`
@@ -173,6 +186,64 @@ page**, **laid**, **ne tiendra pas au référencement**.
 
 ### À la toute fin
 - [ ] **La passe du hater.** Eddy : *« ce n'est pas encore le moment. »*
+
+---
+
+## 9. Consignes du 19 septembre 2026 — à traiter en entier
+
+### Le domaine
+- **`coachings.boxingcenter.fr`** est l'adresse à indexer. C'est elle qui va dans
+  `NEXT_PUBLIC_SITE_URL`.
+
+### Les adresses de clubs
+- Pas `clubs/toulouse-minimes` mais **`coaching-toulouse-minimes`**. Le mot
+  « coaching » fait partie de l'adresse, pour les cinq clubs.
+
+### Le favicon
+- Pas celui d'aujourd'hui. Soit le **vrai logo Boxing Center**, soit — et c'est
+  sa préférence — **un logo qui dit simplement « coachings »**.
+
+### Le QR d'accès
+- **Ce n'est PAS une page publique.** `/acces-qr-deciplus` doit disparaître des
+  routes publiques.
+- Il vit dans le **tableau de bord personnel du coach**. Chaque coach doit avoir
+  son espace pour gérer son activité.
+
+### Les crédits — le modèle est confirmé
+- **On ne reçoit des crédits qu'en payant.** 10 € payés → crédits. Tout achat
+  donne des crédits. Le concept de crédit du cahier des charges est juste : il
+  décrit le fonctionnement réel.
+
+### Les plannings — refonte
+- **Arrêter les cartes. Passer à un vrai format CALENDRIER.**
+- « C'est exploitable, on peut construire une interface folle là-dessus. On le
+  gâche. »
+- Consigne de méthode, dite deux fois : **être intentionnel.** Ne rien poser par
+  défaut.
+- **La source des plannings** : dossier `Plannings/` → `public/images/` →
+  `reprise 2026` → `web`. Les plannings y sont en images. **Ne pas inventer
+  d'horaires.**
+
+### Les animations — le site est encore figé
+- **Le hero est statique.** Déjà signalé une fois. Il doit bouger.
+- **Accueil** : le texte apparaît **progressivement**.
+- **Comment ça marche** : animation de **rebond** — le texte rebondit, deux
+  fois, puis se pose. L'animation actuelle est **trop rapide**.
+- **Tarifs** : même traitement.
+
+### Le défaut qui l'a fâché
+- **La section qui suit le hero est collée au hero.** Sur toutes les pages.
+  « Depuis quand tu fais des erreurs aussi bêtes ? Ça ne doit plus jamais se
+  reproduire. »
+
+### Le référencement
+- Les routes mots-clés proposées ne valent rien : **« personne ne va chercher
+  *annulation avoirs* »**. Une page par intention de recherche RÉELLE, pas par
+  fonctionnalité interne.
+
+### Le ton
+- « Ne m'énerve pas. » Il juge le travail récent mauvais. La barre n'est pas
+  négociable et le détail trivial ne doit plus revenir deux fois.
 
 ---
 

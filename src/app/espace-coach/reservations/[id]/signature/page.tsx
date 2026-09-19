@@ -46,7 +46,7 @@ export default async function SignaturePage(ctx: Props) {
         <h1>Signature</h1>
         <p>Documents à signer après paiement / avoir.</p>
       </header>
-      <section className="section" style={{ paddingTop: 0, maxWidth: 640 }}>
+      <section className="section" style={{ maxWidth: 640 }}>
         <SignaturePad reservationId={params.id} />
       </section>
     </>

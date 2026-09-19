@@ -59,7 +59,7 @@ export default async function QrPage(ctx: Props) {
           créneau et s’éteint à la fin. Il n’ouvre que le club réservé.
         </p>
       </header>
-      <section className="section" style={{ paddingTop: 0, maxWidth: 360 }}>
+      <section className="section" style={{ maxWidth: 360 }}>
         {png ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

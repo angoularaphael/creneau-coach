@@ -24,7 +24,7 @@ export default async function ProfilePage() {
           e-mail sert à vous identifier : elle se change depuis la page contact.
         </p>
       </header>
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <ProfileForm me={me} />
       </section>
     </>

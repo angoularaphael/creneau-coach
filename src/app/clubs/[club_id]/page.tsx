@@ -5,7 +5,7 @@ import { lireClubPublic, lireGrillePublic } from '@/lib/dal/clubs';
 import { isClubId } from '@/lib/clubs';
 import { getClubBySlug, getClubByApiId, cheminClub } from '@/lib/seo';
 import { redirect } from 'next/navigation';
-import { SlotGrid } from '@/components/SlotGrid';
+import { Calendrier } from '@/components/Calendrier';
 import { ClubSlotsToolbar } from './SlotsToolbar';
 import { getSessionMe } from '@/lib/auth/session';
 
@@ -122,7 +122,7 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
         ) : null}
       </header>
 
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <div className="section-head">
           <h2>Créneaux</h2>
           <p>
@@ -147,7 +147,7 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
           </p>
         ) : null}
 
-        <SlotGrid
+        <Calendrier
           clubId={club.id}
           spaceId={spaceId!}
           slots={grid.slots}

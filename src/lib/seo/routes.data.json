@@ -9,19 +9,48 @@
     "sitemap. Passer une route en 'live' est un geste explicite, fait quand son contenu",
     "est valide par la direction. Voir .research/spec-05-seo.md §6 et §15.2."
   ],
-
-  "prefixesPrives": ["/admin", "/espace-coach", "/api"],
-
-  "cheminsAuth": ["/connexion", "/inscription", "/verification"],
-
-  "clubs": [
-    { "slug": "toulouse-minimes", "clubId": "minimes", "nom": "Minimes", "ville": "Toulouse" },
-    { "slug": "toulouse-st-cyprien", "clubId": "st-cyprien", "nom": "Saint-Cyprien", "ville": "Toulouse" },
-    { "slug": "toulouse-etats-unis", "clubId": "etats-unis", "nom": "États-Unis", "ville": "Toulouse" },
-    { "slug": "ramonville", "clubId": "ramonville", "nom": "Ramonville", "ville": "Ramonville-Saint-Agne" },
-    { "slug": "portet-sur-garonne", "clubId": "portet", "nom": "Portet-sur-Garonne", "ville": "Portet-sur-Garonne" }
+  "prefixesPrives": [
+    "/admin",
+    "/espace-coach",
+    "/api"
   ],
-
+  "cheminsAuth": [
+    "/connexion",
+    "/inscription",
+    "/verification"
+  ],
+  "clubs": [
+    {
+      "slug": "coaching-toulouse-minimes",
+      "clubId": "minimes",
+      "nom": "Minimes",
+      "ville": "Toulouse"
+    },
+    {
+      "slug": "coaching-toulouse-st-cyprien",
+      "clubId": "st-cyprien",
+      "nom": "Saint-Cyprien",
+      "ville": "Toulouse"
+    },
+    {
+      "slug": "coaching-toulouse-etats-unis",
+      "clubId": "etats-unis",
+      "nom": "États-Unis",
+      "ville": "Toulouse"
+    },
+    {
+      "slug": "coaching-ramonville",
+      "clubId": "ramonville",
+      "nom": "Ramonville",
+      "ville": "Ramonville-Saint-Agne"
+    },
+    {
+      "slug": "coaching-portet-sur-garonne",
+      "clubId": "portet",
+      "nom": "Portet-sur-Garonne",
+      "ville": "Portet-sur-Garonne"
+    }
+  ],
   "routes": [
     {
       "path": "/",
@@ -41,7 +70,7 @@
       "inNav": true
     },
     {
-      "path": "/clubs/toulouse-minimes",
+      "path": "/clubs/coaching-toulouse-minimes",
       "title": "Salle de Minimes",
       "description": "Espaces, équipement et créneaux disponibles à la salle Boxing Center de Minimes, à Toulouse.",
       "intent": "louer un espace de coaching à Minimes",
@@ -49,7 +78,7 @@
       "inNav": false
     },
     {
-      "path": "/clubs/toulouse-st-cyprien",
+      "path": "/clubs/coaching-toulouse-st-cyprien",
       "title": "Salle de Saint-Cyprien",
       "description": "Espaces, équipement et créneaux disponibles à la salle Boxing Center de Saint-Cyprien, à Toulouse.",
       "intent": "louer un espace de coaching à Saint-Cyprien",
@@ -57,7 +86,7 @@
       "inNav": false
     },
     {
-      "path": "/clubs/toulouse-etats-unis",
+      "path": "/clubs/coaching-toulouse-etats-unis",
       "title": "Salle d’États-Unis",
       "description": "Trois espaces à États-Unis : Boxe, MMA-Sol et Fitness. Plannings et capacités par espace, à Toulouse.",
       "intent": "réserver Boxe, MMA ou Fitness à États-Unis",
@@ -65,7 +94,7 @@
       "inNav": false
     },
     {
-      "path": "/clubs/ramonville",
+      "path": "/clubs/coaching-ramonville",
       "title": "Salle de Ramonville",
       "description": "Espaces, équipement et créneaux disponibles à la salle Boxing Center de Ramonville-Saint-Agne.",
       "intent": "louer un espace de coaching à Ramonville",
@@ -73,7 +102,7 @@
       "inNav": false
     },
     {
-      "path": "/clubs/portet-sur-garonne",
+      "path": "/clubs/coaching-portet-sur-garonne",
       "title": "Salle de Portet-sur-Garonne",
       "description": "Deux espaces à Portet-sur-Garonne : Boxe-Fitness et MMA-Sol. Plannings, capacités et règles particulières.",
       "intent": "réserver Boxe-Fitness ou MMA à Portet",
@@ -105,22 +134,6 @@
       "inNav": true
     },
     {
-      "path": "/acces-qr-deciplus",
-      "title": "L’accès au club",
-      "description": "Comment l’accès au club fonctionne le jour de votre créneau, ce qu’il couvre, ses limites, et qui contacter si la porte refuse.",
-      "intent": "comprendre l’accès au club",
-      "status": "draft",
-      "inNav": false
-    },
-    {
-      "path": "/annulation-avoirs",
-      "title": "Annulation et avoirs",
-      "description": "La règle des 24 heures, ce qui donne lieu à un avoir, ce qui n’en donne pas, et comment l’avoir est utilisé sur une prochaine réservation.",
-      "intent": "comprendre la règle de 24 h",
-      "status": "draft",
-      "inNav": false
-    },
-    {
       "path": "/faq",
       "title": "Questions fréquentes",
       "description": "Les questions posées par les coachs indépendants sur la réservation, le paiement, l’accès au club et l’annulation.",
@@ -136,7 +149,6 @@
       "status": "draft",
       "inNav": true
     },
-
     {
       "path": "/conditions-generales",
       "title": "Conditions générales",

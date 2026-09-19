@@ -76,7 +76,7 @@ const QUESTIONS = [
 
 export default function HowItWorksPage() {
   return (
-    <>
+    <div data-geste="rebond">
       <header className="page-hero page-hero--visuel" data-visuel="comment-ca-marche">
         <p className="sur mono">En quatre étapes</p>
         <h1>De la recherche d’une salle à la porte du club</h1>
@@ -86,7 +86,7 @@ export default function HowItWorksPage() {
         </p>
       </header>
 
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <div className="enveloppe">
           <ol className="deroule">
             {ETAPES.map((e) => (
@@ -156,6 +156,6 @@ export default function HowItWorksPage() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

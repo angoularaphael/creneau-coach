@@ -9,7 +9,7 @@ export default function MentionsPage() {
         <h1>Mentions légales</h1>
         <p className="muted">Textes direction à intégrer — placeholder Lot B.</p>
       </header>
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <p>
           Éditeur : Boxing Center — contact{' '}
           <a href="mailto:boxingcenter31@gmail.com">boxingcenter31@gmail.com</a>.

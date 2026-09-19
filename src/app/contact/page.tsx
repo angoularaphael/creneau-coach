@@ -13,7 +13,7 @@ export default function ContactPage() {
           transactionnel = Lot Raphael.
         </p>
       </header>
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <ContactForm />
       </section>
     </>

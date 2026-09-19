@@ -73,9 +73,13 @@ export default function HomePage() {
   return (
     <>
       <section className="hero" aria-label="Louer une salle">
+        {/* Chaque ligne est un élément à part : c'est ce qui permet de les
+            découvrir l'une après l'autre. Un `<br>` ne se cible pas. */}
         <h1 className="hero-titre">
-          Louez une salle<br />
-          <em>à l’heure.</em>
+          <span className="ligne">Louez une salle</span>
+          <span className="ligne">
+            <em>à l’heure.</em>
+          </span>
         </h1>
         <p className="hero-sous">
           Vous avez le client. Nous avons la salle, le ring et les sacs. Réservez

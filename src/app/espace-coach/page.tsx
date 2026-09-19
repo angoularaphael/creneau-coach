@@ -38,7 +38,7 @@ export default async function CoachHomePage() {
             après vérification.
           </p>
         </header>
-        <section className="section" style={{ paddingTop: 0 }}>
+        <section className="section">
           <form action={signOutAction}>
             <button type="submit" className="btn btn-ghost">
               Se déconnecter
@@ -83,7 +83,7 @@ export default async function CoachHomePage() {
         </p>
       </header>
 
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section">
         <div className="section-head">
           <h2>Mes réservations</h2>
           <p>
