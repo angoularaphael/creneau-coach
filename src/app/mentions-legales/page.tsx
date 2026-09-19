@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: 'Mentions légales' };
 export default function MentionsPage() {
   return (
     <>
-      <header className="page-hero">
+      <header className="page-hero page-hero--visuel" data-visuel="mentions-legales">
         <h1>Mentions légales</h1>
         <p className="muted">Textes direction à intégrer — placeholder Lot B.</p>
       </header>

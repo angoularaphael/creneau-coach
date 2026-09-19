@@ -77,7 +77,7 @@ const QUESTIONS = [
 export default function HowItWorksPage() {
   return (
     <>
-      <header className="page-hero">
+      <header className="page-hero page-hero--visuel" data-visuel="comment-ca-marche">
         <p className="sur mono">En quatre étapes</p>
         <h1>De la recherche d’une salle à la porte du club</h1>
         <p className="page-hero__sous">

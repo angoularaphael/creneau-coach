@@ -1,6 +1,22 @@
 import { vignetteOg, TAILLE_OG, TYPE_OG } from '@/lib/seo/og'
 import { CLUB_PAGES, getClubBySlug, getClubByApiId } from '@/lib/seo'
 import { ESPACES_PAR_CLUB, type ClubId } from '@/domain/contrat'
+import type { NomDeFond } from '@/lib/seo/og'
+
+/**
+ * La photo de chaque club, écrite en toutes lettres.
+ *
+ * Elle a été générée À PARTIR d'une vraie photo de CETTE salle-là : la
+ * charpente de Saint-Cyprien, le volume des Minimes, les baies de Ramonville.
+ * Deux clubs ne doivent pas pouvoir se confondre sur une vignette.
+ */
+const FOND_PAR_CLUB: Record<string, NomDeFond> = {
+  minimes: 'hero-club-toulouse-minimes',
+  'st-cyprien': 'hero-club-toulouse-st-cyprien',
+  'etats-unis': 'hero-club-toulouse-etats-unis',
+  ramonville: 'hero-club-ramonville',
+  portet: 'hero-club-portet-sur-garonne',
+}
 
 export const size = TAILLE_OG
 export const contentType = TYPE_OG
@@ -32,5 +48,7 @@ export default async function Image({ params }: { params: Promise<{ club_id: str
     surtitre: 'Club',
     titre: club ? club.nom : 'Boxing Center',
     detail,
+    // Repli volontaire : un club sans photo dédiée sort quand même une vignette.
+    fond: (club && FOND_PAR_CLUB[club.clubId]) || 'hero-clubs',
   })
 }

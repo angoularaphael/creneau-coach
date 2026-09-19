@@ -1,4 +1,5 @@
 import { porteConfiguree } from '@/lib/admin/session'
+import { ChampMotDePasse } from '@/components/ChampMotDePasse'
 import { actionEntrer } from './actions'
 
 export const dynamic = 'force-dynamic'
@@ -61,14 +62,7 @@ export default async function ConnexionBackOffice({
         <label className="bo-porte__label" htmlFor="mdp">
           Mot de passe
         </label>
-        <input
-          id="mdp"
-          name="motdepasse"
-          type="password"
-          required
-          autoComplete="current-password"
-          className="bo-porte__champ"
-        />
+        <ChampMotDePasse id="mdp" name="motdepasse" autoComplete="current-password" />
         <input type="hidden" name="suite" value={suite ?? '/admin'} />
 
         <button className="bo-porte__bouton" disabled={!configuree}>

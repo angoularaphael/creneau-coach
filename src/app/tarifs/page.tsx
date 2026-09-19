@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: 'Tarifs' };
 export default function TarifsPage() {
   return (
     <>
-      <header className="page-hero">
+      <header className="page-hero page-hero--visuel" data-visuel="tarifs">
         <p className="sur mono">Sans abonnement</p>
         <h1>Deux prix, c’est tout</h1>
         <p className="page-hero__sous">

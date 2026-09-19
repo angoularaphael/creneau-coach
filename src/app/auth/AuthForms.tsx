@@ -8,6 +8,7 @@ import {
   signUpAction,
   type AuthActionState,
 } from '@/app/auth/actions';
+import { ChampMotDePasse } from '@/components/ChampMotDePasse';
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -45,12 +46,10 @@ export function SignUpForm() {
       </label>
       <label>
         Mot de passe
-        <input
+        <ChampMotDePasse
           name="password"
-          type="password"
-          required
           autoComplete="new-password"
-          minLength={12}
+          className=""
         />
       </label>
       <p className="field-hint">
@@ -102,11 +101,10 @@ export function SignInForm({ next = '/espace-coach' }: { next?: string }) {
       </label>
       <label>
         Mot de passe
-        <input
+        <ChampMotDePasse
           name="password"
-          type="password"
-          required
           autoComplete="current-password"
+          className=""
         />
       </label>
 

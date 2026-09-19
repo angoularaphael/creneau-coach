@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: 'Confidentialité' };
 export default function PrivacyPage() {
   return (
     <>
-      <header className="page-hero">
+      <header className="page-hero page-hero--visuel" data-visuel="confidentialite">
         <h1>Politique de confidentialité</h1>
         <p className="muted">
           Mentions RGPD — textes direction à coller. Consentements CGU /

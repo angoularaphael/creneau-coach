@@ -35,3 +35,10 @@ next-env.d.ts
 .jeton*
 .cookies
 *.token
+
+# Atelier des visuels : sources lourdes, jamais versionnees.
+.tmp-visuels/
+
+# Le lot de visuels en pleine definition, pour televersement manuel.
+# Il double `public/visuels/` : inutile de le versionner.
+visuels-a-televerser/

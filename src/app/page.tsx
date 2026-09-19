@@ -14,29 +14,35 @@ export const metadata = metadataDeRoute('/');
  * à Muret ses pages `boxe-anglaise`, `mma`, `kick-boxing`, `transports` : une
  * intention de recherche, une page.
  *
- * Aucune photo générée : toutes viennent du pool des sites frères, ce sont de
- * vraies salles Boxing Center.
+ * Les visuels sont produits à partir des VRAIES photos des salles, passées en
+ * référence au modèle : la charpente, les tapis bleu et rouge, les sacs, les
+ * enseignes et les drapeaux sont ceux des clubs. La photographie est refaite,
+ * la salle ne l'est pas.
+ *
+ * Ils ne sont jamais présentés comme la photo d'un club précis : les textes
+ * disent « une salle Boxing Center », et les pages club, elles, portent le
+ * visuel fait à partir de LEUR salle.
  */
 
 const ESPACES = [
   {
     titre: 'Le ring',
-    photo: '/photos/coach-ring.webp',
-    alt: 'Un coach dans le coin du ring, Boxing Center',
+    photo: '/visuels/espace-ring.webp',
+    alt: 'Le coin du ring, dans une salle Boxing Center',
     texte:
       'Cordes, tabouret, seau. Pour le travail aux gants, les mises en situation et les rounds chronométrés.',
   },
   {
     titre: 'L’allée des sacs',
-    photo: '/photos/sacs-700.webp',
-    alt: 'L’allée des sacs de frappe, Boxing Center Minimes',
+    photo: '/visuels/espace-sacs.webp',
+    alt: 'L’allée des sacs de frappe, dans une salle Boxing Center',
     texte:
       'Sacs lourds, poires, double-élastique. Pour la puissance, le cardio et le travail en série.',
   },
   {
     titre: 'Le tapis',
-    photo: '/photos/duo.webp',
-    alt: 'Travail au sol sur le tapis, Boxing Center',
+    photo: '/visuels/espace-tapis.webp',
+    alt: 'Le tapis dégagé, dans une salle Boxing Center',
     texte:
       'Surface dégagée pour le sol, le grappling, la préparation physique et les étirements.',
   },
@@ -109,8 +115,8 @@ export default function HomePage() {
           </div>
           <figure className="bande__image">
             <Image
-              src="/photos/coach-consignes.webp"
-              alt="Un coach donne ses consignes à son client, Boxing Center"
+              src="/visuels/section-coach.webp"
+              alt="Un coach dans une salle Boxing Center"
               width={1200}
               height={800}
               sizes="(min-width: 60rem) 46vw, 100vw"
@@ -196,8 +202,8 @@ export default function HomePage() {
         <div className="enveloppe bande bande--inverse">
           <figure className="bande__image">
             <Image
-              src="/photos/coach-garde.webp"
-              alt="Travail de garde avec un coach, Boxing Center"
+              src="/visuels/section-duo.webp"
+              alt="Un coach et son client dans une salle Boxing Center"
               width={1200}
               height={800}
               sizes="(min-width: 60rem) 46vw, 100vw"

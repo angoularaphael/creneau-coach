@@ -37,8 +37,30 @@ export type SessionProxy = {
   readonly acteurId: string | null
 }
 
-export async function rafraichirSession(request: NextRequest): Promise<SessionProxy> {
-  let reponse = NextResponse.next({ request })
+export async function rafraichirSession(
+  request: NextRequest,
+  entetesEnPlus: Readonly<Record<string, string>> = {},
+): Promise<SessionProxy> {
+  /**
+   * `entetesEnPlus` porte le nonce CSP posé par le proxy.
+   *
+   * Il DOIT voyager sur les en-têtes de REQUÊTE : c'est là que Next va le lire
+   * pour taguer ses propres scripts d'amorçage. Or cette fonction reconstruit la
+   * réponse à chaque écriture de cookie ; si le nonce n'était posé qu'en amont,
+   * la reconstruction l'effacerait — et sur le chemin Supabase, c'est-à-dire sur
+   * presque toutes les requêtes, l'hydratation resterait morte.
+   *
+   * Les en-têtes sont relus depuis `request.headers` à chaque reconstruction, et
+   * pas capturés une fois : `request.cookies.set()` réécrit l'en-tête `cookie`,
+   * qu'une photo prise trop tôt perdrait.
+   */
+  const suivante = () => {
+    const entetes = new Headers(request.headers)
+    for (const [cle, valeur] of Object.entries(entetesEnPlus)) entetes.set(cle, valeur)
+    return NextResponse.next({ request: { headers: entetes } })
+  }
+
+  let reponse = suivante()
 
   const supabase = createServerClient(urlSupabase(), cleAnon(), {
     cookies: {
@@ -49,7 +71,7 @@ export async function rafraichirSession(request: NextRequest): Promise<SessionPr
         for (const { name, value } of aPoser) {
           request.cookies.set(name, value)
         }
-        reponse = NextResponse.next({ request })
+        reponse = suivante()
         for (const { name, value, options } of aPoser) {
           reponse.cookies.set(name, value, options)
         }

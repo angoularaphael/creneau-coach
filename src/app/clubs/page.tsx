@@ -14,7 +14,7 @@ export default async function ClubsPage() {
 
   return (
     <>
-      <header className="page-hero">
+      <header className="page-hero page-hero--visuel" data-visuel="clubs">
         <h1>Nos clubs</h1>
         <p>Cinq salles Boxing Center — choisissez votre club pour voir la grille.</p>
       </header>

@@ -25,7 +25,7 @@ export default function SignUpPage() {
 
   return (
     <>
-      <header className="page-hero">
+      <header className="page-hero page-hero--visuel" data-visuel="inscription">
         <p className="sur mono">Gratuit · une minute</p>
         <h1>Créez votre compte coach</h1>
         <p className="page-hero__sous">

@@ -108,8 +108,20 @@ export function Mouvement() {
       clearTimeout(t)
       removeEventListener('pageshow', auRetour)
       obs.disconnect()
-      // On désarme : si le composant part, le contenu reste visible.
-      cibles.forEach((c) => c.classList.remove('arme'))
+      /**
+       * On rend le DOM tel qu'on l'a trouvé — `bloc-scene` COMPRIS.
+       *
+       * Ne retirer que `arme` laissait `bloc-scene` collé aux éléments. Or le
+       * balayage d'entrée saute tout ce qui porte déjà `bloc-scene`. En mode
+       * strict, React monte, démonte, remonte : le démontage désarmait, et le
+       * remontage passait son chemin. Résultat, plus rien n'était armé et
+       * l'animation n'existait plus du tout en développement — invisible en
+       * production, donc impossible à voir en la cherchant là où on travaille.
+       *
+       * `vu` reste en place volontairement : au remontage le bloc se retrouve
+       * `arme` ET `vu`, donc visible, et il n'y a pas de clignotement.
+       */
+      cibles.forEach((c) => c.classList.remove('arme', 'bloc-scene'))
     }
   }, [])
 

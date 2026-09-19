@@ -11,8 +11,6 @@
  * son extension.
  */
 
-const isProd = process.env.NODE_ENV === 'production';
-
 /**
  * Politique de sécurité du contenu.
  *
@@ -24,23 +22,19 @@ const isProd = process.env.NODE_ENV === 'production';
  * tunnel de paiement, ni le pad de signature ne doivent pouvoir être encadrés par
  * un tiers. `frame-src` n'ouvre que les deux prestataires de paiement du lot A.
  */
-const csp = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-  "img-src 'self' data: blob: https://res.cloudinary.com",
-  "font-src 'self' data:",
-  "style-src 'self' 'unsafe-inline'",
-  `script-src 'self'${isProd ? '' : " 'unsafe-eval'"}`,
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
-  'frame-src https://secure.payplug.com https://www.paypal.com',
-  'upgrade-insecure-requests',
-].join('; ');
-
+/*
+ * La Content-Security-Policy N'EST PLUS ICI — elle est dans `src/proxy.ts`.
+ *
+ * Elle y était posée en en-tête statique, avec `script-src 'self'`. Or Next
+ * injecte des scripts EN LIGNE pour amorcer l'hydratation : ils étaient bloqués,
+ * React n'hydratait jamais, et TOUT le site était inerte. Pas d'animation au
+ * défilement, pas de bascule, pas un seul gestionnaire d'événement — sur toutes
+ * les pages, depuis que cette CSP existait.
+ *
+ * Un nonce doit être imprévisible et différent à chaque requête : un en-tête
+ * statique ne peut pas le produire. Seul le proxy le peut.
+ */
 const securite = [
-  { key: 'Content-Security-Policy', value: csp },
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

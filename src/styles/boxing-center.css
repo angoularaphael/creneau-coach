@@ -47,6 +47,15 @@
   /* Mobile d'abord : l'espace part du pouce, pas de l'écran de bureau. */
   --space: clamp(1rem, 4vw, 2rem);
   --max: 1120px;
+
+  /* LA GOUTTIÈRE DU SITE.
+     En-tête, hero et contenu doivent tomber sur la MÊME arête gauche. Sans ça,
+     le logo commence à 32 px du bord pendant que le texte des sections commence
+     à 230 px : deux grilles différentes sur le même écran, et l'œil le voit
+     immédiatement, même sans savoir le nommer.
+     La formule tient les deux cas : bord d'écran sur téléphone, colonne centrée
+     dès que l'écran dépasse la largeur de lecture. */
+  --gouttiere: max(var(--space), (100% - var(--max)) / 2);
   --tap: 48px;                /* 44 est le minimum ; 48 est confortable */
 }
 
@@ -126,7 +135,7 @@ p {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem var(--space);
+  padding: 0.75rem var(--gouttiere);
   border-bottom: 1px solid var(--line);
   /* Le fond de l'en-tête est l'encre de la marque, pas un gris. */
   background: rgba(20, 22, 46, 0.86);
@@ -350,7 +359,7 @@ p {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--e4, 1rem);
-  padding: 2.5rem var(--space) 3rem;
+  padding: 3rem var(--gouttiere) 3.5rem;
   overflow: hidden;
   isolation: isolate;
 }
@@ -361,10 +370,54 @@ p {
   inset: 0;
   z-index: -2;
   background:
+    /* Le voile latéral, et c'est lui qui fait le travail.
+       Le titre se posait sur la partie la plus chargée de la photo — les sacs,
+       la fresque, les cordes — et se lisait mal. La photo est donc éteinte à
+       gauche, là où le texte vit, et rendue à droite, là où elle se regarde. */
+    linear-gradient(95deg, rgba(8, 8, 8, 0.94) 0%, rgba(8, 8, 8, 0.82) 40%, rgba(8, 8, 8, 0.3) 100%),
     /* L'encre Boxing Center porte l'ombre : la photo se couche dans le bleu
        de la marque, pas dans un gris neutre. */
-    linear-gradient(180deg, rgba(8, 8, 8, 0.72) 0%, rgba(20, 22, 46, 0.86) 62%, var(--bg) 100%),
-    url('/photos/salle-hero-1200.webp') center 38% / cover no-repeat;
+    linear-gradient(180deg, rgba(8, 8, 8, 0.45) 0%, rgba(20, 22, 46, 0.68) 70%, var(--bg) 100%),
+    url('/visuels/hero-accueil.webp') center 45% / cover no-repeat;
+}
+
+/* ── LE VOILE SUR TÉLÉPHONE ─────────────────────────────────────────────
+   Le voile du hero est LATÉRAL : sombre à gauche où vit le titre, clair à
+   droite où la salle se regarde. Sur un écran de 375 px, « à droite » n'existe
+   plus : la partie sombre couvre presque tout et la salle disparaît. On
+   verrait un rectangle noir alors qu'on a justement travaillé pour montrer le
+   vrai club.
+
+   Sur téléphone le voile devient donc VERTICAL : clair en haut, où la photo se
+   voit, dense en bas, où le texte commence. C'est l'inverse d'un réglage
+   décoratif — c'est ce qui rend la photo utile là où il y a le plus de trafic.
+
+   Mobile d'abord, donc cette règle n'est pas une exception : c'est le cas
+   normal, et la version latérale est l'élargissement. */
+@media (max-width: 40rem) {
+  .hero::before {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(8, 8, 8, 0.58) 0%,
+        rgba(8, 8, 8, 0.72) 42%,
+        rgba(8, 8, 8, 0.94) 78%,
+        var(--bg) 100%
+      ),
+      url('/visuels/hero-accueil.webp') center 38% / cover no-repeat;
+  }
+
+  .page-hero--visuel {
+    background-position: center 38%;
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(8, 8, 8, 0.55) 0%,
+        rgba(8, 8, 8, 0.78) 50%,
+        rgba(8, 8, 8, 0.95) 100%
+      ),
+      var(--visuel);
+  }
 }
 
 /* Le filet cuivre : la seule couleur chaude de l'écran, posée sur l'arête. */
@@ -374,7 +427,7 @@ p {
   inset: auto 0 0 0;
   height: 2px;
   z-index: -1;
-  background: linear-gradient(90deg, var(--accent) 0%, transparent 62%);
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hot) 38%, transparent 92%);
 }
 
 .hero-kicker span + span::before {
@@ -450,9 +503,9 @@ p {
    hero reprend de la hauteur. Mobile d'abord : l'élargissement est l'exception. */
 @media (min-width: 40rem) {
   .hero {
-    min-height: min(78vh, 720px);
+    min-height: min(82vh, 760px);
     justify-content: flex-end;
-    padding: 4rem var(--space) 3.5rem;
+    padding: 5rem var(--gouttiere) 4.5rem;
     gap: 1.25rem;
   }
 
@@ -521,12 +574,6 @@ p {
 
 .btn-ghost:hover {
   border-color: rgba(243, 240, 234, 0.35);
-}
-
-.section {
-  padding: clamp(2.5rem, 6vw, 4.5rem) var(--space);
-  max-width: var(--max);
-  margin: 0 auto;
 }
 
 .section-head {
@@ -598,15 +645,66 @@ p {
   color: var(--ink-muted);
 }
 
+/* ── L'EN-TÊTE DE PAGE ──────────────────────────────────────────────────
+   Il souffrait du même défaut que `.section` : une boîte centrée à 1120 px.
+   Tant qu'il n'y avait pas de fond, ça ne se voyait pas ; le jour où chaque
+   page reçoit sa photo, un fond qui s'arrête au milieu de l'écran se voit
+   immédiatement. Il passe donc pleine largeur, et c'est la gouttière commune
+   qui replace le texte sur la même arête que le logo et que le contenu. */
 .page-hero {
-  padding: clamp(2rem, 6vw, 3.5rem) var(--space) 1.5rem;
-  max-width: var(--max);
-  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 3.5rem) var(--gouttiere) 1.5rem;
+  position: relative;
 }
 
 .page-hero h1 {
   font-size: clamp(1.9rem, 5vw, 3rem);
 }
+
+/* ── LA PHOTO DE LA PAGE ────────────────────────────────────────────────
+   Chaque page publique a la sienne, et elle est pilotée par un ATTRIBUT, pas
+   par un style en ligne. Deux raisons, et la seconde est la vraie :
+
+   1. La liste des visuels reste au même endroit que le reste du design.
+   2. Un style en ligne oblige à garder `'unsafe-inline'` ouvert côté styles
+      dans la politique de sécurité. Tant qu'on peut s'en passer, on s'en passe.
+
+   Le voile est en `linear-gradient` PAR-DESSUS la photo : sans lui, un titre
+   blanc sur un mur clair de salle devient illisible. Les salles Boxing Center
+   sont lumineuses — c'est justement ce qui fait leur caractère, et c'est ce
+   qui oblige à protéger le texte. */
+.page-hero--visuel {
+  padding-top: clamp(3.5rem, 9vw, 6rem);
+  padding-bottom: clamp(2rem, 5vw, 3rem);
+  background-image:
+    linear-gradient(
+      100deg,
+      rgba(8, 8, 8, 0.93) 0%,
+      rgba(8, 8, 8, 0.8) 44%,
+      rgba(20, 22, 46, 0.55) 100%
+    ),
+    var(--visuel);
+  background-size: cover;
+  background-position: center 42%;
+  background-repeat: no-repeat;
+  border-bottom: 2px solid var(--accent);
+}
+
+.page-hero[data-visuel='clubs'] { --visuel: url('/visuels/hero-clubs.webp'); }
+.page-hero[data-visuel='comment-ca-marche'] { --visuel: url('/visuels/hero-comment-ca-marche.webp'); }
+.page-hero[data-visuel='tarifs'] { --visuel: url('/visuels/hero-tarifs.webp'); }
+.page-hero[data-visuel='contact'] { --visuel: url('/visuels/hero-contact.webp'); }
+.page-hero[data-visuel='connexion'] { --visuel: url('/visuels/hero-connexion.webp'); }
+.page-hero[data-visuel='inscription'] { --visuel: url('/visuels/hero-inscription.webp'); }
+.page-hero[data-visuel='mentions-legales'] { --visuel: url('/visuels/hero-mentions-legales.webp'); }
+.page-hero[data-visuel='confidentialite'] { --visuel: url('/visuels/hero-confidentialite.webp'); }
+
+/* Les clubs : l'attribut porte l'identifiant du club, celui de l'API. Chaque
+   salle a SA photo, faite à partir d'une vraie photo de cette salle-là. */
+.page-hero[data-visuel='minimes'] { --visuel: url('/visuels/hero-club-toulouse-minimes.webp'); }
+.page-hero[data-visuel='st-cyprien'] { --visuel: url('/visuels/hero-club-toulouse-st-cyprien.webp'); }
+.page-hero[data-visuel='etats-unis'] { --visuel: url('/visuels/hero-club-toulouse-etats-unis.webp'); }
+.page-hero[data-visuel='ramonville'] { --visuel: url('/visuels/hero-club-ramonville.webp'); }
+.page-hero[data-visuel='portet'] { --visuel: url('/visuels/hero-club-portet-sur-garonne.webp'); }
 
 .slot-toolbar {
   display: flex;
@@ -1252,5 +1350,124 @@ p {
   .faq {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem 2.5rem;
+  }
+}
+
+/* ── Champ mot de passe avec bascule ────────────────────────────────────
+   Sans elle, une personne qui se trompe d'un caractère sur un téléphone n'a
+   aucun moyen de le voir : elle efface tout et recommence, et souvent elle
+   abandonne. Le masquage protège d'un regard par-dessus l'épaule ; empêcher
+   de vérifier ce qu'on tape ne protège de rien. */
+.mdp {
+  position: relative;
+  display: block;
+}
+
+.mdp__champ {
+  width: 100%;
+  /* La place du bouton, pour que le texte ne passe jamais dessous. */
+  padding-right: 3rem !important;
+}
+
+.mdp__bascule {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color var(--d-rapide, 160ms) ease;
+}
+
+.mdp__bascule:hover {
+  color: var(--accent-hot);
+}
+
+.mdp__bascule:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Affiché : l'œil prend la couleur chaude, l'état se voit sans lire. */
+.mdp__bascule[aria-pressed='true'] {
+  color: var(--accent-hot);
+}
+
+/* Masque le texte à l'écran en le gardant pour les lecteurs d'écran. */
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LE MOUVEMENT — la moitié visible de `src/components/Mouvement.tsx`.
+
+   Le moteur posait `bloc-scene`, `arme` et `vu` sur chaque bloc depuis le
+   début. Aucune des trois n'était déclarée ici. Il observait, il classait, il
+   réarmait au défilement — et rien ne bougeait, parce qu'il n'y avait rien à
+   bouger. C'est l'autre moitié de « le site est figé » : la CSP tuait
+   l'hydratation, et même hydraté, le geste n'existait pas.
+
+   Le geste, lui, est un REMPLISSAGE et pas une montée. Muret fait monter ses
+   blocs ; si on copiait, les deux sites auraient le même défilement. Ici le
+   masque s'ouvre de la gauche vers la droite, comme une aiguille balaie un
+   cadran, avec juste assez de translation pour que l'œil sente le poids.
+
+   LE DÉCALAGE est plafonné à cinq crans. Sans plafond, une grille de neuf
+   cartes finit par faire attendre la dernière presque une seconde : le
+   visiteur a déjà fini de lire quand elle arrive. Le décalage doit se sentir,
+   pas se subir.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.bloc-scene {
+  --i: 0;
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1),
+    clip-path 0.78s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition-delay: calc(min(var(--i), 5) * 80ms);
+  will-change: opacity, transform, clip-path;
+}
+
+/* L'état caché n'existe QUE quand le script a armé le bloc lui-même. Sans
+   JavaScript, la classe n'est jamais posée et la page s'affiche entière. */
+.bloc-scene.arme:not(.vu) {
+  opacity: 0;
+  transform: translateY(12px);
+  clip-path: inset(0 100% 0 0);
+}
+
+.bloc-scene.arme.vu {
+  opacity: 1;
+  transform: none;
+  clip-path: inset(0 0 0 0);
+}
+
+/* Le filet du filet. Le moteur sort déjà en `prefers-reduced-motion`, mais si
+   un jour quelqu'un arme les blocs autrement, le contenu reste lisible ici. */
+@media (prefers-reduced-motion: reduce) {
+  .bloc-scene,
+  .bloc-scene.arme:not(.vu) {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+    transition: none;
   }
 }

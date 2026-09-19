@@ -19,7 +19,7 @@ export default async function SignInPage({ searchParams }: Props) {
 
   return (
     <>
-      <header className="page-hero">
+      <header className="page-hero page-hero--visuel" data-visuel="connexion">
         <h1>Bon retour</h1>
         <p className="page-hero__sous">
           Retrouvez vos réservations, vos avoirs et le QR qui vous ouvre la porte.
