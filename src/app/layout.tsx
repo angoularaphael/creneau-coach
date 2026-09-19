@@ -38,7 +38,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#0c0d0f',
+  // L'encre Boxing Center, pas un gris resté d'avant la refonte : c'est la
+  // couleur de la barre du navigateur sur téléphone, donc la première chose
+  // que la marque colore, avant même que la page s'affiche.
+  themeColor: '#14162e',
 };
 
 export default async function RootLayout({

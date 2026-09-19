@@ -1835,3 +1835,150 @@ p {
   .cal__prix { font-size: 0.85rem; }
   .cal__etat { font-size: 0.62rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   L'ESPACE COACH EN CLAIR.
+
+   Le site public est noir : c'est une vitrine, on la regarde deux minutes et
+   l'encre profonde y fait le spectacle. Le tableau de bord n'est pas une
+   vitrine, c'est un OUTIL DE TRAVAIL. Un coach y revient plusieurs fois par
+   semaine pour caler des heures, vérifier un paiement, retrouver un QR. Sur ce
+   genre de surface, le fond clair fatigue moins et fait mieux ressortir les
+   tableaux et les formulaires.
+
+   La marque ne change pas pour autant : l'encre Boxing Center devient la
+   couleur du TEXTE au lieu d'être celle du fond. C'est le même bleu, retourné.
+
+   ── LE CUIVRE NE PASSE PAS SUR BLANC, ET C'EST UN PROBLÈME RÉEL ──────────
+
+   `--accent: #b8763a` sur blanc donne un contraste d'environ 3,4:1. La norme
+   d'accessibilité en demande 4,5:1 pour du texte courant. Repris tel quel, le
+   cuivre aurait été illisible pour une partie des gens — et invisible au
+   soleil, sur un téléphone, au bord d'un ring. C'est exactement la population
+   visée.
+
+   Le cuivre est donc FONCÉ en mode clair : `#8a5526`, qui monte à ~7,6:1 sur
+   blanc, aussi bien en texte qu'en fond de bouton avec du blanc dessus. Même
+   famille chromatique, même lecture de marque, mais lisible.
+
+   ── LE FOND N'EST PAS BLANC PUR ─────────────────────────────────────────
+
+   `#f7f7f8` et pas `#ffffff`. Sur une session longue, le blanc pur renvoie
+   trop de lumière et fait vibrer le texte. Les cartes, elles, sont en blanc
+   pur : c'est ce qui les détache du fond sans avoir à poser une ombre.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair {
+  --bg: #f7f7f8;
+  --bg-elevated: #ffffff;
+  --bg-soft: #eceef3;
+
+  --ink: #14162e;
+  --ink-muted: #565a73;
+
+  --line: rgba(20, 22, 46, 0.14);
+
+  --accent: #8a5526;
+  --accent-hot: #a3652f;
+
+  --fond: var(--bg);
+  --texte: var(--ink);
+
+  display: block;
+  min-height: 60vh;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Les surfaces héritées du thème sombre qui portaient une couleur en dur. */
+.espace-clair .section--encre {
+  background: var(--bg-soft);
+}
+
+.espace-clair .page-hero--visuel {
+  /* Le voile s'inverse : clair par-dessus la photo, sinon un bandeau noir
+     vient trancher au milieu d'une page blanche. */
+  background-image:
+    linear-gradient(
+      100deg,
+      rgba(247, 247, 248, 0.96) 0%,
+      rgba(247, 247, 248, 0.88) 46%,
+      rgba(236, 238, 243, 0.72) 100%
+    ),
+    var(--visuel);
+  border-bottom: 2px solid var(--accent);
+}
+
+/* Le bouton principal : fond cuivre foncé, texte blanc. ~7,6:1, conforme. */
+.espace-clair .btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.espace-clair .btn-primary:hover {
+  background: var(--accent-hot);
+  border-color: var(--accent-hot);
+}
+
+/* Le bouton secondaire doit rester VISIBLE : sur fond clair, une bordure à
+   15 % d'opacité disparaît. On la monte, et on pose un fond blanc pour que le
+   bouton se distingue de la page. */
+.espace-clair .btn-ghost {
+  background: #ffffff;
+  color: var(--ink);
+  border-color: rgba(20, 22, 46, 0.28);
+}
+
+.espace-clair .btn-ghost:hover {
+  border-color: var(--accent);
+}
+
+.espace-clair .note {
+  background: #fff8ef;
+  border: 1px solid rgba(138, 85, 38, 0.32);
+  color: #5c3a1a;
+}
+
+.espace-clair .form-error {
+  background: #fdf2f2;
+  border: 1px solid rgba(155, 28, 28, 0.34);
+  color: #8a1c1c;
+}
+
+.espace-clair input,
+.espace-clair select,
+.espace-clair textarea {
+  background: #ffffff;
+  color: var(--ink);
+  border-color: rgba(20, 22, 46, 0.24);
+}
+
+/* Le repère de focus est la seule chose qui guide au clavier. Sur fond clair,
+   celui du thème sombre devient invisible : il est redéfini, pas hérité. */
+.espace-clair :focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Le calendrier en clair : les créneaux libres restent la seule chose colorée. */
+.espace-clair .cal {
+  background: #ffffff;
+}
+
+.espace-clair .cal__creneau {
+  background: #ffffff;
+}
+
+.espace-clair .cal__creneau:hover:not(:disabled) {
+  background: #fdf7f1;
+}
+
+.espace-clair .cal__creneau[data-etat='blocked'] {
+  background: rgba(20, 22, 46, 0.05);
+}
+
+.espace-clair .cal__titre-jour {
+  background: var(--bg-soft);
+  color: var(--accent);
+}
