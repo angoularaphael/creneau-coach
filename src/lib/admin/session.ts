@@ -2,7 +2,9 @@ import 'server-only'
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
-import { boxplusConfigure, superAdminConfigure, type CompteBoxplus } from './boxplus'
+import { boxplusConfigure, superAdminConfigure } from './boxplus'
+import { personnelConfigure, type ComptePersonnel, type RolePersonnel } from './personnel'
+import { estClubId } from '@/domain/contrat'
 
 /**
  * Session back-office — cookie signé, httpOnly, chemin `/admin`.
@@ -15,7 +17,18 @@ import { boxplusConfigure, superAdminConfigure, type CompteBoxplus } from './box
 const COOKIE = 'bo_session'
 const DUREE_S = 8 * 60 * 60
 
-export type SessionBo = CompteBoxplus
+/**
+ * La session porte désormais le PÉRIMÈTRE, pas seulement l'identité.
+ *
+ * Avant, elle ne disait que `role: admin | super_admin` — aucun club. Le
+ * back-office lisait donc les cinq clubs pour tout le monde, ce que le cahier
+ * §20 interdit explicitement pour un responsable de salle.
+ *
+ * `clubId` est signé dans le cookie avec le reste. Il ne peut pas être changé
+ * par un paramètre d'URL, ni par un champ de formulaire : c'est toute la
+ * différence entre un filtre et une frontière.
+ */
+export type SessionBo = ComptePersonnel
 
 function secret(): string {
   const s = process.env.SESSION_SECRET
@@ -27,18 +40,39 @@ function secret(): string {
 
 export function porteConfiguree(): boolean {
   const sessionOk = Boolean(process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32)
-  return sessionOk && (boxplusConfigure() || superAdminConfigure())
+  return sessionOk && (personnelConfigure() || boxplusConfigure() || superAdminConfigure())
 }
 
+const ROLES: readonly RolePersonnel[] = ['salle', 'direction', 'super_admin']
+
+/**
+ * Relecture du contenu du cookie.
+ *
+ * Elle est STRICTE, et le point qui compte est le dernier : un rôle `salle`
+ * sans club est refusé. Si on laissait passer, `clubId: null` voudrait dire
+ * « tous les clubs » — un compte de salle mal formé deviendrait une direction.
+ * C'est le genre de glissement qui ne se voit jamais en relisant le code
+ * d'appel, parce qu'il se produit ici.
+ */
 function chargeValide(brut: unknown): SessionBo | null {
   if (!brut || typeof brut !== 'object') return null
   const o = brut as Record<string, unknown>
-  const email = String(o.email ?? '').trim().toLowerCase()
-  const role = String(o.role ?? '')
-  const name = String(o.name ?? email).slice(0, 80)
-  if (!email.includes('@') || email.length > 120) return null
-  if (role !== 'admin' && role !== 'super_admin') return null
-  return { email, role, name }
+
+  const identifiant = String(o.identifiant ?? '').trim().toLowerCase()
+  if (!identifiant || identifiant.length > 64) return null
+
+  const role = String(o.role ?? '') as RolePersonnel
+  if (!ROLES.includes(role)) return null
+
+  const brutClub = o.clubId
+  const clubId = brutClub == null ? null : String(brutClub)
+  if (clubId !== null && !estClubId(clubId)) return null
+
+  if (role === 'salle' && clubId === null) return null
+  if (role !== 'salle' && clubId !== null) return null
+
+  const libelle = String(o.libelle ?? identifiant).slice(0, 80)
+  return { identifiant, role, clubId, libelle }
 }
 
 export function creerJeton(compte: SessionBo): { valeur: string; maxAge: number } {

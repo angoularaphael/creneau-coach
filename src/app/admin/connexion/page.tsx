@@ -24,16 +24,14 @@ export default async function ConnexionBackOffice({
       <form action={actionEntrer} className="bo-porte__carte">
         <h1>Back-office</h1>
         <p className="bo-porte__sous">
-          Porte du <strong>back-office créneaux</strong> (<code>/admin</code>), pas
-          l’espace coach (<code>/auth/connexion</code>). E-mail + mot de passe
-          identiques à la boutique BOXPLUS.
+          Réservé à l’équipe Boxing Center. Les coachs se connectent{' '}
+          <a href="/auth/connexion">sur leur espace</a>.
         </p>
 
         {!configuree ? (
           <p className="bo-porte__alerte" role="alert">
-            La porte n’est pas configurée. Renseigne{' '}
-            <code>BOXPLUS_SUPABASE_URL</code>, <code>BOXPLUS_SUPABASE_SERVICE_ROLE_KEY</code> et{' '}
-            <code>SESSION_SECRET</code> (32 caractères minimum).
+            La connexion n’est pas disponible pour le moment. Prévenez l’équipe
+            technique.
           </p>
         ) : null}
 
@@ -45,19 +43,37 @@ export default async function ConnexionBackOffice({
           </p>
         ) : null}
 
+        {/*
+          LE CHAMP N'EST PLUS UN E-MAIL, ET ÇA A CASSÉ LA PORTE.
+
+          Il était en `type="email"`. Depuis que chaque salle a son identifiant
+          — « minimes », « st-cyprien » —, le navigateur refusait la saisie
+          AVANT l'envoi : le formulaire ne partait pas, et aucun message
+          n'expliquait pourquoi. Une validation trop zélée qui bloque la seule
+          façon correcte de se connecter.
+
+          `type="text"` accepte les deux : un identifiant de salle comme une
+          adresse BOXPLUS. `autoComplete="username"` est conservé pour que les
+          gestionnaires de mots de passe continuent de le reconnaître.
+        */}
         <label className="bo-porte__label" htmlFor="email">
-          E-mail
+          Identifiant
         </label>
         <input
           id="email"
           name="email"
-          type="email"
+          type="text"
           required
           autoComplete="username"
           autoFocus
-          inputMode="email"
+          autoCapitalize="none"
+          spellCheck={false}
           className="bo-porte__champ"
+          aria-describedby="aide-identifiant"
         />
+        <p id="aide-identifiant" className="bo-porte__aide">
+          Le nom de votre salle, ou votre adresse si vous êtes à la direction.
+        </p>
 
         <label className="bo-porte__label" htmlFor="mdp">
           Mot de passe

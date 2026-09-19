@@ -125,9 +125,40 @@ export default async function BackOffice({
   const studio = await studioActif()
 
   const params = await searchParams
-  const clubs = await listerClubs()
+  const tousLesClubs = await listerClubs()
 
-  const club = clubs.find((c) => c.id === params.club) ?? clubs[0]
+  /**
+   * LE PÉRIMÈTRE S'APPLIQUE ICI, AVANT TOUTE LECTURE.
+   *
+   * La page lisait `?club=` et servait le club demandé, quel qu'il soit. Le
+   * cahier §20 l'interdit : « Le responsable de salle ne devra pas pouvoir
+   * consulter les données des autres clubs. »
+   *
+   * On réduit donc la LISTE elle-même. C'est volontaire, et plus sûr que de
+   * filtrer les requêtes une par une : un club absent de la liste ne peut pas
+   * être sélectionné, ne peut pas apparaître dans un lien, et ne peut pas être
+   * atteint en bidouillant l'URL puisque la ligne suivante ne le trouvera pas.
+   * Filtrer au niveau des requêtes marche jusqu'au jour où quelqu'un ajoute une
+   * requête et oublie le filtre. Réduire la source ne s'oublie pas.
+   */
+  const clubs = staff.clubId
+    ? tousLesClubs.filter((c) => c.id === staff.clubId)
+    : tousLesClubs
+
+  const demande = params.club
+  const club = clubs.find((c) => c.id === demande) ?? clubs[0]
+
+  // Un responsable qui demande explicitement un autre club reçoit un refus, pas
+  // un repli silencieux sur le sien : un repli masquerait la tentative.
+  if (demande && staff.clubId && demande !== staff.clubId) {
+    return (
+      <p className="bo__vide-texte">
+        Ce club n’est pas dans votre périmètre. Vous avez accès au club{' '}
+        <strong>{staff.clubId}</strong>.
+      </p>
+    )
+  }
+
   if (!club) {
     return (
       <p className="bo__vide-texte">
@@ -172,14 +203,21 @@ export default async function BackOffice({
 
   return (
     <>
+      {/* Le bandeau dit QUI est connecté ET JUSQU'OÙ il voit. La seconde
+          moitié n'est pas décorative : un responsable de salle doit pouvoir
+          constater d'un coup d'œil qu'il est bien dans son club et nulle part
+          ailleurs — et une direction doit savoir qu'elle voit tout. */}
       <p className="bo__bandeau">
-        <strong>{studio ? 'Studio TEST' : 'BOXPLUS'}</strong>
+        <strong>
+          {studio ? 'Studio TEST' : staff.role === 'salle' ? 'Responsable de salle' : 'Direction'}
+        </strong>
         <span>
-          Connecté en tant que <strong>{staff.email}</strong>
-          {staff.role === 'super_admin' ? ' (super-admin)' : ''}.
-          {studio
-            ? ' Paiements Payplug en TEST sur ce navigateur.'
-            : ' Mêmes comptes que la boutique.'}
+          Connecté en tant que <strong>{staff.libelle}</strong>
+          {staff.role === 'super_admin' ? ' (super-admin)' : ''}.{' '}
+          {staff.clubId
+            ? `Périmètre : le club ${staff.clubId} uniquement.`
+            : 'Périmètre : les cinq clubs.'}
+          {studio ? ' Paiements Payplug en TEST sur ce navigateur.' : ''}
         </span>
         <span className="bo__actions">
           {studio ? (

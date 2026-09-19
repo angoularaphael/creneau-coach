@@ -10,7 +10,39 @@ Légende : ✅ fait · 🟡 partiel · ❌ absent
 
 ---
 
-## 0. Le trou bloquant, avant tout le reste
+## 0. ~~Le trou bloquant~~ — RÉPARÉ le 19 septembre
+
+Le cloisonnement par club est en place et **prouvé sur le serveur** :
+
+| Test | Résultat |
+|---|---|
+| `minimes` se connecte | « Périmètre : le club minimes uniquement » |
+| `minimes` demande `?club=portet` | **Refusé.** Le seul club cité sur toute la page est `minimes` |
+| `direction` se connecte | « Périmètre : les cinq clubs », les 5 sélectionnables |
+
+C'est le test contractuel du cahier §13.2, passé.
+
+Le périmètre est appliqué **à la source** : la liste des clubs est réduite avant
+toute lecture. Filtrer requête par requête marche jusqu'au jour où quelqu'un
+ajoute une requête et oublie le filtre ; réduire la source ne s'oublie pas.
+
+Les comptes vivent dans `coach_staff_accounts` : un par salle, plus la
+direction, plus un super-admin de secours pris dans l'environnement — pour
+qu'une porte reste ouverte même si la table devient inaccessible.
+
+**Les six comptes existent mais sont INACTIFS.** Pour les ouvrir :
+
+```
+node scripts/comptes-salle.mjs --activer-tous
+```
+
+À lancer dans ton terminal : les mots de passe s'affichent une seule fois et
+seule leur empreinte est conservée. Ils n'apparaissent volontairement nulle part
+dans cette conversation ni dans git.
+
+---
+
+## 0 bis. L'ancien constat, pour mémoire
 
 > Cahier §20 : « Le responsable de salle **ne devra pas pouvoir consulter les
 > données des autres clubs**. »

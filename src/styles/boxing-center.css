@@ -1982,3 +1982,13 @@ p {
   background: var(--bg-soft);
   color: var(--accent);
 }
+
+/* L'aide sous le champ d'identifiant. Elle existe parce que « identifiant »
+   seul ne dit pas QUOI saisir : le nom de sa salle, ou une adresse. Deux
+   publics, un seul champ — il faut le dire, pas le laisser deviner. */
+.bo-porte__aide {
+  margin: 0.4rem 0 1rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
