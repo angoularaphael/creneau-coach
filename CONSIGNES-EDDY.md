@@ -247,6 +247,61 @@ l'inverse : **on garde la salle, on ne refait que la photographie.**
 
 ---
 
+## 10. Les plannings réels — ce que la donnée dit vraiment
+
+Source : `Plannings/bc-plannings/src/data/plannings.js`, **224 lignes
+structurées** (salle, période, jour, créneau, activité, coach). Ce n'est pas une
+lecture d'image : c'est le fichier qui a servi à fabriquer les images.
+
+### Les espaces : 8 salles, pas 9
+
+Neuf valeurs de `salle` apparaissent, mais l'une d'elles n'est pas un lieu :
+
+| Salle | Période | Nature |
+|---|---|---|
+| saint-cyprien | été + rentrée | salle |
+| ramonville | été + rentrée | salle |
+| minimes | rentrée | salle |
+| etats-unis-boxe / -mma / -fitness | rentrée | 3 salles |
+| portet-combat / portet-mma | rentrée | 2 salles |
+| **portet-provisoire** | **provisoire-2026 seulement** | **planning intérimaire, pas une salle** |
+
+→ **8 salles permanentes** réparties sur 5 clubs. `portet-provisoire` est le
+planning de transition de Portet en attendant l'ouverture de ses deux salles.
+
+Le contrat du code (`src/domain/contrat.ts`) déclare déjà ces 8 espaces. **Mais
+les noms ne correspondent pas** : le code dit `mma-sol` et `boxe-fitness`, les
+plannings disent `mma` et `combat`.
+
+**À confirmer par Eddy** : quel nom la salle de Portet porte-t-elle pour le
+public — « Boxe / Fitness » comme dans le code, ou « Combat » comme dans le
+planning ? Je ne le renomme pas au hasard.
+
+### L'amplitude horaire
+
+Le cahier §5 liste 9 créneaux de 10h à 19h, **et** ajoute : « Les créneaux
+devront être paramétrables par salle depuis le back-office. » Le verrou
+`check (start_hour between 10 and 18)` rendait cette clause inapplicable — on
+ne règle pas ce que la base refuse.
+
+Les plannings réels descendent à **21h30**. Comme le cahier impose des créneaux
+d'**une heure pleine**, l'extension propre s'arrête à une heure de début à 20h,
+soit **10h → 21h, onze créneaux**. 21h30 imposerait une demi-heure.
+
+**Migration écrite : `0023_amplitude_du_soir.sql`. PAS ENCORE APPLIQUÉE** — la
+base était injoignable (`ECONNRESET`). Tant qu'elle ne l'est pas, le site
+continue d'annoncer 10h→19h, ce qui est la vérité du moteur actuel.
+
+**À confirmer par Eddy** : le tarif de 19h–21h. Le cahier §8 ne l'attribue pas.
+La migration prolonge les **heures pleines (15 €)** — hypothèse assumée, la plus
+continue avec le texte, et modifiable en deux `UPDATE` puisque c'est une table.
+
+**À coordonner avec Raphael** : la même contrainte `between 10 and 18` vit dans
+`20260918120000_coach_schema.sql`, son jeu de migrations. Si les deux jeux
+tournent sur la même base, la borne doit être reportée des deux côtés.
+
+---
+
 ## 8. Dettes de sécurité ouvertes — à traiter avant la mise en ligne
 
 1. **Faire tourner la clé `service_role` Supabase** : elle est passée en clair

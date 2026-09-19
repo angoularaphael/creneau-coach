@@ -1553,14 +1553,14 @@ p {
    ═══════════════════════════════════════════════════════════════════════ */
 
 @keyframes rebond {
-  0%   { opacity: 0; transform: translateY(-38px); }
+  0%   { opacity: 0; transform: translateY(-26px); }
   26%  { opacity: 1; transform: translateY(0); }
   30%  { animation-timing-function: cubic-bezier(0.3, 0, 0.6, 1); }
-  44%  { transform: translateY(-19px); }
+  44%  { transform: translateY(-13px); }
   58%  { transform: translateY(0); }
-  72%  { transform: translateY(-8px); }
+  72%  { transform: translateY(-5.5px); }
   86%  { transform: translateY(0); }
-  93%  { transform: translateY(-2.5px); }
+  93%  { transform: translateY(-1.8px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
@@ -1569,7 +1569,7 @@ p {
    bouillie. Un geste, un seul, par page. */
 [data-geste='rebond'] .bloc-scene.arme:not(.vu) {
   opacity: 0;
-  transform: translateY(-38px);
+  transform: translateY(-26px);
   clip-path: none;
 }
 
@@ -1579,6 +1579,29 @@ p {
   animation: rebond 1.3s cubic-bezier(0.34, 1.1, 0.5, 1) both;
   animation-delay: calc(min(var(--i), 4) * 110ms);
 }
+
+/* ── LE DRAPEAU DE PREMIÈRE PEINTURE ────────────────────────────────────
+   `Mouvement.tsx` le pose sur CHAQUE bloc déjà présent dans la fenêtre au
+   démarrage. Ce bloc reçoit `vu` et s'AFFICHE, sans jouer son geste — parce
+   qu'il était déjà là : il n'arrive pas.
+
+   C'est porté par l'élément et pas par la racine, volontairement. Un drapeau
+   global doit être retiré au bout d'un moment, et « un moment » est une course
+   contre le premier appel de l'observateur. Une marque par bloc ne court
+   contre rien : elle tombe quand le bloc se réarme, et à ce moment-là il a
+   vraiment quitté l'écran.
+
+   Sans ça, ouvrir une page déclenchait trois ou quatre rebonds simultanés que
+   personne n'avait demandés. Le geste doit répondre à une action du lecteur,
+   jamais au simple fait d'exister. */
+.bloc-scene.sans-geste,
+.bloc-scene.sans-geste.arme.vu {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* L'en-tête, lui, DOIT s'animer au chargement : c'est son moment. Il est donc
+   exclu du gel — le drapeau ne vise que les blocs de défilement. */
 
 @media (prefers-reduced-motion: reduce) {
   .hero-titre .ligne,

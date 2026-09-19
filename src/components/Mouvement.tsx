@@ -72,20 +72,78 @@ export function Mouvement() {
     }
     if (!cibles.length) return
 
-    const obs = new IntersectionObserver(
+    /**
+     * PREMIÈRE PEINTURE : ON NE JOUE RIEN — ET ON NE PARIE PAS SUR L'HORLOGE.
+     *
+     * Un bloc déjà à l'écran au chargement n'ARRIVE pas : il est là. L'animer,
+     * c'est animer l'état de départ. À l'ouverture d'une page, trois ou quatre
+     * blocs se mettaient à rebondir ensemble sans que le lecteur ait rien fait.
+     * Ça se lit comme un bug, et c'en est un.
+     *
+     * Premier essai : poser un drapeau le temps de deux images, puis le
+     * retirer. C'était une COURSE entre ce drapeau et le premier appel de
+     * l'observateur — et une course, ça se perd une fois sur deux, sur les
+     * machines des autres.
+     *
+     * Donc on ne mesure plus le temps, on mesure l'espace. Au démarrage, on
+     * lit les rectangles À LA MAIN, tout de suite : ce qui est déjà dans la
+     * fenêtre est marqué vu ET dispensé de geste. Aucun délai, aucun hasard.
+     *
+     * La dispense est retirée dès que le bloc se réarme. Un bloc vu au
+     * chargement, puis quitté franchement, rejouera son entrée au retour —
+     * c'est bien la règle voulue, et elle survit.
+     */
+    const hauteur = innerHeight
+
+    /**
+     * DEUX OBSERVATEURS, ET C'EST TOUT LE SUJET.
+     *
+     * Avec un seul, révéler et réarmer partagent la même frontière. Un bloc
+     * posé pile sur cette frontière bascule à chaque petit mouvement de
+     * molette : révélé, réarmé, révélé. En lecture normale, ça donne le
+     * « bouncy bouncy bouncy » — pas un défaut d'animation, un défaut
+     * d'hystérésis.
+     *
+     * Il en faut donc deux, avec des seuils différents :
+     *
+     *   RÉVÉLER  se déclenche tôt, au bord de l'écran (−8 %), pour que le bloc
+     *            soit déjà en place quand l'œil y arrive.
+     *   RÉARMER  ne se déclenche que LOIN, à 45 % d'écran sous le pli. Il faut
+     *            vraiment s'être éloigné pour que le bloc redevienne rejouable.
+     *
+     * Entre les deux, une large bande morte où rien ne change. C'est elle qui
+     * rend la lecture calme : on peut monter et descendre de quelques lignes
+     * sans réveiller quoi que ce soit.
+     */
+    const obsReveler = new IntersectionObserver(
       (entrees) => {
-        for (const e of entrees) {
-          if (e.isIntersecting) {
-            e.target.classList.add('vu')
-            continue
-          }
-          // On ne réarme que par le bas : sortir par le haut, c'est avoir lu.
-          if (e.boundingClientRect.top > 0) e.target.classList.remove('vu')
-        }
+        for (const e of entrees) if (e.isIntersecting) e.target.classList.add('vu')
       },
       { rootMargin: '0px 0px -8% 0px', threshold: 0 },
     )
-    cibles.forEach((c) => obs.observe(c))
+
+    const obsRearmer = new IntersectionObserver(
+      (entrees) => {
+        for (const e of entrees) {
+          if (e.isIntersecting) continue
+          // Toujours par le bas seulement : sortir par le haut, c'est avoir lu.
+          if (e.boundingClientRect.top > 0) {
+            // La dispense tombe avec le réarmement : au retour, le bloc rejoue.
+            e.target.classList.remove('vu', 'sans-geste')
+          }
+        }
+      },
+      { rootMargin: '45% 0px 45% 0px', threshold: 0 },
+    )
+
+    for (const c of cibles) {
+      const r = c.getBoundingClientRect()
+      if (r.top < hauteur && r.bottom > 0) {
+        c.classList.add('vu', 'sans-geste')
+      }
+      obsReveler.observe(c)
+      obsRearmer.observe(c)
+    }
 
     /**
      * LE FILET. Un bloc en attente est un bloc invisible. Si l'observateur ne
@@ -107,7 +165,8 @@ export function Mouvement() {
     return () => {
       clearTimeout(t)
       removeEventListener('pageshow', auRetour)
-      obs.disconnect()
+      obsReveler.disconnect()
+      obsRearmer.disconnect()
       /**
        * On rend le DOM tel qu'on l'a trouvé — `bloc-scene` COMPRIS.
        *
@@ -121,7 +180,7 @@ export function Mouvement() {
        * `vu` reste en place volontairement : au remontage le bloc se retrouve
        * `arme` ET `vu`, donc visible, et il n'y a pas de clignotement.
        */
-      cibles.forEach((c) => c.classList.remove('arme', 'bloc-scene'))
+      cibles.forEach((c) => c.classList.remove('arme', 'bloc-scene', 'sans-geste'))
     }
   }, [])
 
