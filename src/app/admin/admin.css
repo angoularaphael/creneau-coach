@@ -435,11 +435,114 @@
   margin: 0;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   LE BACK-OFFICE SUR TÉLÉPHONE.
+
+   Il était pensé pour un grand écran et simplement rétréci. Mesuré à 375 px :
+   la grille faisait 736 px, toutes les cibles 32 px de haut, et les libellés
+   11 px. Autrement dit : illisible, et intouchable au pouce.
+
+   On ne rétrécit pas une table de données — on la rend DÉFILABLE LISIBLEMENT.
+   Trois décisions, et la première fait tout le travail.
+
+   1. LA COLONNE DES HEURES SE FIGE. En défilant vers la droite, on perd
+      immédiatement de vue à quelle heure correspond la ligne qu'on lit. On se
+      retrouve à faire l'aller-retour pour vérifier. La colonne reste donc
+      collée à gauche : on sait toujours où on est.
+
+   2. LES CIBLES PASSENT À 44 px. C'est le minimum qu'un pouce vise sans
+      rater. En dessous, chaque geste devient une loterie — et ici un geste
+      raté bloque un créneau ou annule une réservation.
+
+   3. LES FILTRES DEVIENNENT UNE BANDE QUI DÉFILE. Cinq clubs empilés
+      verticalement mangeaient un écran entier avant d'arriver au planning.
+      En bande horizontale, ils tiennent sur deux lignes et le planning
+      remonte au-dessus du pli.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 60rem) {
+  /* ── La colonne des heures reste visible ─────────────────────────────── */
+  .bo__grille th[scope='row'] {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--bg-elevated);
+    /* Un filet plus marqué : c'est la couture entre le fixe et le mobile.
+       Sans lui, les chiffres des cellules semblent glisser SOUS l'heure. */
+    box-shadow: 1px 0 0 var(--line);
+  }
+
+  /* Le coin haut-gauche appartient aux deux en-têtes figés : il doit passer
+     par-dessus les deux, sinon il disparaît sous l'un ou sous l'autre. */
+  .bo__grille thead th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+  }
+
+  /* ── Dire que ça défile ──────────────────────────────────────────────
+     Un tableau coupé net ressemble à un tableau cassé. Le dégradé sur le
+     bord droit signale qu'il continue — c'est la seule façon de le faire
+     savoir sans écrire une phrase que personne ne lit. */
+  .bo__defilement {
+    position: relative;
+    background-image: linear-gradient(
+      to left,
+      color-mix(in srgb, var(--bg) 85%, transparent),
+      transparent 2.5rem
+    );
+    background-repeat: no-repeat;
+    background-position: right;
+    background-size: 2.5rem 100%;
+    background-attachment: local, scroll;
+  }
+
+  /* ── Les cibles au pouce ─────────────────────────────────────────────── */
+  .bo__onglet {
+    min-height: 44px;
+    padding: 0 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  /* Une bande qui défile, pas une pile. `scroll-snap` pour que chaque puce
+     s'aligne proprement au lieu de s'arrêter à moitié coupée. */
+  .bo__onglets {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    gap: 0.4rem;
+    padding-bottom: 0.25rem;
+    /* La barre de défilement masquée : elle prend une ligne entière sur
+       certains navigateurs pour une information que le dégradé donne déjà. */
+    scrollbar-width: none;
+  }
+
+  .bo__onglets::-webkit-scrollbar { display: none; }
+  .bo__onglet { scroll-snap-align: start; flex: 0 0 auto; }
+
+  /* ── Le texte redevient lisible ──────────────────────────────────────── */
+  .bo__grille thead th { font-size: 0.75rem; padding: 0.5rem 0.25rem; }
+  .bo__legende { font-size: 0.78rem; }
+  /* 0.72rem faisait 11,5 px — sous le seuil de lecture confortable. */
+  .bo__etiquette { font-size: 0.8rem; }
+
+  /* Les cellules du planning sont des boutons : même règle des 44 px. */
+  .bo__grille td button,
+  .bo__grille td a {
+    min-height: 44px;
+  }
+}
+
 @media (max-width: 40rem) {
   .bo { padding: 1rem 0.75rem 3rem; }
   .bo__filtres { gap: 0.875rem; }
   .bo__form { flex-direction: column; align-items: stretch; }
   .bo__champ, .bo__bouton { width: 100%; }
+
+  /* La grille se resserre pour réduire le défilement, sans descendre sous
+     ce qui reste lisible. 34rem au lieu de 46 : un tiers de moins à parcourir. */
+  .bo__grille { min-width: 34rem; }
+  .bo__grille th, .bo__grille td { border-right-width: 1px; }
 }
 
 /* Verdict du moteur après une action — succès comme refus.

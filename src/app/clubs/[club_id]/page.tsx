@@ -139,12 +139,34 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
           to={to}
         />
 
+        {/*
+          LE MOMENT OÙ LE VISITEUR DÉCIDE.
+
+          C'était une phrase avec deux liens de dix-huit pixels de haut. La
+          norme d'accessibilité tolère un lien dans une phrase — mais ici ce
+          n'est pas une phrase avec des liens dedans, c'est la SEULE porte vers
+          la réservation pour quelqu'un qui n'a pas de compte. Sur téléphone,
+          il visait deux mots soulignés au milieu d'un paragraphe.
+
+          Deux vrais boutons. Le premier est celui de la majorité — la plupart
+          des gens qui arrivent ici ont déjà un compte ; créer le sien est
+          l'exception, donc le bouton secondaire.
+        */}
         {!loggedIn ? (
-          <p className="note">
-            <Link href="/auth/connexion">Connectez-vous</Link> pour réserver une
-            heure — ou <Link href="/auth/inscription">créez votre compte</Link>,
-            c’est gratuit.
-          </p>
+          <div className="invite">
+            <p className="invite__texte">
+              Les créneaux sont visibles par tous. Pour en prendre un, il faut un
+              compte coach — c’est gratuit et ça prend une minute.
+            </p>
+            <div className="invite__actions">
+              <Link className="btn btn-primary" href="/auth/connexion">
+                Me connecter
+              </Link>
+              <Link className="btn btn-ghost" href="/auth/inscription">
+                Créer mon compte
+              </Link>
+            </div>
+          </div>
         ) : null}
 
         <Calendrier

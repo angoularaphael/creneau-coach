@@ -65,6 +65,46 @@ les données des quatre autres clubs.
 
 ---
 
+## 0 ter. Le responsive, mesuré — 19 septembre
+
+Eddy : « Le responsive n'est pas bon. Je vois la page /admin. C'est de la
+merde. » Mesuré avant correction, à 375 px :
+
+| Mesure | Avant | Après |
+|---|---|---|
+| Largeur de la grille du planning | 736 px | **544 px** |
+| Colonne des heures en défilant | perdue | **figée à gauche** |
+| Cibles sous 44 px | 8 | **0** |
+| Texte sous 12 px | 3 | **0** |
+| Débordement horizontal | 0 | 0 |
+
+Vérifié aussi à **320 px** (le plus petit téléphone encore en service) :
+aucun débordement de page, aucune cible trop petite, et les trois bandes de
+filtres comme la grille défilent au lieu de casser.
+
+### Les trois décisions
+
+1. **La colonne des heures se fige.** En défilant vers la droite on perdait de
+   vue la ligne qu'on lisait, donc on faisait l'aller-retour. C'est le seul
+   correctif qui change la nature de l'outil, pas juste son confort.
+2. **Les filtres passent en bandes défilantes.** Cinq clubs empilés
+   verticalement mangeaient un écran entier avant d'arriver au planning.
+3. **Les cibles montent à 44 px** — y compris les liens de pied de page, qui
+   faisaient 19 px sur tout le site, et le logo, qui en faisait 30.
+
+### Ce qui n'a PAS été « corrigé », et pourquoi
+
+Trois liens restent sous 44 px : ils sont au fil d'une phrase, et la norme
+WCAG 2.5.8 les exempte explicitement. Les gonfler casserait l'interligne sans
+rien gagner.
+
+En revanche l'un d'eux n'était pas un lien dans une phrase mais **le seul
+chemin vers la réservation** pour un visiteur sans compte, traité comme une
+note de bas de page. Il est devenu un vrai bloc avec deux boutons. Ce n'était
+pas un problème d'accessibilité, c'était un problème de conversion.
+
+---
+
 ## 1. Back-office responsable de salle — cahier §20
 
 | # | Exigence | État | Où |

@@ -114,6 +114,10 @@ p {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
+  /* Le logo est le lien de retour à l'accueil, et le plus utilisé du site.
+     Il faisait 30 px de haut. La hauteur de cible ne dépend pas de la taille
+     de l'image : elle est posée ici, l'image reste à sa taille. */
+  min-height: 44px;
 }
 
 .brand img {
@@ -329,12 +333,26 @@ p {
 .site-footer nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
+  /* Pas de `gap` vertical : la hauteur de cible sert d'espacement. Cumuler
+     les deux écarterait les liens de deux centimètres. */
+  gap: 0 1.25rem;
   margin-bottom: 1rem;
   font-family: var(--pile-titre);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-size: 0.78rem;
+}
+
+/* LES LIENS DE PIED DE PAGE FAISAIENT 19 PIXELS DE HAUT.
+   Mentions légales, confidentialité, contact — ce sont précisément les liens
+   qu'on cherche quand on doute, souvent sur un téléphone, souvent pressé. À
+   19 px, on tape à côté. La zone cliquable passe à 44 px sans que le texte
+   bouge : c'est le PADDING qui grandit, pas la typographie. */
+.site-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.125rem;
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -441,7 +459,7 @@ p {
   flex-wrap: wrap;
   gap: 0.25rem 0.75rem;
   margin: 0;
-  font-size: 0.6875rem;
+  font-size: 0.78rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-muted);
@@ -988,10 +1006,15 @@ p {
   padding-inline: var(--space);
 }
 
-/* Le surtitre : la seule chose en cuivre d'une section de contenu. */
+/* Le surtitre : la seule chose en cuivre d'une section de contenu.
+
+   Il était à 0.6875rem, soit 11 px. Une petite capitale espacée à 11 px se
+   devine plus qu'elle ne se lit, et c'est elle qui annonce de quoi parle la
+   section. 0.78rem (12,5 px) garde la discrétion voulue sans tomber sous le
+   seuil de lecture. */
 .sur {
   margin: 0 0 0.5rem;
-  font-size: 0.6875rem;
+  font-size: 0.78rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent-hot);
@@ -1991,4 +2014,43 @@ p {
   font-size: 0.8rem;
   line-height: 1.45;
   color: var(--ink-muted);
+}
+
+/* ── L'INVITATION À SE CONNECTER ────────────────────────────────────────
+   Elle remplace une phrase contenant deux liens fins. Ce n'est pas qu'une
+   question de taille de cible : c'est le seul chemin vers la réservation pour
+   un visiteur sans compte, et il était traité comme une note de bas de page.
+
+   Sur téléphone les deux boutons s'empilent en pleine largeur ; dès qu'il y a
+   la place, ils se posent côte à côte. Jamais l'inverse. */
+.invite {
+  margin: 1.25rem 0 1.75rem;
+  padding: 1.125rem 1.25rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: var(--bg-elevated);
+}
+
+.invite__texte {
+  margin: 0 0 1rem;
+  max-width: 52ch;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+.invite__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.invite__actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (min-width: 30rem) {
+  .invite__actions { flex-direction: row; }
+  .invite__actions .btn { width: auto; }
 }
