@@ -10,24 +10,81 @@
   padding: calc(var(--space) * 1.5) var(--space) calc(var(--space) * 4);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   LE BANDEAU D'IDENTITÉ.
+
+   Il était stylé comme une ALERTE : bordure cuivre, fond cuivré, filet épais
+   à gauche. Or il ne dit rien d'inquiétant — il dit qui vous êtes et jusqu'où
+   vous voyez. Résultat, chaque page du back-office s'ouvrait sur un encadré
+   orange qui réclamait l'attention pour une information de contexte.
+
+   Le coût n'est pas esthétique. À force de voir une alerte qui ne veut rien
+   dire, on cesse de regarder les alertes. Le cuivre est donc RENDU au seul
+   état qui le mérite ici : le mode studio, où les paiements passent en test
+   et où se tromper coûte de l'argent.
+
+   Et `align-items: baseline` alignait la ligne de base d'un groupe de boutons
+   de 44 px sur celle d'un texte de 20 px : les boutons descendaient sous la
+   ligne, le bandeau montait à 70 px de haut pour un contenu qui en fait 44.
+   ═══════════════════════════════════════════════════════════════════════ */
+
 .bo__bandeau {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.25rem;
-  border: 1px solid var(--warn);
-  border-left-width: 3px;
-  background: color-mix(in srgb, var(--warn) 8%, transparent);
-  border-radius: 4px;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.625rem 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--line);
+  background: var(--bg-elevated);
+  border-radius: 5px;
   font-size: 0.8125rem;
   line-height: 1.5;
+}
+
+/* Le rôle : une étiquette, pas un cri. */
+.bo__bandeau > strong:first-child {
+  flex: 0 0 auto;
+  padding: 0.2rem 0.55rem;
+  border-radius: 3px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-hot);
+}
+
+.bo__bandeau > span:not(.bo__actions) {
+  flex: 1 1 18rem;
+  min-width: 0;
+  color: var(--ink-muted);
 }
 
 .bo__bandeau strong {
   font-family: var(--font-display), sans-serif;
   letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+/* `.bo__actions` est déjà défini plus bas — un seul endroit, pas deux. */
+
+/* ── LE MODE STUDIO, LUI, EST UN AVERTISSEMENT ─────────────────────────
+   C'est le seul état de cette barre qui demande de la vigilance : les
+   paiements sont en test, et oublier de l'éteindre fait passer de vraies
+   transactions pour des essais. Il reprend donc le cuivre que le bandeau
+   ordinaire vient d'abandonner. */
+.bo__bandeau[data-studio='true'] {
+  border-color: var(--etat-attente);
+  border-left-width: 3px;
+  background: color-mix(in srgb, var(--etat-attente) 10%, transparent);
+}
+
+.bo__bandeau[data-studio='true'] > strong:first-child {
+  background: var(--etat-attente);
+  border-color: var(--etat-attente);
+  color: #14162e;
 }
 
 .bo h1 {
@@ -519,6 +576,30 @@
 
   .bo__onglets::-webkit-scrollbar { display: none; }
   .bo__onglet { scroll-snap-align: start; flex: 0 0 auto; }
+
+  /* DIRE QUE ÇA DÉFILE, SINON ÇA RESSEMBLE À UN BUG.
+     Sans repère, la dernière puce est coupée en plein mot au bord de la
+     carte : on ne lit pas « ça continue », on lit « c'est cassé ». Le
+     dégradé sur l'arête droite fait la différence entre les deux.
+
+     `mask-image` plutôt qu'un dégradé de fond : le masque s'applique au
+     CONTENU, donc les puces s'estompent réellement en arrivant au bord. Un
+     fond posé par-dessus laisserait le texte net sous un voile, ce qui se
+     voit et fait sale. */
+  .bo__onglets[data-deborde='true'] {
+    mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+  }
+
+  /* `data-deborde` vient de `src/components/Debordement.tsx`, qui mesure.
+     Sans cette condition, une bande d'une seule puce qui tient largement
+     s'affichait à moitié éteinte — l'impression de bug qu'on voulait
+     justement éviter.
+
+     Ce qu'on NE fait pas : éteindre le dégradé une fois arrivé au bout du
+     défilement. La CSS ne sait pas où en est un défilement, et les animations
+     pilotées au défilement ne sont pas servies partout. Deux rems permanents :
+     assez pour signaler, trop peu pour gêner la dernière puce. */
 
   /* ── Le texte redevient lisible ──────────────────────────────────────── */
   .bo__grille thead th { font-size: 0.75rem; padding: 0.5rem 0.25rem; }

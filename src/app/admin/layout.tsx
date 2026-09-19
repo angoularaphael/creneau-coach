@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import './admin.css'
 
+import { Debordement } from '@/components/Debordement'
+
 /**
  * Le back-office n'est jamais indexable. Trois couches, volontairement redondantes :
  *   1. ces métadonnées ;
@@ -14,5 +16,12 @@ export const metadata: Metadata = {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <div className="bo">{children}</div>
+  return (
+    <div className="bo">
+      {children}
+      {/* Marque les bandes de filtres qui débordent vraiment, pour que le
+          dégradé de défilement ne s'applique pas à celles qui tiennent. */}
+      <Debordement selecteur=".bo__onglets" />
+    </div>
+  )
 }

@@ -294,7 +294,7 @@ export default async function BackOffice({
 
           La règle est générale : dès qu'un conteneur porte un bouton, un
           formulaire ou une liste, ce n'est pas un paragraphe. */}
-      <div className="bo__bandeau">
+      <div className="bo__bandeau" data-studio={studio}>
         <strong>
           {studio ? 'Studio TEST' : staff.role === 'salle' ? 'Responsable de salle' : 'Direction'}
         </strong>

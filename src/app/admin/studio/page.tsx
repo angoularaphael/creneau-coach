@@ -16,7 +16,7 @@ export default async function PageStudio() {
     <>
       {/* `div` et non `p` : ce bandeau porte des formulaires, donc du
           contenu de flux. Voir la note dans `src/app/admin/page.tsx`. */}
-      <div className="bo__bandeau">
+      <div className="bo__bandeau" data-studio={on}>
         <strong>{on ? 'Studio allumé' : 'Studio éteint'}</strong>
         <span>
           {on
