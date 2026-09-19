@@ -12,16 +12,41 @@
  */
 
 /**
- * Politique de sécurité du contenu.
+ * OÙ VIT LA POLITIQUE DE SÉCURITÉ DU CONTENU — et pourquoi à deux endroits.
  *
- * `style-src 'unsafe-inline'` est toléré : Next injecte ses propres styles en ligne.
- * `script-src` reste sans nonce en v1 — le durcir touche le rendu du lot B et fera
- * l'objet d'une passe dédiée.
+ * Pour tout le site, elle est posée PAR REQUÊTE dans `src/proxy.ts`, avec un
+ * nonce. C'est la seule façon d'autoriser les scripts d'amorçage de Next sans
+ * ouvrir `'unsafe-inline'` à tout le monde : un en-tête statique ne sait pas
+ * fabriquer une valeur imprévisible à chaque appel.
  *
- * `frame-ancestors 'none'` est l'exigence anti-clickjacking du cahier §2.4 : ni le
- * tunnel de paiement, ni le pad de signature ne doivent pouvoir être encadrés par
- * un tiers. `frame-src` n'ouvre que les deux prestataires de paiement du lot A.
+ * SAUF `/admin`. Le matcher du proxy exclut cette route depuis que le lot A a
+ * constaté qu'elle y perdait le `Set-Cookie` de son login. Le back-office
+ * n'était donc plus couvert du tout : c'est un trou, sur la surface la plus
+ * sensible du site, et il se rebouche ici.
+ *
+ * La politique ci-dessous est plus faible d'un cran, et il faut le dire : sans
+ * proxy il n'y a pas de nonce, donc `script-src` doit tolérer l'inline pour que
+ * la page démarre. Tout le reste reste fermé — l'origine, les cadres, les
+ * formulaires, les connexions sortantes. Mieux vaut un cran de moins partout
+ * qu'un back-office à nu.
+ *
+ * `frame-ancestors 'none'` est l'exigence anti-clickjacking du cahier §2.4 : ni
+ * le tunnel de paiement, ni le pad de signature ne doivent pouvoir être encadrés
+ * par un tiers.
  */
+const CSP_ADMIN = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://res.cloudinary.com",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  'upgrade-insecure-requests',
+].join('; ')
 /*
  * La Content-Security-Policy N'EST PLUS ICI — elle est dans `src/proxy.ts`.
  *
@@ -77,6 +102,8 @@ const nextConfig = {
         headers: [
           { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
           { key: 'Cache-Control', value: 'private, no-store, max-age=0' },
+          // Le proxy ne passe pas ici : voir la note en tête de fichier.
+          { key: 'Content-Security-Policy', value: CSP_ADMIN },
         ],
       },
       {

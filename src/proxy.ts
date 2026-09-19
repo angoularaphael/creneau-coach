@@ -144,9 +144,21 @@ export async function proxy(request: NextRequest) {
 
   const chemin = request.nextUrl.pathname
 
-  // Le back-office a sa propre session (`bo_session`). On ne passe PAS par
-  // `NextResponse.next({ request })` : ça a déjà avalé le Set-Cookie du login
-  // (succès silencieux → retour au formulaire).
+  /**
+   * ATTENTION : cette branche ne s'exécute PAS aujourd'hui.
+   *
+   * Le `matcher`, en bas de ce fichier, exclut `admin`. Le lot A l'a retiré du
+   * proxy parce que la route y perdait le `Set-Cookie` de son login. Ce qui suit
+   * est donc un filet, pas le chemin actif — et le dire évite à la prochaine
+   * personne de passer une heure à déboguer du code qui ne tourne jamais.
+   *
+   * Ce que ça implique, et qui compte plus que le code mort : le contrôle
+   * d'accès au back-office ne repose PAS sur le proxy. Il est fait dans
+   * `src/lib/dal/back-office.ts`, qui vérifie la signature du jeton. C'était
+   * déjà la règle avant ce retrait ; elle est maintenant la seule en vigueur.
+   *
+   * Sa politique de sécurité du contenu, elle, est servie par `next.config.mjs`.
+   */
   if (chemin.startsWith('/admin')) {
     if (chemin.startsWith('/admin/connexion')) return adminSuivant()
     // Présence seulement. La SIGNATURE du jeton est vérifiée dans la couche de
