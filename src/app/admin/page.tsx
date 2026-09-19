@@ -281,8 +281,20 @@ export default async function BackOffice({
       {/* Le bandeau dit QUI est connecté ET JUSQU'OÙ il voit. La seconde
           moitié n'est pas décorative : un responsable de salle doit pouvoir
           constater d'un coup d'œil qu'il est bien dans son club et nulle part
-          ailleurs — et une direction doit savoir qu'elle voit tout. */}
-      <p className="bo__bandeau">
+          ailleurs — et une direction doit savoir qu'elle voit tout.
+
+          C'EST UN `div`, ET CE N'EST PAS UN DÉTAIL DE STYLE.
+
+          C'était un `<p>` contenant trois `<form>`. Or `<p>` n'accepte que du
+          contenu de phrasé, et un formulaire est du contenu de flux : le
+          navigateur REFERME le paragraphe tout seul avant le premier `<form>`.
+          L'arbre rendu côté client cesse alors de ressembler à celui du
+          serveur, et React refuse d'hydrater — toute la page perd ses
+          interactions, pas seulement ce bandeau.
+
+          La règle est générale : dès qu'un conteneur porte un bouton, un
+          formulaire ou une liste, ce n'est pas un paragraphe. */}
+      <div className="bo__bandeau">
         <strong>
           {studio ? 'Studio TEST' : staff.role === 'salle' ? 'Responsable de salle' : 'Direction'}
         </strong>
@@ -317,7 +329,7 @@ export default async function BackOffice({
             </button>
           </form>
         </span>
-      </p>
+      </div>
 
       {params.resultat ? (
         <p

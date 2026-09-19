@@ -14,7 +14,9 @@ export default async function PageStudio() {
 
   return (
     <>
-      <p className="bo__bandeau">
+      {/* `div` et non `p` : ce bandeau porte des formulaires, donc du
+          contenu de flux. Voir la note dans `src/app/admin/page.tsx`. */}
+      <div className="bo__bandeau">
         <strong>{on ? 'Studio allumé' : 'Studio éteint'}</strong>
         <span>
           {on
@@ -44,7 +46,7 @@ export default async function PageStudio() {
             </button>
           </form>
         </span>
-      </p>
+      </div>
 
       <h1>Comment ça marche</h1>
       <p className="bo__sous">

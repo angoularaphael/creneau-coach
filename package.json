@@ -14,7 +14,7 @@
     "bootstrap": "node bootstrap.js",
     "typecheck": "tsc --noEmit",
     "typegen": "next typegen",
-    "lint": "eslint",
+    "lint": "eslint && node scripts/verifier-imbrications.mjs",
     "lint:fix": "eslint --fix",
     "test": "node --test test/*.test.js",
     "test:slots": "node --test test/slots-contract.test.mjs",
@@ -26,7 +26,8 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:reset": "node scripts/db-migrate.mjs --reset",
     "db:test": "node scripts/db-test.mjs",
-    "mcp": "node mcp/server.mjs"
+    "mcp": "node mcp/server.mjs",
+    "verif:html": "node scripts/verifier-imbrications.mjs"
   },
   "engines": {
     "node": ">=20.9.0"
