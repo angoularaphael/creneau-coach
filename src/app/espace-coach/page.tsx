@@ -1,4 +1,4 @@
-import { libelleMoyen, libellePaiement, libelleStatut } from '@/lib/libelles-coach';
+import { libelleMoyen, libellePaiement, libelleStatut, retourPaiement } from '@/lib/libelles-coach';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -25,7 +25,12 @@ function when(iso: string) {
   }).format(new Date(iso));
 }
 
-export default async function CoachHomePage() {
+export default async function CoachHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ paiement?: string }>
+}) {
+  const retour = retourPaiement(await searchParams);
   const me = await getSessionMe();
   if (!me) redirect('/auth/connexion?next=/espace-coach');
   if (me.status === 'suspended') redirect('/espace-coach/suspendu');
@@ -85,6 +90,12 @@ export default async function CoachHomePage() {
           {formatCents(me.credits_cents ?? 0)}.
         </p>
       </header>
+
+      {retour ? (
+        <p className="note reservation-retour" data-ton={retour.ton} role="status">
+          {retour.texte}
+        </p>
+      ) : null}
 
       <section className="section">
         <div className="section-head">

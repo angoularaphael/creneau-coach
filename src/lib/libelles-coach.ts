@@ -15,6 +15,8 @@
  * un statut, on le VOIT au lieu d'afficher une case vide.
  */
 
+import { RESEAU } from '@/lib/seo/verite'
+
 const STATUT: Record<string, string> = {
   held: 'Place gardée — paiement à faire',
   awaiting_signature: 'Payée — documents à signer',
@@ -52,3 +54,29 @@ export const libelleStatut = (v: string): string => STATUT[v] ?? v
 export const libellePaiement = (v: string): string => PAIEMENT[v] ?? v
 export const libelleMoyen = (v: string | null | undefined): string => (v ? (MOYEN[v] ?? v) : '')
 export const libelleEspace = (v: string): string => ESPACE[v] ?? v
+
+/**
+ * Ce que le coach lit en revenant du prestataire de paiement. Des CODES dans
+ * l'URL, jamais du texte libre : un lien fabriqué ne fait pas afficher un
+ * message arbitraire.
+ */
+const RETOURS_PAIEMENT: Record<string, { ton: 'ok' | 'info' | 'alerte'; texte: string }> = {
+  attente: { ton: 'info', texte: 'PayPal valide encore votre paiement. Rechargez cette page dans quelques minutes pour voir sa confirmation.' },
+  deja: { ton: 'info', texte: 'Cette réservation était déjà réglée : aucun second paiement n’a été pris.' },
+  expire: { ton: 'alerte', texte: 'Le délai pour payer était écoulé et la place a été libérée. Aucun paiement n’a été pris.' },
+  refuse: { ton: 'alerte', texte: 'Le paiement n’a pas abouti. Aucun paiement n’a été pris : vous pouvez réessayer.' },
+  rembourse: { ton: 'alerte', texte: 'Votre paiement est arrivé alors que la place n’était plus disponible : il vous a été remboursé automatiquement.' },
+  erreur: {
+    ton: 'alerte',
+    texte: `Votre paiement n’a pas pu être rattaché à la réservation. Appelez Boxing Center au ${RESEAU.telephone.affiche} : il vous sera remboursé.`,
+  },
+  inconnu: { ton: 'alerte', texte: 'Ce paiement est introuvable. Aucun paiement n’a été pris.' },
+  annule: { ton: 'info', texte: 'Paiement annulé : rien n’a été pris. Votre place reste gardée jusqu’à la fin du délai affiché.' },
+};
+
+/** Le message de retour de paiement à afficher, d'après les paramètres de l'URL. */
+export function retourPaiement(q: { paiement?: string; annule?: string; cancelled?: string }) {
+  return (
+    RETOURS_PAIEMENT[q.paiement ?? ''] ?? (q.annule || q.cancelled ? RETOURS_PAIEMENT.annule : undefined)
+  )
+}

@@ -19,9 +19,18 @@ function jour(iso: string) {
 export function ReservationActions({
   reservation,
   paiementsTest = false,
+  paypalDisponible = false,
+  optionEchue = false,
+  noteEchue = true,
 }: {
   reservation: Reservation
   paiementsTest?: boolean
+  /** Vrai seulement si des clés PayPal sont configurées pour ce mode (réel ou test). */
+  paypalDisponible?: boolean
+  /** Option dont le délai de paiement est passé (calculé par le serveur). */
+  optionEchue?: boolean
+  /** Faux quand la page affiche déjà un message de retour qui dit la même chose. */
+  noteEchue?: boolean
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -82,10 +91,16 @@ export function ReservationActions({
         {jour(reservation.starts_at)}, de {heure(reservation.starts_at)} à {heure(reservation.ends_at)}
       </p>
       <p className="muted">
-        {libelleStatut(reservation.status)}
-        {reservation.status !== 'held' ? ` · ${libellePaiement(reservation.payment_status)}` : ''}
+        {optionEchue ? libelleStatut('expired') : libelleStatut(reservation.status)}
+        {reservation.payment_status !== 'unpaid' ? ` · ${libellePaiement(reservation.payment_status)}` : ''}
       </p>
-      {reservation.hold_expires_at && reservation.status === 'held' ? (
+      {(optionEchue || reservation.status === 'expired') && noteEchue ? (
+        <p className="note">
+          Le délai pour payer est écoulé : cette place a été libérée et aucun paiement n’a été pris.{' '}
+          <a href="/clubs">Choisir un autre créneau</a>.
+        </p>
+      ) : null}
+      {reservation.hold_expires_at && reservation.status === 'held' && !optionEchue ? (
         <p className="note">
           Votre place est gardée jusqu’à {heure(reservation.hold_expires_at)}. Passé ce délai,
           elle est libérée pour les autres coachs.
@@ -96,7 +111,7 @@ export function ReservationActions({
         {error ? <p className="form-error">{error}</p> : null}
       </div>
 
-      {reservation.status === 'held' ? (
+      {reservation.status === 'held' && !optionEchue ? (
         <div className="reservation-actions__boutons">
           <button
             type="button"
@@ -106,9 +121,18 @@ export function ReservationActions({
           >
             Payer par carte{paiementsTest ? ' (mode test)' : ''}
           </button>
-          {/* PayPal n'est pas branché sur ce parcours : la route de paiement le
-              refuse. Un bouton qui mène à « pas encore branché » n'a rien à
-              faire devant un coach — il reviendra quand le paiement existera. */}
+          {/* Affiché seulement quand PayPal est configuré : un bouton qui mène à
+              « indisponible » n'a rien à faire devant un coach. */}
+          {paypalDisponible ? (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              disabled={busy}
+              onClick={() => pay('paypal')}
+            >
+              Payer avec PayPal{paiementsTest ? ' (mode test)' : ''}
+            </button>
+          ) : null}
           <button
             type="button"
             className="btn btn-ghost"

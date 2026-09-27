@@ -55,5 +55,12 @@ export async function POST(req: Request) {
   if (verdict === 'mismatch') {
     return jsonError(409, 'PRICE_MISMATCH', 'Montant ou réservation incohérents.')
   }
+  if (verdict === 'indisponible') {
+    // Un paiement Payplug est arrivé pour une réservation déjà payée, expirée
+    // ou annulée : l'argent est chez Payplug sans réservation en face. Payplug
+    // capture à la validation, on ne peut pas l'éviter en amont — on le signale
+    // pour un remboursement depuis le tableau de bord Payplug.
+    console.error('[payplug] PAIEMENT EN TROP — à rembourser', { reservationId, paymentId: payment.id })
+  }
   return jsonOk({ ok: true, status: verdict })
 }

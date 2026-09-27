@@ -7,6 +7,7 @@ import { exigerSession } from '@/lib/dal/acteur'
 import { lireMonProfil } from '@/lib/dal/profil'
 import { estUrlCheckoutSure } from '@/lib/paiement-url'
 import { creerPaiementPayplug } from '@/lib/payments/payplug'
+import { creerCommandePaypal } from '@/lib/payments/paypal'
 import { studioActif } from '@/lib/studio/session'
 import {
   checkRateLimit,
@@ -112,10 +113,40 @@ export async function POST(req: NextRequest, ctxRoute: Ctx) {
     )
   }
 
+  if (body.data.provider === 'paypal') {
+    const commande = await creerCommandePaypal({
+      reservation: resa,
+      test: await studioActif(),
+      siteUrl: (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin).replace(/\/$/, ''),
+      idempotence: cle,
+    }).catch((e) => {
+      console.error(`[${ctx.requestId}] paypal`, e instanceof Error ? e.message : e)
+      return null
+    })
+    if (!commande) {
+      return reponseErreur(
+        'PAYMENT_REQUIRED',
+        { provider: 'paypal' },
+        'PayPal est momentanément indisponible. Payez par carte ou avec un avoir.',
+        ctx.requestId,
+      )
+    }
+    return reponseJson(
+      {
+        reservation_id: resa.id,
+        provider: 'paypal',
+        checkout_url: commande.checkout_url,
+        status: resa.status,
+      },
+      200,
+      ctx.requestId,
+    )
+  }
+
   return reponseErreur(
     'PAYMENT_REQUIRED',
     { provider: body.data.provider },
-    'Ce prestataire n’est pas encore branché. Utilisez un avoir ou Payplug.',
+    'Moyen de paiement inconnu. Payez par carte, PayPal ou avec un avoir.',
     ctx.requestId,
   )
 }
