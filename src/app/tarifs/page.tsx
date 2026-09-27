@@ -119,8 +119,9 @@ export default function TarifsPage() {
           <p>
             L’accès à l’espace réservé et à tout son équipement fixe — rings, sacs
             de frappe, tatamis, cage ou octogone selon le club —, votre QR code
-            d’entrée, et la présence de vos clients sans qu’ils aient à être
-            adhérents. Vous n’apportez que l’équipement individuel.
+            d’entrée, et la présence de votre client — un client par
+            réservation, en cours privé — sans qu’il ait à être adhérent. Vous
+            n’apportez que l’équipement individuel.
           </p>
         </div>
       </section>

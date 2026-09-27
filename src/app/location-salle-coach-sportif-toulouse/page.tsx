@@ -52,9 +52,9 @@ const QUESTIONS: readonly QuestionReponse[] = [
     reponse: `Oui. L’article ${LOI.qualification.article} du Code du sport réserve l’encadrement rémunéré d’une activité physique aux titulaires d’un diplôme ou d’une qualification reconnue, et l’article ${LOI.declaration.article} impose de déclarer son activité. Vos justificatifs sont demandés une seule fois, à l’inscription.`,
   },
   {
-    question: 'Mes clients doivent-ils être adhérents du club ?',
+    question: 'Mon client doit-il être adhérent du club ?',
     reponse:
-      'Non. Vous réservez le créneau, vous entrez avec vos clients et vous en restez responsable pendant l’heure. Ils n’ont pas besoin d’abonnement Boxing Center.',
+      'Non. Vous réservez le créneau et vous entrez avec votre client — un client par réservation, en cours privé — et vous en restez responsable pendant l’heure. Il n’a pas besoin d’abonnement Boxing Center.',
   },
   {
     question: 'Serai-je seul dans la salle ?',
@@ -276,8 +276,9 @@ export default function Page() {
           <p>
             Chaque espace accueille au maximum deux coachs à la même heure. Vous
             voyez le nombre de places restantes avant de réserver, et un créneau
-            complet ne s’affiche plus comme disponible. Vous ne travaillerez jamais
-            à cinq groupes sur le même tapis.
+            complet ne s’affiche plus comme disponible. Chaque coach y vient avec
+            un seul client : jamais plus de quatre personnes en séance privée sur
+            le même espace.
           </p>
         </div>
       </section>

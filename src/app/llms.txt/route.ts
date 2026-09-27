@@ -108,6 +108,7 @@ ${clubs}
 
 - Créneaux d’une heure, du lundi au samedi, de 10 h à 19 h. Fermé le dimanche.
 - ${REGLAGES_DEFAUT.capacity_per_slot} coachs au maximum par espace et par heure.
+- Un client par réservation : c’est un cours privé, le coach et son client.
 - ${REGLAGES_DEFAUT.max_active_reservations} réservations en cours au maximum par coach.
 - Annulation jusqu’à ${REGLAGES_DEFAUT.cancel_min_hours} h avant : avoir du même montant, réutilisable dans n’importe quel club. Pas de remboursement.
 - Moins de ${REGLAGES_DEFAUT.cancel_min_hours} h avant : annulation impossible, l’heure reste due.

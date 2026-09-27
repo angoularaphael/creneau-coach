@@ -55,11 +55,11 @@ const QUESTIONS = [
   },
   {
     q: 'Puis-je venir avec plusieurs clients ?',
-    r: 'Oui, dans la limite de ce que l’espace permet. Vous restez responsable des personnes que vous faites entrer, et elles n’ont pas besoin d’être adhérentes du club.',
+    r: 'Non : une réservation, c’est un cours privé — vous et un client. Pour un deuxième client, réservez une autre heure. Votre client n’a pas besoin d’être adhérent du club, et vous en restez responsable pendant toute la séance.',
   },
   {
     q: 'Et si j’annule ?',
-    r: 'Jusqu’à 24 heures avant, vous recevez un avoir réutilisable sur n’importe quel autre créneau. En dessous de 24 heures, le créneau reste dû — la place n’est plus reloouable à temps.',
+    r: 'Jusqu’à 24 heures avant, vous recevez un avoir réutilisable sur n’importe quel autre créneau. En dessous de 24 heures, le créneau reste dû — la place n’est plus relouable à temps.',
   },
   {
     q: 'Serai-je seul dans la salle ?',

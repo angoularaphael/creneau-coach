@@ -136,7 +136,7 @@ export default function Page() {
           <h2>Ce que vous louez : l’espace et son ring, pour une heure</h2>
           <p>
             Vous réservez une heure dans un espace du club, et le ring fait partie
-            de cet espace. Vous arrivez avec vos clients, les cordes sont tendues,
+            de cet espace. Vous arrivez avec votre client, les cordes sont tendues,
             le tapis est propre : il n’y a rien à monter ni à démonter, et rien à
             transporter.
           </p>

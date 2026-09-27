@@ -59,7 +59,7 @@ const QUESTIONS: readonly QuestionReponse[] = [
   {
     question: 'Qu’est-ce qui est inclus dans l’heure louée ?',
     reponse:
-      'L’accès à l’espace réservé et à son équipement fixe : rings, sacs de frappe, tatamis selon le club. Prévoyez l’équipement individuel de vos clients.',
+      'L’accès à l’espace réservé et à son équipement fixe : rings, sacs de frappe, tatamis selon le club. Prévoyez l’équipement individuel de votre client.',
   },
   {
     question: 'Les espaces MMA se réservent-ils à part ?',

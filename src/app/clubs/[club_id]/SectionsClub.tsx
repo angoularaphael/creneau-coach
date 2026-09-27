@@ -119,7 +119,7 @@ export function SectionsClub({
           </blockquote>
           <p>
             Tout cet équipement fixe est compris dans l’heure : vous arrivez avec
-            vos clients et l’équipement individuel, le reste est déjà en place.
+            votre client et l’équipement individuel, le reste est déjà en place.
           </p>
         </div>
       </section>
