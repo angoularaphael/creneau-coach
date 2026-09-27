@@ -9,7 +9,7 @@
  * Sans `server-only` : la case de consentement est un composant client.
  */
 const AVEC_ARTICLE: Record<string, string> = {
-  cgv: 'les conditions générales de vente',
+  cgv: 'les conditions générales d’utilisation et de vente',
   reglement: 'le règlement intérieur',
   decharge: 'la décharge de responsabilité',
 }

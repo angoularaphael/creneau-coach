@@ -60,15 +60,19 @@ export function SignUpForm() {
         <input name="consent_cgu" type="checkbox" />
         <span>
           J’accepte les{' '}
-          <Link href="/mentions-legales" target="_blank">
-            CGU
+          <Link href="/conditions-generales" target="_blank">
+            conditions générales d’utilisation et de vente
           </Link>
         </span>
       </label>
       <label className="check">
         <input name="consent_privacy" type="checkbox" />
+        {/* « J'ai lu », pas « J'accepte » : le traitement des données repose
+            sur le contrat (RGPD, art. 6.1.b), pas sur un consentement. Dire
+            « accepter » laisserait croire qu'on peut le retirer sans fermer
+            son compte. */}
         <span>
-          J’accepte la{' '}
+          J’ai lu la{' '}
           <Link href="/confidentialite" target="_blank">
             politique de confidentialité
           </Link>

@@ -5,6 +5,7 @@ import {
   REFUS_PUBLICATION,
   TITRES,
   TYPES_OBLIGATOIRES,
+  PAGES,
   cheminPublic,
   documentsEnVigueur,
   estPublie,
@@ -12,7 +13,8 @@ import {
   type RefusPublication,
 } from '@/lib/documents/obligatoires'
 import { enumererDocuments } from '@/lib/documents/noms'
-import { actionPublierDocument } from './actions'
+import { DATE_VERSION_REDIGEE, VERSION_REDIGEE } from '@/lib/documents/juridique'
+import { actionPublierDocument, actionPublierTextesRediges } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +49,7 @@ function taille(octets: number | null): string {
 export default async function PageDocuments({
   searchParams,
 }: {
-  searchParams: Promise<{ publie?: string; rejeu?: string; refus?: string; type?: string }>
+  searchParams: Promise<{ publie?: string; rejeu?: string; refus?: string; type?: string; rediges?: string }>
 }) {
   const staff = await exigeSessionBackOffice('/admin/documents')
   const params = await searchParams
@@ -108,6 +110,47 @@ export default async function PageDocuments({
           {refus}
         </p>
       ) : null}
+      {params.rediges !== undefined ? (
+        <p className="bo__verdict" data-ok="true" role="status">
+          {params.rediges === '0'
+            ? `Les textes rédigés (version ${VERSION_REDIGEE}) étaient déjà en vigueur : rien n’a changé.`
+            : `Textes rédigés publiés : ${params.rediges} document${params.rediges === '1' ? '' : 's'} mis à jour. Ils s’appliquent aux prochaines signatures.`}
+        </p>
+      ) : null}
+
+      {/* Les textes rédigés dans le dépôt : les relire, puis les publier d'un
+          geste. Les valeurs (prix, délais) sont lues en base à l'instant de la
+          publication — l'aperçu montre exactement ce qui sera publié. */}
+      <section className="bo__panneau bo-doc bo-doc--rediges" aria-labelledby="rediges">
+        <h2 id="rediges">Textes rédigés — version du {DATE_VERSION_REDIGEE}</h2>
+        <p className="bo-doc__etat">
+          Les trois documents rédigés pour Boxing Center, avec les prix, délais et limites actuellement
+          réglés. Relisez-les avant de publier ; une version déposée à la main ci-dessous les remplace.
+        </p>
+        <ul className="bo-doc__apercus">
+          {TYPES_OBLIGATOIRES.map((type) => {
+            const d = parType.get(type)
+            const actuelle = d?.version === VERSION_REDIGEE && d && estPublie(d)
+            return (
+              <li key={type}>
+                <a href={`/documents/apercu/${type}`} target="_blank" rel="noopener">
+                  {TITRES[type]}
+                </a>{' '}
+                <span className="bo__etat" data-ton={actuelle ? 'ok' : 'attente'}>
+                  {actuelle ? 'En vigueur' : 'Non publié'}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+        {peutPublier ? (
+          <form action={actionPublierTextesRediges} className="bo-doc__form">
+            <button className="bo__bouton" type="submit">
+              Publier les trois textes rédigés
+            </button>
+          </form>
+        ) : null}
+      </section>
 
       <div className="bo__panneaux">
         {TYPES_OBLIGATOIRES.map((type) => {
@@ -133,8 +176,11 @@ export default async function PageDocuments({
               </p>
               {d && enLigne ? (
                 <p className="bo-doc__lien">
-                  <a href={cheminPublic(type)} target="_blank" rel="noopener">
+                  <a href={PAGES[type]} target="_blank" rel="noopener">
                     Lire la version en vigueur
+                  </a>
+                  <a href={cheminPublic(type)} target="_blank" rel="noopener">
+                    PDF
                   </a>
                   <span className="bo-doc__empreinte" title={d.file_sha256 ?? ''}>
                     Empreinte {d.file_sha256?.slice(0, 12)}…

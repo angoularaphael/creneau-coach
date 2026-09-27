@@ -22,25 +22,40 @@ ouvre tout sauf `/admin/`, `/espace-coach/`, `/api/`, `/auth` ; le sitemap liste
 
 ---
 
-## 0. Avant tout : publier les trois documents à signer
+## 0. Les documents à signer — publiés le 27/09/2026
 
-**Sans eux, la plateforme refuse toute réservation** — c'est voulu. Le cahier
-§16 impose que le coach signe les CGV, le règlement intérieur et la décharge
-avant d'accéder à la salle, et précise que ces textes « seront fournis par la
-direction Boxing Center ». Le 27/09/2026, aucun des trois n'existait : les
-lignes en base pointaient vers des PDF absents. Un coach aurait payé, puis
-signé du vide.
+Sans eux, la plateforme refuse toute réservation (cahier §16) : le coach signe
+les conditions générales, le règlement intérieur et la décharge avant
+d'accéder à la salle.
 
-1. La direction fournit les trois PDF (rédigés ou validés par elle).
-2. `/admin/documents` → un panneau par document → version (ex. `2026-10`) et
-   fichier PDF (4 Mo au plus) → **Publier**.
-3. Vérifier : `/documents/cgv`, `/documents/reglement`, `/documents/decharge`
-   ouvrent le bon texte, et le bandeau rouge « Réservations fermées » a
-   disparu du back-office.
+Les trois textes ont été **rédigés et publiés le 27/09/2026** (version
+2026-09-27), en attendant la relecture de la direction :
 
-Tant que ce n'est pas fait, un coach qui tente de réserver lit : « Les
-réservations ouvrent dès que Boxing Center a publié ses conditions (CGV,
-règlement intérieur, décharge). Aucun paiement n'a été pris. »
+- lisibles en page : `/conditions-generales`, `/reglement-interieur`,
+  `/decharge-de-responsabilite` ;
+- en PDF, la version qui fait foi : `/documents/cgv`, `/documents/reglement`,
+  `/documents/decharge`.
+
+**Pour les modifier** : éditer `src/lib/documents/textes/*.ts`, changer
+`VERSION_REDIGEE` dans `src/lib/documents/juridique.ts`, déployer, puis
+`/admin/documents` → « Publier les trois textes rédigés ». Ou déposer un PDF
+rédigé ailleurs, document par document, sur la même page. Chaque nouvelle
+version s'applique aux signatures suivantes ; les signatures passées restent
+liées au texte signé.
+
+Les prix, délais et limites écrits dans les textes sont lus dans les réglages
+au moment de la publication : **après un changement de prix ou de délai dans
+les réglages, republier les textes**.
+
+## 0 bis. PayPal
+
+Brancher PayPal = renseigner, dans Vercel (Production) : `PAYPAL_CLIENT_ID`,
+`PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE=live`, `PAYPAL_WEBHOOK_ID`. Le webhook se
+crée dans le tableau de bord PayPal : URL
+`https://coachings.boxingcenter.fr/api/v1/webhooks/paypal`, événements
+`CHECKOUT.ORDER.APPROVED` et `PAYMENT.CAPTURE.COMPLETED`. Pour le mode studio,
+les mêmes clés en `PAYPAL_TEST_*`, du bac à sable. Sans clés, le bouton PayPal
+n'apparaît pas — rien ne casse.
 
 ## 1. OVH — créer l'adresse (5 minutes)
 

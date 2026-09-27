@@ -8,7 +8,7 @@ import { lireReservation, listerDocumentsCourants } from '@/lib/dal/reservations
 import { versReservationPublique } from '@/lib/dal/map';
 import { exigerSession } from '@/lib/dal/acteur';
 import { contextePage } from '@/lib/dal/page';
-import { cheminPublic, estTypeDocument } from '@/lib/documents/obligatoires';
+import { PAGES, cheminPublic, estTypeDocument } from '@/lib/documents/obligatoires';
 import { RESEAU } from '@/lib/seo/verite';
 import { SignaturePad } from './SignaturePad';
 
@@ -93,14 +93,21 @@ export default async function SignaturePage(ctx: Props) {
                     une ligne d'attente. On ne l'affiche qu'une fois le fichier en ligne. */}
                 {d.file_sha256 ? <span className="signature__doc-version">Version {d.version}</span> : null}
                 {d.file_sha256 && estTypeDocument(d.kind) ? (
-                  <a
-                    className="btn btn-ghost signature__lire"
-                    href={cheminPublic(d.kind)}
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    Lire<span className="vh"> : {d.title} (PDF, nouvel onglet)</span>
-                  </a>
+                  <span className="signature__liens">
+                    {/* La page d'abord : au téléphone, un PDF se lit mal. Le PDF
+                        reste à côté — c'est la version qui fait foi. */}
+                    <a
+                      className="btn btn-ghost signature__lire"
+                      href={PAGES[d.kind]}
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      Lire<span className="vh"> : {d.title} (nouvel onglet)</span>
+                    </a>
+                    <a className="signature__pdf" href={cheminPublic(d.kind)} target="_blank" rel="noopener">
+                      PDF<span className="vh"> : {d.title}</span>
+                    </a>
+                  </span>
                 ) : (
                   <span className="signature__attente">En cours de publication</span>
                 )}

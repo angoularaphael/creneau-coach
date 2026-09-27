@@ -65,6 +65,12 @@ const FONDS = {
   'hero-inscription': new URL('./fonds/hero-inscription.jpg', import.meta.url),
   'hero-mentions-legales': new URL('./fonds/hero-mentions-legales.jpg', import.meta.url),
   'hero-confidentialite': new URL('./fonds/hero-confidentialite.jpg', import.meta.url),
+  'hero-conditions-generales': new URL('./fonds/hero-conditions-generales.jpg', import.meta.url),
+  'hero-reglement-interieur': new URL('./fonds/hero-reglement-interieur.jpg', import.meta.url),
+  'hero-decharge-de-responsabilite': new URL(
+    './fonds/hero-decharge-de-responsabilite.jpg',
+    import.meta.url,
+  ),
   'hero-club-toulouse-minimes': new URL('./fonds/hero-club-toulouse-minimes.jpg', import.meta.url),
   'hero-club-toulouse-st-cyprien': new URL(
     './fonds/hero-club-toulouse-st-cyprien.jpg',

@@ -43,7 +43,7 @@ export async function signUpAction(
   }
   if (!consent_cgu || !consent_privacy) {
     return {
-      error: 'Vous devez accepter les CGU et la politique de confidentialité.',
+      error: 'Cochez les deux cases : les conditions générales sont à accepter, la politique de confidentialité à lire.',
     };
   }
   const pwdErr = validatePassword(password);

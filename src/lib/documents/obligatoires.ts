@@ -31,15 +31,27 @@ export const SEAU_PRIVE = process.env.SUPABASE_STORAGE_BUCKET_PRIVATE?.trim() ||
 export const TYPES_OBLIGATOIRES = ['cgv', 'reglement', 'decharge'] as const
 export type TypeDocument = (typeof TYPES_OBLIGATOIRES)[number]
 
+/**
+ * « Conditions générales d'utilisation ET de vente » : le cahier §26 demande une
+ * page « Conditions d'utilisation » ; un seul texte couvre l'usage de la
+ * Plateforme et la vente des créneaux, sans deux documents à tenir d'accord.
+ */
 export const TITRES: Record<TypeDocument, string> = {
-  cgv: 'Conditions générales de vente',
+  cgv: 'Conditions générales d’utilisation et de vente',
   reglement: 'Règlement intérieur',
   decharge: 'Décharge de responsabilité',
 }
 
-/** Où un coach — ou n'importe qui — lit la version en vigueur. */
+/** Le PDF en vigueur — la version qui fait foi, celle qu'on signe. */
 export function cheminPublic(type: TypeDocument): string {
   return `/documents/${type}`
+}
+
+/** La page HTML du même texte — pour le lire confortablement, surtout au téléphone. */
+export const PAGES: Record<TypeDocument, string> = {
+  cgv: '/conditions-generales',
+  reglement: '/reglement-interieur',
+  decharge: '/decharge-de-responsabilite',
 }
 
 export function estTypeDocument(valeur: unknown): valeur is TypeDocument {
@@ -95,7 +107,7 @@ export async function documentsPublies(): Promise<boolean> {
 
 /** Message montré au coach quand les réservations sont fermées pour cette raison. */
 export const MESSAGE_DOCUMENTS_EN_ATTENTE =
-  'Les réservations ouvrent dès que Boxing Center a publié ses conditions (CGV, règlement intérieur, décharge). Aucun paiement n’a été pris.'
+  'Les réservations ouvrent dès que Boxing Center a publié ses conditions (conditions générales, règlement intérieur, décharge). Aucun paiement n’a été pris.'
 
 /**
  * Le PDF en vigueur d'un type, vérifié contre son empreinte.
@@ -121,6 +133,23 @@ export async function lireDocument(
     return null
   }
   return { doc, octets }
+}
+
+/**
+ * Le document en vigueur d'un type, AVEC le texte qui a servi à fabriquer son
+ * PDF (`null` pour un PDF déposé à la main). Pour les pages publiques.
+ */
+export async function documentEtTexte(
+  type: TypeDocument,
+): Promise<(DocumentCourant & { readonly texte: string | null }) | null> {
+  const { data, error } = await createServiceClient()
+    .from('coach_documents')
+    .select('id, kind, title, version, published_at, file_sha256, file_bytes, body_path, texte')
+    .eq('is_current', true)
+    .eq('kind', type)
+    .maybeSingle()
+  if (error) throw new Error(`document : ${error.message}`)
+  return (data as (DocumentCourant & { texte: string | null }) | null) ?? null
 }
 
 export function sha256(octets: Buffer): string {
@@ -152,6 +181,8 @@ export async function publierDocument(entree: {
   readonly version: string
   readonly octets: Buffer
   readonly auteur: string
+  /** Le texte source du PDF, quand il vient du dépôt (voir `juridique.ts`). */
+  readonly texte?: string
 }): Promise<ResultatPublication> {
   const version = entree.version.trim()
   if (!/^[\p{L}\p{N} ._-]{1,40}$/u.test(version)) return { ok: false, code: 'version' }
@@ -185,6 +216,7 @@ export async function publierDocument(entree: {
     p_file_sha256: empreinte,
     p_file_bytes: entree.octets.length,
     p_auteur: entree.auteur,
+    p_texte: entree.texte ?? null,
   })
   const r = data as { ok: boolean; rejeu?: boolean; error?: { message: string } } | null
   if (error || !r?.ok) {

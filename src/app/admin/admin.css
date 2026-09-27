@@ -1001,3 +1001,29 @@
 .bo-doc__form .bo__bouton {
   justify-self: start;
 }
+
+.bo-doc--rediges {
+  margin-bottom: 1rem;
+}
+
+.bo-doc__apercus {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.bo-doc__apercus li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap, 2.25rem);
+}
+
+.bo-doc__apercus a {
+  color: var(--ink);
+  text-underline-offset: 0.2em;
+}

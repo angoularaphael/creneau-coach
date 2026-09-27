@@ -715,6 +715,17 @@ p {
 .page-hero[data-visuel='inscription'] { --visuel: url('/visuels/hero-inscription.webp'); }
 .page-hero[data-visuel='mentions-legales'] { --visuel: url('/visuels/hero-mentions-legales.webp'); }
 .page-hero[data-visuel='confidentialite'] { --visuel: url('/visuels/hero-confidentialite.webp'); }
+.page-hero[data-visuel='conditions-generales'] { --visuel: url('/visuels/hero-conditions-generales.webp'); }
+.page-hero[data-visuel='reglement-interieur'] { --visuel: url('/visuels/hero-reglement-interieur.webp'); }
+.page-hero[data-visuel='decharge-de-responsabilite'] { --visuel: url('/visuels/hero-decharge-de-responsabilite.webp'); }
+/* Ces trois images portent leur sujet en bas à droite (le contrat, le banc
+   rangé, les protections) : on cadre sur lui, pas sur le plafond. Spécificité
+   classe + attribut, pour l'emporter aussi sur le cadrage mobile. */
+.page-hero--visuel[data-visuel='conditions-generales'],
+.page-hero--visuel[data-visuel='reglement-interieur'],
+.page-hero--visuel[data-visuel='decharge-de-responsabilite'] {
+  background-position: 72% 88%;
+}
 
 /* Les pages d'intention. Chacune a son image, jamais partagée avec une autre
    page : deux pages qui s'ouvrent sur la même photo se lisent comme une seule. */
@@ -966,6 +977,21 @@ p {
 }
 
 /* ── Une réservation, côté coach ─────────────────────────────────────────── */
+/* Le retour du prestataire de paiement : une alerte se distingue d'une
+   information par sa bordure, pas seulement par sa couleur. */
+.reservation-retour {
+  margin: 0 0 1rem;
+}
+
+/* `.note` est redéfinie par le mode clair (`.espace-clair .note`), plus bas
+   dans ce fichier : trois classes pour que l'alerte garde sa bordure. */
+.note.reservation-retour[data-ton='alerte'] {
+  border-left-width: 4px;
+  border-left-color: #b42318;
+  background: rgba(180, 35, 24, 0.07);
+  color: var(--ink);
+}
+
 .reservation-section {
   max-width: 560px;
 }
@@ -1049,9 +1075,24 @@ p {
   color: var(--ink-muted);
 }
 
-.signature__lire,
+.signature__liens,
 .signature__attente {
   grid-area: action;
+}
+
+.signature__liens {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.signature__pdf {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  text-underline-offset: 0.2em;
 }
 
 .signature__attente {
@@ -1113,7 +1154,7 @@ p {
       'action';
   }
 
-  .signature__lire {
+  .signature__liens {
     justify-self: start;
     margin-top: 0.4rem;
   }
@@ -2598,4 +2639,135 @@ p {
   display: inline-block;
   padding-block: 14px;
   margin-block: -14px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LES DOCUMENTS À SIGNER EN PAGE — conditions générales, règlement, décharge.
+
+   Un contrat se LIT : colonne de 68 caractères, interligne généreux, articles
+   repérables d'un coup d'œil. Au téléphone, le sommaire se replie ; sur grand
+   écran, il accompagne la lecture dans une colonne collante.
+   ═══════════════════════════════════════════════════════════════════════ */
+.juridique__actions {
+  margin: 1.25rem 0 0;
+}
+
+.juridique__grille {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* Sans numérotation de liste : chaque titre porte déjà son numéro d'article.
+   « 2. Article 1 — Définitions » se lisait comme une erreur. */
+.juridique__sommaire ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.9rem;
+}
+
+.juridique__sommaire a {
+  display: inline-block;
+  padding: 0.3rem 0;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.juridique__sommaire a:hover,
+.juridique__sommaire a:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.juridique__sommaire--replie {
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 0 1rem;
+}
+
+.juridique__sommaire--replie summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-family: var(--pile-titre);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.juridique__sommaire--replie[open] {
+  padding-bottom: 0.75rem;
+}
+
+.juridique__sommaire--colonne {
+  display: none;
+}
+
+.juridique__sommaire-titre {
+  margin: 0 0 0.5rem;
+  font-family: var(--pile-titre);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.juridique__texte {
+  max-width: 68ch;
+  line-height: 1.7;
+}
+
+.juridique__texte h2 {
+  margin: 2.25rem 0 0.75rem;
+  font-size: clamp(1.15rem, 1rem + 0.6vw, 1.45rem);
+  scroll-margin-top: 6rem;
+}
+
+.juridique__texte h2:first-child {
+  margin-top: 0;
+}
+
+.juridique__texte h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.juridique__texte p {
+  margin: 0 0 0.9rem;
+}
+
+.juridique__texte ul {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.juridique__texte strong {
+  color: var(--ink);
+}
+
+@media (min-width: 64rem) {
+  .juridique__grille {
+    grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .juridique__sommaire--replie {
+    display: none;
+  }
+
+  .juridique__sommaire--colonne {
+    display: block;
+    position: sticky;
+    top: 6rem;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+  }
 }

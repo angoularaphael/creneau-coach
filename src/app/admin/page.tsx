@@ -353,7 +353,7 @@ export default async function BackOffice({
           l'état le plus grave du back-office : il passe avant le planning. */}
       {documentsOk ? null : (
         <p className="bo__verdict" role="status">
-          Réservations fermées : les documents à signer (CGV, règlement intérieur, décharge) ne sont
+          Réservations fermées : les documents à signer (conditions générales, règlement intérieur, décharge) ne sont
           pas tous publiés.{' '}
           {staff.role === 'salle' ? (
             'La direction doit les publier.'

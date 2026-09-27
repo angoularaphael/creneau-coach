@@ -186,8 +186,15 @@ l'inverse : **on garde la salle, on ne refait que la photographie.**
 - [ ] **Ouvrir le site aux moteurs** — six gestes hors du code, dans
       `MISE-EN-LIGNE.md`. Tant qu'ils ne sont pas faits, le site est à 0 page
       indexée partout.
-- [ ] Pages encore en brouillon : `/devenir-coach-partenaire`, `/faq`,
-      `/conditions-generales`, `/reglement-interieur`.
+- [x] `/conditions-generales`, `/reglement-interieur`,
+      `/decharge-de-responsabilite` : rédigés, publiés et signables le 27/09
+      (version 2026-09-27), en attendant la relecture de la direction.
+- [x] PayPal branché (Orders v2), éprouvé contre un faux PayPal local : il ne
+      manque que les clés (`MISE-EN-LIGNE.md` §0 bis).
+- [ ] Pages encore en brouillon : `/devenir-coach-partenaire`, `/faq`.
+- [ ] Factures : les conditions générales (art. 7.5) promettent une facture
+      par paiement — obligation légale entre professionnels. À construire ;
+      il manque le régime de TVA de la SAS (question transmise).
 
 ### Contenu
 - [ ] Plus de contenu et plus d'images sur l'accueil, pour retenir le visiteur
@@ -353,6 +360,25 @@ tournent sur la même base, la borne doit être reportée des deux côtés.
 - Cause mesurée de l'invisibilité : domaine absent du DNS, robots fermés,
   `noindex`, sitemap vide, 0 lien entrant. **Procédure : `MISE-EN-LIGNE.md`.**
   Relevé zéro : `.research/positions/2026-09-27.md`.
+
+### Consignes du 27 septembre, deuxième message
+
+- **CGV, règlement intérieur, décharge : les rédiger maintenant.**
+  > « Je vais te demander d'agir comme un avocat et faire un truc bien solide.
+  > Comme ça, il n'y aura pas de problème du juridique après ou de procès. Un
+  > truc bien solide… qui explique très bien, sans ambiguïté. »
+  > « S'il y a des modifications, on va faire des modifications. »
+- **PayPal : on le branche.** « S'il n'y a pas encore les clés ENV, je te les
+  donnerai après… il n'y aura pas de clé pour tester. »
+- **Un seul client par créneau.** « Si le cahier des charges dit un seul client,
+  c'est un seul client. Et il faut corriger ça dans les FAQ. » Cahier §2 :
+  « encadrer un client en cours privé ».
+- **Directeur de la publication : abandonné** (« you can drop that »).
+- **Les questions sans réponse** : les écrire dans un bloc copiable, qu'il
+  transmet à l'autre développeur.
+- **Heures du soir** : toujours cachées tant qu'il ne le demande pas.
+- **La note** : « we're at 35%. I'm going to validate that 35% from now until I
+  see a reason not to. So let's keep bombarding. »
 
 ---
 

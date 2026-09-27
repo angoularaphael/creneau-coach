@@ -418,7 +418,15 @@ section('0. Cohérence des sources')
      */
     const NOS_DOMAINES = /https?:\/\/(?:[a-z0-9-]+\.)*(?:coachings\.boxingcenter\.fr|coach\.boxingcenter\.fr|creneau-coach[a-z0-9-]*\.vercel\.app)/i
     const extrait = sansCommentaires.match(new RegExp(NOS_DOMAINES.source + "[^\\s'\"`)]*", 'i'))?.[0]
-    if (extrait) {
+    /*
+     * UNE exception, déclarée ici et nulle part ailleurs : les contrats.
+     * `src/lib/documents/juridique.ts` écrit dans les documents signés l'adresse
+     * OFFICIELLE de la Plateforme. `absoluteUrl()` y mettrait l'adresse de
+     * l'environnement qui publie — une prévisualisation Vercel éphémère, par
+     * exemple — et un contrat signé ne se corrige pas après coup.
+     */
+    const EXCEPTIONS = new Set(['src/lib/documents/juridique.ts'])
+    if (extrait && !EXCEPTIONS.has(relative(RACINE, f).replace(/\\/g, '/'))) {
       fautifs.push(`${relative(RACINE, f).replace(/\\/g, '/')} — ${extrait}`)
     }
   }

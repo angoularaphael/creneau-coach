@@ -159,17 +159,25 @@
     {
       "path": "/conditions-generales",
       "title": "Conditions générales",
-      "description": "Conditions générales de vente et d’utilisation du service de réservation de créneaux.",
+      "description": "Les règles de la location de salles Boxing Center aux coachs : réservation, prix, paiement, accès, annulation avec avoir et responsabilités.",
       "intent": "contrat",
-      "status": "draft",
+      "status": "live",
       "inNav": true
     },
     {
       "path": "/reglement-interieur",
-      "title": "Règlement intérieur",
-      "description": "Règlement intérieur applicable dans les clubs du réseau Boxing Center.",
+      "title": "Règlement intérieur des clubs",
+      "description": "Les règles de conduite du coach et de son client dans les clubs Boxing Center : accès, partage de l’espace, sécurité, tenue et interdictions.",
       "intent": "règles club",
-      "status": "draft",
+      "status": "live",
+      "inNav": true
+    },
+    {
+      "path": "/decharge-de-responsabilite",
+      "title": "Décharge de responsabilité",
+      "description": "Ce que le coach assume pendant sa séance dans un club Boxing Center, l’assurance exigée, et les limites que la loi impose à toute décharge.",
+      "intent": "responsabilité",
+      "status": "live",
       "inNav": true
     },
     {

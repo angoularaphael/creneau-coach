@@ -96,6 +96,8 @@ export function SiteFooter() {
         <Link href="/location-ring-de-boxe-toulouse">Location de ring de boxe</Link>
       </nav>
       <nav aria-label="Légal">
+        <Link href="/conditions-generales">Conditions générales</Link>
+        <Link href="/reglement-interieur">Règlement intérieur</Link>
         <Link href="/mentions-legales">Mentions légales</Link>
         <Link href="/confidentialite">Confidentialité</Link>
         <Link href="/contact">Contact</Link>

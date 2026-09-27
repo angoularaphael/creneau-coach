@@ -11,6 +11,8 @@ declare module 'pdfkit' {
     lang?: string
     displayTitle?: boolean
     tagged?: boolean
+    bufferPages?: boolean
+    autoFirstPage?: boolean
   }
   type Texte = {
     align?: 'left' | 'center' | 'right' | 'justify'
@@ -20,11 +22,13 @@ declare module 'pdfkit' {
     paragraphGap?: number
     underline?: boolean
     link?: string
+    indent?: number
+    lineBreak?: boolean
   }
 
   class PDFDocument {
     constructor(options?: Options)
-    readonly page: { readonly width: number; readonly height: number; readonly margins: { left: number; right: number; top: number; bottom: number } }
+    readonly page: { readonly width: number; readonly height: number; margins: { left: number; right: number; top: number; bottom: number } }
     y: number
     x: number
     on(evenement: 'data', f: (morceau: Buffer) => void): this
@@ -46,6 +50,9 @@ declare module 'pdfkit' {
     image(source: Buffer, x: number, y: number, options?: { fit?: [number, number]; width?: number }): this
     heightOfString(texte: string, options?: Texte): number
     addPage(): this
+    switchToPage(n: number): this
+    bufferedPageRange(): { start: number; count: number }
+    flushPages(): void
     end(): void
   }
 
