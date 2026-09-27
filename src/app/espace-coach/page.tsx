@@ -1,3 +1,4 @@
+import { libelleMoyen, libellePaiement, libelleStatut } from '@/lib/libelles-coach';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -68,9 +69,11 @@ export default async function CoachHomePage() {
           : [],
       )
     : [];
-  const payments = reservations.filter(
-    (r) => r.payment_status === 'paid' || r.payment_status === 'waived_credit',
-  );
+  // Trié ici, pas supposé : le titre de la liste promet « du plus récent au
+  // plus ancien », et l'ordre de l'API est celui des créneaux.
+  const payments = reservations
+    .filter((r) => r.payment_status === 'paid' || r.payment_status === 'waived_credit')
+    .sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')));
 
   return (
     <>
@@ -108,7 +111,7 @@ export default async function CoachHomePage() {
                   <h3>{clubName}</h3>
                   <p className="meta">{when(r.starts_at)}</p>
                   <p className="muted" style={{ marginTop: '0.5rem' }}>
-                    {formatCents(r.amount_cents)} · <code>{r.status}</code>
+                    {formatCents(r.amount_cents)} · {libelleStatut(r.status)}
                     {r.qr_ready ? ' · QR prêt' : ''}
                   </p>
                 </Link>
@@ -118,8 +121,8 @@ export default async function CoachHomePage() {
         )}
 
         <div className="section-head" style={{ marginTop: '2.5rem' }}>
-          <h2>Historique paiements</h2>
-          <p>Lecture seule — montants serveur.</p>
+          <h2>Historique des paiements</h2>
+          <p>Vos paiements, du plus récent au plus ancien.</p>
         </div>
         {payments.length === 0 ? (
           <p className="muted">Aucun paiement.</p>
@@ -127,7 +130,8 @@ export default async function CoachHomePage() {
           <ul className="muted" style={{ paddingLeft: '1.1rem' }}>
             {payments.map((p) => (
               <li key={p.id}>
-                {formatCents(p.amount_cents)} · {p.payment_provider ?? '—'} · {p.payment_status} ·{' '}
+                {formatCents(p.amount_cents)} · {libelleMoyen(p.payment_provider) || '—'} ·{' '}
+                {libellePaiement(p.payment_status)} ·{' '}
                   {p.created_at
                     ? new Intl.DateTimeFormat('fr-FR', {
                         timeZone: 'Europe/Paris',

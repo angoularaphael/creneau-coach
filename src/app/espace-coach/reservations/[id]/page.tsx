@@ -7,6 +7,7 @@ import { versReservationPublique } from '@/lib/dal/map';
 import { exigerSession } from '@/lib/dal/acteur';
 import { contextePage } from '@/lib/dal/page';
 import { nomClub } from '@/lib/clubs';
+import { libelleEspace } from '@/lib/libelles-coach';
 import { ReservationActions } from './ReservationActions'
 import { studioActif } from '@/lib/studio/session';
 
@@ -38,12 +39,9 @@ export default async function ReservationPage(ctx: Props) {
           <Link href="/espace-coach">Espace coach</Link> / réservation
         </p>
         <h1>{nomClub(reservation.club_id)}</h1>
-        <p>
-          Espace <code>{reservation.space_id}</code> · jamais de prix inventé
-          côté client.
-        </p>
+        <p className="page-hero__sous">Espace {libelleEspace(reservation.space_id)}</p>
       </header>
-      <section className="section" style={{ maxWidth: 520 }}>
+      <section className="section reservation-section">
         <ReservationActions reservation={reservation} paiementsTest={paiementsTest} />
       </section>
     </>
