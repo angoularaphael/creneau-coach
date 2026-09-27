@@ -13,6 +13,15 @@ import { cleService, urlSupabase } from './env'
  *   — les clés d'idempotence et les nonces internes, révoqués à `authenticated` ;
  *   — l'écriture dans `coach_audit_logs`, dont seul `service_role` a l'INSERT.
  *
+ * Et, depuis le 27/09/2026, trois surfaces du seau privé (cahier §16) :
+ *   — les documents à signer (`documents/…`) : ce sont les conditions PUBLIQUES
+ *     de l'entreprise, lisibles avant d'avoir un compte, pas une donnée d'un
+ *     coach (`src/lib/documents/obligatoires.ts`) ;
+ *   — le dépôt de l'attestation de signature dans `signatures/…`, un dossier où
+ *     le coach ne peut PAS écrire : il ne doit pas pouvoir réécrire sa preuve ;
+ *   — la relecture de cette attestation par son coach, et seulement APRÈS que
+ *     la RLS a prouvé, avec la session, que la réservation est à lui.
+ *
  * IL NE SERT JAMAIS À LIRE UNE DONNÉE MÉTIER POUR LE COMPTE D'UN COACH.
  * Cette phrase est la frontière entière de ce fichier : à la seconde où une
  * requête de réservation passe par ici « parce que c'est plus simple », le test

@@ -22,6 +22,26 @@ ouvre tout sauf `/admin/`, `/espace-coach/`, `/api/`, `/auth` ; le sitemap liste
 
 ---
 
+## 0. Avant tout : publier les trois documents à signer
+
+**Sans eux, la plateforme refuse toute réservation** — c'est voulu. Le cahier
+§16 impose que le coach signe les CGV, le règlement intérieur et la décharge
+avant d'accéder à la salle, et précise que ces textes « seront fournis par la
+direction Boxing Center ». Le 27/09/2026, aucun des trois n'existait : les
+lignes en base pointaient vers des PDF absents. Un coach aurait payé, puis
+signé du vide.
+
+1. La direction fournit les trois PDF (rédigés ou validés par elle).
+2. `/admin/documents` → un panneau par document → version (ex. `2026-10`) et
+   fichier PDF (4 Mo au plus) → **Publier**.
+3. Vérifier : `/documents/cgv`, `/documents/reglement`, `/documents/decharge`
+   ouvrent le bon texte, et le bandeau rouge « Réservations fermées » a
+   disparu du back-office.
+
+Tant que ce n'est pas fait, un coach qui tente de réserver lit : « Les
+réservations ouvrent dès que Boxing Center a publié ses conditions (CGV,
+règlement intérieur, décharge). Aucun paiement n'a été pris. »
+
 ## 1. OVH — créer l'adresse (5 minutes)
 
 Zone DNS de `boxingcenter.fr` (serveurs `dns17.ovh.net` / `ns17.ovh.net`) →

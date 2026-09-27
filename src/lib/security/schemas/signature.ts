@@ -59,6 +59,12 @@ export const SignatureBody = z.strictObject({
   // obligatoire ». Avec `z.boolean()`, un `consent: false` serait valide et il
   // faudrait s'en souvenir dix lignes plus bas. Ici, c'est inécrivable.
   consent: z.literal(true, { error: 'Le consentement est obligatoire.' }),
+
+  // Tracé au doigt ou nom saisi au clavier. La seconde voie existe parce qu'un
+  // tracé est un geste « de chemin » : WCAG 2.5.1 et 2.1.1 exigent une
+  // alternative au clavier. Les deux produisent une image ; l'attestation dit
+  // laquelle des deux a été utilisée.
+  signature_mode: z.enum(['trace', 'saisie']).default('trace'),
 })
 
 export type SignatureBody = z.infer<typeof SignatureBody>

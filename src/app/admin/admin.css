@@ -934,3 +934,70 @@
   background: transparent;
   opacity: 0.7;
 }
+
+/* ── Documents à signer (/admin/documents) ────────────────────────────────
+   Un panneau par document : son état, la version en vigueur, un lien pour la
+   relire, et le dépôt d'une nouvelle version. Les champs s'empilent : un nom
+   de fichier est long, et un sélecteur de fichier compressé est inutilisable
+   au pouce. */
+.bo-doc {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.bo-doc h2 {
+  margin: 0;
+}
+
+.bo-doc__etat,
+.bo-doc__lien {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+.bo-doc__lien {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+
+.bo-doc__lien a {
+  color: var(--ink);
+  text-underline-offset: 0.2em;
+}
+
+.bo-doc__empreinte {
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.bo-doc__form {
+  display: grid;
+  gap: 0.6rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.bo-doc__champ {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+.bo-doc__champ .bo__champ {
+  width: 100%;
+}
+
+.bo-doc__champ input[type='file'] {
+  padding: 0.45rem 0.5rem;
+  line-height: 1.4;
+}
+
+.bo-doc__form .bo__bouton {
+  justify-self: start;
+}

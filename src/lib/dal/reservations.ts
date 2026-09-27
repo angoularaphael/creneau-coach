@@ -304,12 +304,24 @@ export async function payerParAvoir(
 export async function marquerSigne(
   ctx: ContexteRequete,
   supabase: SupabaseClient,
-  entree: { readonly reservationId: string; readonly pdfPath: string; readonly qrJti: string },
+  entree: {
+    readonly reservationId: string
+    readonly pdfPath: string
+    readonly pdfSha256: string
+    readonly documentIds: readonly string[]
+    readonly userAgent: string
+    readonly ip: string
+    readonly qrJti: string
+  },
 ): Promise<ResultatDal<unknown>> {
   const { data, error } = await supabase.rpc('coach_mark_signed', {
     p_reservation_id: entree.reservationId,
     p_pdf_path: entree.pdfPath,
     p_qr_jti: entree.qrJti,
+    p_pdf_sha256: entree.pdfSha256,
+    p_document_ids: entree.documentIds,
+    p_user_agent: entree.userAgent,
+    p_ip: entree.ip,
   })
   if (error) {
     console.error(`[${ctx.requestId}] coach_mark_signed`, { code: error.code })
@@ -357,6 +369,8 @@ export type DocumentCourant = {
   kind: string
   title: string
   version: string
+  /** Empreinte du PDF publié ; `null` = le texte n'est pas encore déposé. */
+  file_sha256: string | null
 }
 
 export async function listerDocumentsCourants(
@@ -365,8 +379,9 @@ export async function listerDocumentsCourants(
 ): Promise<ResultatDal<DocumentCourant[]>> {
   const { data, error } = await supabase
     .from('coach_documents')
-    .select('id, kind, title, version')
+    .select('id, kind, title, version, file_sha256')
     .eq('is_current', true)
+    .order('kind')
     .returns<DocumentCourant[]>()
   if (error) {
     console.error(`[${ctx.requestId}] documents`, { code: error.code })

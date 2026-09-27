@@ -15,7 +15,8 @@ import {
   valider,
 } from '@/lib/security'
 import { auditDeny, auditOk } from '@/lib/security/audit'
-import { reponseDepuisErreur, reponseJson } from '@/lib/http/erreurs'
+import { reponseDepuisErreur, reponseErreur, reponseJson } from '@/lib/http/erreurs'
+import { MESSAGE_DOCUMENTS_EN_ATTENTE, documentsPublies } from '@/lib/documents/obligatoires'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -90,6 +91,18 @@ export async function POST(req: NextRequest) {
       meta: { request_id: ctx.requestId, issue_paths: body.problemes.map((p) => p.path) },
     })
     return body.reponse
+  }
+
+  // Cahier §16 : pas de confirmation sans signature, pas de signature sans
+  // texte publié. Refuser ICI, avant l'option et avant l'argent — un coach ne
+  // doit jamais payer une heure qu'il ne pourra pas confirmer.
+  if (!(await documentsPublies())) {
+    return reponseErreur(
+      'CONFLICT',
+      { raison: 'documents_non_publies' },
+      MESSAGE_DOCUMENTS_EN_ATTENTE,
+      ctx.requestId,
+    )
   }
 
   const hold = await creerHold(ctx, session.valeur.supabase, {

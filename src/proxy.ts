@@ -188,8 +188,16 @@ export async function proxy(request: NextRequest) {
   return suivant()
 }
 
+/*
+ * `documents/` est hors du proxy depuis le 27/09/2026 : on y sert des PDF (les
+ * documents à signer, l'attestation de signature). Une CSP de page HTML n'a
+ * rien à y faire — `object-src 'none'` peut empêcher la visionneuse PDF de
+ * Chrome d'afficher le fichier. Ces routes vérifient elles-mêmes ce qu'il y a
+ * à vérifier (l'attestation exige la session du coach), et gardent `nosniff`
+ * et `X-Frame-Options: DENY` posés par `next.config.mjs`.
+ */
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|fonts|images|api/v1/webhooks|api/cron|api/v1/internal|admin).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|fonts|images|api/v1/webhooks|api/cron|api/v1/internal|admin|documents/).*)',
   ],
 }

@@ -85,6 +85,25 @@ const nextConfig = {
   images: {
     remotePatterns: [{ protocol: 'https', hostname: 'res.cloudinary.com' }],
   },
+  /*
+   * pdfkit lit ses polices standard sur le disque, à côté de son propre fichier
+   * (`__dirname + '/data/Helvetica.afm'`). Empaqueté par le bundler, ce chemin
+   * n'existe plus et l'attestation de signature plante au premier appel. On le
+   * laisse donc en `require` natif ; le traçage de fichiers de Vercel suit ces
+   * chemins littéraux et embarque les polices.
+   */
+  serverExternalPackages: ['pdfkit'],
+  experimental: {
+    serverActions: {
+      /*
+       * 1 Mo par défaut. Les documents à signer (CGV, règlement, décharge) se
+       * déposent par une Server Action du back-office et sont plafonnés à 4 Mo
+       * côté serveur (`src/lib/documents/obligatoires.ts`) ; 5 Mo laisse la
+       * place à l'enveloppe du formulaire. Vercel coupe de toute façon à 4,5 Mo.
+       */
+      bodySizeLimit: '5mb',
+    },
+  },
   async headers() {
     return [
       { source: '/:path*', headers: securite },

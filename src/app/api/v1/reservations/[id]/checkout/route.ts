@@ -19,6 +19,7 @@ import {
 } from '@/lib/security'
 import { reponse429 } from '@/lib/security/rate-limit'
 import { reponseDepuisErreur, reponseErreur, reponseJson } from '@/lib/http/erreurs'
+import { MESSAGE_DOCUMENTS_EN_ATTENTE, documentsPublies } from '@/lib/documents/obligatoires'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +50,17 @@ export async function POST(req: NextRequest, ctxRoute: Ctx) {
 
   const { id } = await ctxRoute.params
   const { supabase, acteur } = session.valeur
+
+  // Seconde barrière, au moment exact où l'argent part : un document a pu être
+  // dépublié entre la prise d'option et le paiement.
+  if (!(await documentsPublies())) {
+    return reponseErreur(
+      'CONFLICT',
+      { raison: 'documents_non_publies' },
+      MESSAGE_DOCUMENTS_EN_ATTENTE,
+      ctx.requestId,
+    )
+  }
 
   if (body.data.provider === 'credit') {
     const paye = await payerParAvoir(ctx, supabase, id)

@@ -24,6 +24,7 @@ import {
 import { actionSortir } from './connexion/actions'
 import { actionFermerStudio, actionOuvrirStudio } from './studio/actions'
 import { studioActif } from '@/lib/studio/session'
+import { documentsPublies } from '@/lib/documents/obligatoires'
 
 export const dynamic = 'force-dynamic'
 
@@ -248,10 +249,11 @@ export default async function BackOffice({
   const du = isoJour(lundi)
   const au = isoJour(samedi)
 
-  const [grille, reservations, coachs] = await Promise.all([
+  const [grille, reservations, coachs, documentsOk] = await Promise.all([
     lireGrille(club.id as ClubId, espace?.id ?? null, du, au),
     listerReservations(club.id as ClubId, du, au),
     listerCoachsDeTest(),
+    documentsPublies(),
   ])
 
   // Indexé par `jour|heure` — la grille SQL renvoie une liste à plat.
@@ -320,6 +322,9 @@ export default async function BackOffice({
               </button>
             </form>
           )}
+          <Link className="bo__bouton bo__bouton--discret" href="/admin/documents">
+            Documents à signer
+          </Link>
           <Link className="bo__bouton bo__bouton--discret" href="/admin/studio">
             Comment ça marche
           </Link>
@@ -342,6 +347,21 @@ export default async function BackOffice({
             : `Refus du moteur : ${params.resultat}`}
         </p>
       ) : null}
+
+      {/* Cahier §16 : sans les trois documents publiés, aucune réservation ne
+          peut être confirmée — la plateforme refuse donc d'en prendre. C'est
+          l'état le plus grave du back-office : il passe avant le planning. */}
+      {documentsOk ? null : (
+        <p className="bo__verdict" role="status">
+          Réservations fermées : les documents à signer (CGV, règlement intérieur, décharge) ne sont
+          pas tous publiés.{' '}
+          {staff.role === 'salle' ? (
+            'La direction doit les publier.'
+          ) : (
+            <Link href="/admin/documents">Publier les documents</Link>
+          )}
+        </p>
+      )}
 
       <h1>Planning — {club.name}</h1>
       <p className="bo__sous">
