@@ -282,11 +282,9 @@ Et deux pièges permanents : la **fusion superficielle** des metadata (§3), et
 
 ## 9. Ce qui reste à décider — pas par un développeur
 
-1. **`coach.boxingcenter.fr` est-il acté avec Boxing Center ?**
-   `MASTER-PROJECT-SPEC.md` §18 liste encore « domaine et nom final du service »
-   en dépendance non levée. Tant que la réponse manque, le site est invisible
-   pour Google — ce qui est le comportement correct, mais pas un état dans
-   lequel on lance.
+1. ~~**`coach.boxingcenter.fr` est-il acté avec Boxing Center ?**~~ —
+   **Tranché le 19/09/2026 : `coachings.boxingcenter.fr`** (Eddy). Reste à
+   créer l'enregistrement DNS et à brancher le domaine : `MISE-EN-LIGNE.md`.
 2. **Slash final** : on garde `/tarifs` ou on suit la notation `/tarifs/` ? (§7)
 3. **Les quatre pages juridiques** : livrées en `draft` comme ici, ou une seule
    page `/documents-contractuels/` comme le veut la décision D6 ? D6 et la carte

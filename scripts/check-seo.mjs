@@ -10,7 +10,7 @@
  *
  *   node scripts/check-seo.mjs
  *   node scripts/check-seo.mjs http://localhost:3041
- *   node scripts/check-seo.mjs https://coach.boxingcenter.fr --strict
+ *   node scripts/check-seo.mjs https://coachings.boxingcenter.fr --strict
  *   node scripts/check-seo.mjs --statique          (contrôles de source seuls)
  *
  * Trois niveaux, et la différence compte :
@@ -381,13 +381,16 @@ section('0. Cohérence des sources')
     if (/ROBOTS_RACINE/.test(layout)) {
       ok('layout racine branché sur ROBOTS_RACINE (interrupteur unique)')
     } else if (/robots\s*:/.test(layout)) {
-      warn(
+      // Échec, plus avertissement, depuis le 27/09/2026 : le branchement est
+      // fait, un retour en arrière laisserait l'accueil en noindex le jour de
+      // l'ouverture — sans erreur, et pendant des semaines.
+      fail(
         "layout.tsx écrit « robots » en dur : l'interrupteur NEXT_PUBLIC_SEO_INDEXABLE " +
-          "ne gouverne pas la racine. Remplacer par « robots: ROBOTS_RACINE » " +
-          "(import depuis '@/lib/seo'). Une ligne.",
+          "ne gouverne plus la racine. Remettre « robots: ROBOTS_RACINE » " +
+          "(import depuis '@/lib/seo').",
       )
     } else {
-      warn('layout.tsx ne déclare aucun « robots »')
+      fail('layout.tsx ne déclare aucun « robots » — remettre « robots: ROBOTS_RACINE »')
     }
   }
 }

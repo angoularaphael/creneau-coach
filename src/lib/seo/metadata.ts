@@ -41,19 +41,14 @@ const ROBOTS_INDEX = {
 } as const satisfies NonNullable<Metadata['robots']>
 
 /**
- * Valeur de `robots` à poser dans le layout racine.
+ * Valeur de `robots` posée dans le layout racine (`src/app/layout.tsx`).
  *
- * `src/app/layout.tsx` écrit aujourd'hui `robots: { index: false, follow: false }`
- * en dur. Tant que c'est le cas, l'interrupteur `NEXT_PUBLIC_SEO_INDEXABLE` ne
- * gouverne pas la racine, et la bascule d'indexation demande deux gestes au lieu
- * d'un. Le remplacement est d'une ligne :
+ * Jusqu'au 27/09/2026, le layout écrivait `robots: { index: false, follow: false }`
+ * en dur : l'interrupteur `NEXT_PUBLIC_SEO_INDEXABLE` ne gouvernait pas la
+ * racine, et ouvrir le site aurait laissé la page d'accueil en `noindex`. Il lit
+ * désormais cette constante — un seul geste ouvre tout.
  *
- * ```ts
- * import { ROBOTS_RACINE } from '@/lib/seo'
- * export const metadata: Metadata = { …, robots: ROBOTS_RACINE }
- * ```
- *
- * `scripts/check-seo.mjs` signale tant que ce n'est pas fait.
+ * `scripts/check-seo.mjs` échoue si le layout revient à une valeur en dur.
  */
 export const ROBOTS_RACINE: Metadata['robots'] = IS_INDEXABLE ? ROBOTS_INDEX : ROBOTS_NOINDEX
 

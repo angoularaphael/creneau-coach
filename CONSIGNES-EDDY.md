@@ -4,7 +4,7 @@ Ce fichier existe parce qu'une consigne répétée trois fois est une consigne q
 j'ai oubliée deux fois. Il n'est pas une note de réunion : c'est la liste contre
 laquelle on vérifie avant de dire « c'est fini ».
 
-Dernière mise à jour : 18 septembre 2026.
+Dernière mise à jour : 27 septembre 2026.
 
 ---
 
@@ -169,16 +169,25 @@ les affiches, aucune enseigne ». Il poursuivait « ça ne doit pas ressembler �
 une salle de sport » et il a effacé Boxing Center. La bonne consigne est
 l'inverse : **on garde la salle, on ne refait que la photographie.**
 
-### Pages encore non retravaillées (contenu, pas visuel)
-- [ ] `/clubs` (liste)
-- [ ] `/tarifs`
-- [ ] `/contact`
-- [ ] `/mentions-legales`, `/confidentialite`
+### Pages retravaillées le 27 septembre (contenu)
+- [x] `/clubs` — page de comparaison des cinq clubs, un H2 par club, sources.
+- [x] `/tarifs` — prix lus dans les réglages, pas écrits à la main.
+- [x] `/contact` — jargon retiré, téléphone du réseau et cinq adresses.
+- [x] `/mentions-legales`, `/confidentialite` — faits réels (SIREN, siège,
+      hébergeurs, droits RGPD tels que le produit les offre vraiment).
 
 ### Référencement
-- [ ] **Le `sitemap.xml` est vide** (`<urlset></urlset>`). À remplir.
-- [ ] Pages par mot-clé / intention de recherche.
-- [ ] Vérifier favicon = vrai logo Boxing Center.
+- [x] **Le sitemap** se remplit dès que l'interrupteur est ouvert (16 adresses).
+      Il est vide exprès tant que le domaine n'existe pas.
+- [x] Quatre pages d'intention réelle : `/location-salle-coach-sportif-toulouse`,
+      `/location-salle-de-sport-a-l-heure-toulouse`, `/location-salle-de-boxe-toulouse`,
+      `/location-ring-de-boxe-toulouse`.
+- [x] Favicon « coachings ».
+- [ ] **Ouvrir le site aux moteurs** — six gestes hors du code, dans
+      `MISE-EN-LIGNE.md`. Tant qu'ils ne sont pas faits, le site est à 0 page
+      indexée partout.
+- [ ] Pages encore en brouillon : `/devenir-coach-partenaire`, `/faq`,
+      `/conditions-generales`, `/reglement-interieur`.
 
 ### Contenu
 - [ ] Plus de contenu et plus d'images sur l'accueil, pour retenir le visiteur
@@ -288,7 +297,12 @@ Les plannings réels descendent à **21h30**. Comme le cahier impose des crénea
 d'**une heure pleine**, l'extension propre s'arrête à une heure de début à 20h,
 soit **10h → 21h, onze créneaux**. 21h30 imposerait une demi-heure.
 
-**Migration écrite : `0023_amplitude_du_soir.sql`. PAS ENCORE APPLIQUÉE** — la
+**Mis à jour le 27/09** : `0023_amplitude_du_soir.sql` est appliquée (la base
+ACCEPTE 10h→21h), puis `0025_soir_en_attente.sql` a remis les 96 créneaux du
+soir **hors vente** — Eddy : ne pas annoncer 19h-21h tant qu'il ne le demande
+pas. Vérifié : 0 créneau actif à 19h et 20h. Le texte qui suit est l'état d'avant.
+
+~~**Migration écrite : `0023_amplitude_du_soir.sql`. PAS ENCORE APPLIQUÉE**~~ — la
 base était injoignable (`ECONNRESET`). Tant qu'elle ne l'est pas, le site
 continue d'annoncer 10h→19h, ce qui est la vérité du moteur actuel.
 
@@ -299,6 +313,46 @@ continue avec le texte, et modifiable en deux `UPDATE` puisque c'est une table.
 **À coordonner avec Raphael** : la même contrainte `between 10 and 18` vit dans
 `20260918120000_coach_schema.sql`, son jeu de migrations. Si les deux jeux
 tournent sur la même base, la borne doit être reportée des deux côtés.
+
+---
+
+## 11. Consignes du 20 au 27 septembre 2026
+
+### La logique métier ne se met pas en pause
+> « NON!! THAT RULE IS OBSOLETE.!! NE METS PAS LA LOGIQUE METIER EN PAUSE! »
+
+### Deux back-offices, pas un
+- Un identifiant **par salle** (Minimes, Saint-Cyprien, …) pour les responsables.
+- Un **super admin** pour les développeurs, avec un **mode pause** et un **mode
+  développeur**.
+- Le back-office doit avoir **le contrôle maximal** sur tout.
+- Ordre de construction : **satisfaire tous les critères du cahier**, puis
+  ajouter nos idées, puis atteindre la barre.
+
+### L'espace coach
+- UX et accessibilité d'abord ; **en mode clair**.
+
+### Le soir
+- Tarif 19h-21h : **15 €**, provisoire (« mets le prix 15 euros, mais après je
+  vais demander »). **Ne pas annoncer les heures du soir** tant qu'il ne le
+  demande pas.
+
+### La note
+- La passe du hater donnait 20 %. Le responsive de `/admin` : « trash ».
+- « Be serious, be focused… you're dispersed. » — un défaut corrigé sans
+  l'avoir regardé à l'écran n'est pas corrigé.
+
+### Le référencement — 27 septembre
+> « We must be first page first position on this. Right now we don't even
+> figure anywhere!! »
+> « Use baffled bar and the AEO skill heavily while understanding that baffled
+> bar is an exponential theory that grows and develops constantly!! »
+
+- Méthode AEO / GEO fusionnée dans les skills `aeo-geo` et `baffled-bar`
+  (article HubSpot compris).
+- Cause mesurée de l'invisibilité : domaine absent du DNS, robots fermés,
+  `noindex`, sitemap vide, 0 lien entrant. **Procédure : `MISE-EN-LIGNE.md`.**
+  Relevé zéro : `.research/positions/2026-09-27.md`.
 
 ---
 
