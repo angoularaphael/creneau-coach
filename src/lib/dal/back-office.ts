@@ -3,7 +3,8 @@ import 'server-only'
 import { cookies } from 'next/headers'
 
 import { createServiceClient } from '@/lib/supabase/service'
-import { COOKIE_BO, jetonValide } from '@/lib/admin/session'
+import { COOKIE_BO, lireSession } from '@/lib/admin/session'
+import { sessionEncoreValable } from '@/lib/admin/revalidation'
 import type { ClubId } from '@/domain/contrat'
 import {
   doitRevoquerDeciplus,
@@ -38,8 +39,10 @@ import {
  * ────────────────────────────────────────────────────────────────────────────
  */
 async function garde(): Promise<void> {
-  const jeton = (await cookies()).get(COOKIE_BO)?.value
-  if (!jetonValide(jeton)) {
+  const session = lireSession((await cookies()).get(COOKIE_BO)?.value)
+  // Signature ET compte : un compte désactivé ne lit plus rien, même avec un
+  // cookie encore dans sa durée de vie (`src/lib/admin/revalidation.ts`).
+  if (!session || !(await sessionEncoreValable(session))) {
     // Message identique dans tous les cas : ni « expiré », ni « signature fausse ».
     throw new Error('Back-office : accès refusé.')
   }

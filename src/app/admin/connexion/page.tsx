@@ -39,7 +39,9 @@ export default async function ConnexionBackOffice({
           <p className="bo-porte__alerte" role="alert">
             {erreur === 'trop'
               ? 'Trop de tentatives. Réessaie dans une minute.'
-              : 'Accès refusé.'}
+              : erreur === 'expiree'
+                ? 'Session terminée : le compte a changé ou n’est plus actif. Reconnecte-toi.'
+                : 'Accès refusé.'}
           </p>
         ) : null}
 

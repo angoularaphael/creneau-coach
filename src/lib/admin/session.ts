@@ -3,7 +3,7 @@ import 'server-only'
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
 import { boxplusConfigure, superAdminConfigure } from './boxplus'
-import { personnelConfigure, type ComptePersonnel, type RolePersonnel } from './personnel'
+import { personnelConfigure, type ComptePersonnel, type RolePersonnel, type SourceCompte } from './personnel'
 import { estClubId } from '@/domain/contrat'
 
 /**
@@ -44,6 +44,7 @@ export function porteConfiguree(): boolean {
 }
 
 const ROLES: readonly RolePersonnel[] = ['salle', 'direction', 'super_admin']
+const SOURCES: readonly SourceCompte[] = ['secours', 'personnel', 'boxplus']
 
 /**
  * Relecture du contenu du cookie.
@@ -64,6 +65,12 @@ function chargeValide(brut: unknown): SessionBo | null {
   const role = String(o.role ?? '') as RolePersonnel
   if (!ROLES.includes(role)) return null
 
+  // Sans source, on ne saurait pas où revérifier le compte : un cookie émis
+  // avant le 27/09/2026 est refusé, et la personne se reconnecte une fois.
+  const source = String(o.source ?? '') as SourceCompte
+  if (!SOURCES.includes(source)) return null
+  if (source === 'boxplus' && role === 'salle') return null
+
   const brutClub = o.clubId
   const clubId = brutClub == null ? null : String(brutClub)
   if (clubId !== null && !estClubId(clubId)) return null
@@ -72,7 +79,7 @@ function chargeValide(brut: unknown): SessionBo | null {
   if (role !== 'salle' && clubId !== null) return null
 
   const libelle = String(o.libelle ?? identifiant).slice(0, 80)
-  return { identifiant, role, clubId, libelle }
+  return { identifiant, source, role, clubId, libelle }
 }
 
 export function creerJeton(compte: SessionBo): { valeur: string; maxAge: number } {

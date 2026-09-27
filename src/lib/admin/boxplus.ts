@@ -74,6 +74,28 @@ export function emailSuperAdmin(): string {
   ).toLowerCase()
 }
 
+/**
+ * Le compte BOXPLUS existe-t-il ENCORE avec ce rôle ? `null` si BOXPLUS ne
+ * répond pas. Le super-admin d'environnement BOXPLUS vaut tant que son adresse
+ * est toujours celle configurée.
+ */
+export async function compteBoxplusInchange(
+  email: string,
+  role: 'direction' | 'super_admin',
+): Promise<boolean | null> {
+  const super_ = emailSuperAdmin()
+  if (super_ && comparaisonConstante(email.toLowerCase(), super_)) return role === 'super_admin'
+
+  const sb = clientBoxplus()
+  if (!sb) return null
+  const { data, error } = await sb.from('app_users').select('role').ilike('email', email).maybeSingle()
+  if (error) return null
+  if (!data) return false
+  const roleBrut = data.role === 'super_admin' ? 'super_admin' : String(data.role || 'admin')
+  if (!roleAutorise(roleBrut)) return false
+  return (roleBrut === 'super_admin' ? 'super_admin' : 'direction') === role
+}
+
 /** Hash bcrypt fixe : même coût qu'un vrai refus, sans révéler si l'e-mail existe. */
 const HASH_LEURRE = '$2b$10$VhKhUsnifQNiMQ0WfQSece/cxkJcPdEuWLqz7eIXjY7u7.oo5k3JS'
 

@@ -62,6 +62,7 @@ export async function actionEntrer(form: FormData) {
       // ce qui est l'exact contraire de ce qu'on veut.
       compte = {
         identifiant: bp.email,
+        source: 'boxplus',
         role: bp.role === 'super_admin' ? 'super_admin' : 'direction',
         clubId: null,
         libelle: bp.name,

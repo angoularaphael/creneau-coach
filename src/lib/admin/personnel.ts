@@ -34,8 +34,18 @@ import type { ClubId } from '@/domain/contrat'
 
 export type RolePersonnel = 'salle' | 'direction' | 'super_admin'
 
+/**
+ * D'où vient le compte. La session le retient pour pouvoir, à chaque requête,
+ * revérifier le compte LÀ OÙ IL VIT (`src/lib/admin/revalidation.ts`) :
+ *   secours    le super-admin de l'environnement ;
+ *   personnel  `coach_staff_accounts` (salles, direction) ;
+ *   boxplus    `app_users` du projet BOXPLUS, ou son super-admin d'environnement.
+ */
+export type SourceCompte = 'secours' | 'personnel' | 'boxplus'
+
 export type ComptePersonnel = {
   readonly identifiant: string
+  readonly source: SourceCompte
   readonly role: RolePersonnel
   /** `null` veut dire « les cinq clubs », et UNIQUEMENT pour direction/super_admin. */
   readonly clubId: ClubId | null
@@ -75,6 +85,29 @@ function superAdminEnv(): { identifiant: string; secret: string } | null {
   return { identifiant, secret }
 }
 
+/** Le super-admin de secours porte-t-il toujours cet identifiant ? */
+export function estSuperAdminSecours(identifiant: string): boolean {
+  const s = superAdminEnv()
+  return Boolean(s) && s!.identifiant.toLowerCase() === identifiant.toLowerCase()
+}
+
+/**
+ * Le compte du personnel existe-t-il ENCORE, actif, avec le même rôle et le
+ * même club ? `null` quand la base ne répond pas — l'appelant décide.
+ */
+export async function comptePersonnelInchange(compte: ComptePersonnel): Promise<boolean | null> {
+  const sb = clientServeur()
+  if (!sb) return null
+  const { data, error } = await sb
+    .from('coach_staff_accounts')
+    .select('role, club_id, is_active')
+    .eq('identifiant', compte.identifiant)
+    .maybeSingle()
+  if (error) return null
+  if (!data || !data.is_active) return false
+  return data.role === compte.role && (data.club_id ?? null) === compte.clubId
+}
+
 export function personnelConfigure(): boolean {
   return Boolean(clientServeur()) || Boolean(superAdminEnv())
 }
@@ -101,7 +134,7 @@ export async function verifierPersonnel(
     const b = Buffer.from(secours.secret.normalize('NFKC'), 'utf8')
     const ok = a.length === b.length && timingSafeEqual(a, b)
     return ok
-      ? { identifiant: secours.identifiant, role: 'super_admin', clubId: null, libelle: 'Super admin' }
+      ? { identifiant: secours.identifiant, source: 'secours', role: 'super_admin', clubId: null, libelle: 'Super admin' }
       : null
   }
 
@@ -144,6 +177,7 @@ export async function verifierPersonnel(
 
   return {
     identifiant: data.identifiant,
+    source: 'personnel',
     role,
     clubId: role === 'salle' ? (data.club_id as ClubId) : null,
     libelle: data.libelle,

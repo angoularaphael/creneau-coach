@@ -3,6 +3,7 @@ import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
+import { sessionEncoreValable } from './revalidation'
 import { COOKIE_BO, lireSession, type SessionBo } from './session'
 
 /**
@@ -21,6 +22,11 @@ export async function exigeSessionBackOffice(suite = '/admin'): Promise<SessionB
   const session = lireSession((await cookies()).get(COOKIE_BO)?.value)
   if (!session) {
     redirect(`/admin/connexion?suite=${encodeURIComponent(suite)}`)
+  }
+  // Signature valide ne veut pas dire compte valide : un compte désactivé,
+  // supprimé ou changé de club perd sa session à la requête suivante.
+  if (!(await sessionEncoreValable(session))) {
+    redirect(`/admin/connexion?erreur=expiree&suite=${encodeURIComponent(suite)}`)
   }
   return session
 }
