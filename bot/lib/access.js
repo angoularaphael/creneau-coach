@@ -2,6 +2,7 @@
 
 const { logInfo, logWarn } = require('./logger');
 const { isCoachAccessAction } = require('./slot-note');
+const { decisionTraitement } = require('./badge-window');
 
 async function callbackApp(job, payload) {
   const base = String(
@@ -35,6 +36,21 @@ async function callbackApp(job, payload) {
  * (login, fiche membre, note COACH-SLOT GRANT/REVOKE).
  */
 async function processAccessJob(job, deps = {}) {
+  const now = deps.now ? new Date(deps.now) : new Date();
+  const decision = decisionTraitement(job, now);
+  if (decision === 'wait') {
+    logInfo('Job trop tôt — reste en file', {
+      order_id: job.reservation_id || job.order_id,
+      qr_valid_from: job.qr_valid_from || job.starts_at || null,
+    });
+    return { status: 'waiting', action: job.action, deciplus_member_id: null };
+  }
+  if (decision === 'unknown' || !isCoachAccessAction(job.action)) {
+    throw new Error(`Action coach inconnue: ${job.action}`);
+  }
+
+  const effectif = decision === 'revoke' ? { ...job, action: 'coach_revoke' } : job;
+
   const { isImapOtpConfigured, imapMissingReason } = require('./imap-otp');
   if (!isImapOtpConfigured()) {
     const err = new Error(imapMissingReason());
@@ -42,30 +58,33 @@ async function processAccessJob(job, deps = {}) {
     throw err;
   }
 
-  if (!isCoachAccessAction(job.action)) {
-    throw new Error(`Action coach inconnue: ${job.action}`);
-  }
-
   const runRpa = deps.runRpa || (await loadRpa());
-  const reservationId = job.reservation_id || job.order_id;
+  const reservationId = effectif.reservation_id || effectif.order_id;
   logInfo('Job Deciplus — RPA', {
-    action: job.action,
+    action: effectif.action,
     order_id: reservationId,
-    club_id: job.club_id || job.gym,
+    club_id: effectif.club_id || effectif.gym,
   });
 
-  const result = await runRpa(job);
+  const result = await runRpa(effectif);
   const status = result.status === 'granted' || result.status === 'revoked' ? result.status : 'error';
 
-  await callbackApp(job, {
+  await callbackApp(effectif, {
     reservation_id: reservationId,
-    deciplus_member_id: result.deciplus_member_id || job.deciplus_member_id || null,
+    deciplus_member_id: result.deciplus_member_id || null,
     job_status: status,
-    club_id: job.club_id || job.gym || null,
+    club_id: effectif.club_id || effectif.gym || null,
     error: result.error || null,
+    access_url: result.access_url || null,
+    fiche_partagee: result.fiche_partagee === true,
   });
 
-  return { status, action: result.action || job.action, deciplus_member_id: result.deciplus_member_id || null };
+  return {
+    status,
+    action: result.action || effectif.action,
+    deciplus_member_id: result.deciplus_member_id || null,
+    access_url: result.access_url || null,
+  };
 }
 
 async function loadRpa() {

@@ -2,7 +2,8 @@
 
 const { logInfo, logWarn } = require('./logger');
 const { launchBrowser, saveSession, login, gotoDeciplus, handleChooseZone } = require('./auth');
-const { gymLabel, slotNote, identityFromJob, MARKER } = require('./slot-note');
+const { gymLabel, slotNote, MARKER } = require('./slot-note');
+const { sharedMemberId, extraireUrlBadge } = require('./badge-window');
 
 function originOf(page) {
   try {
@@ -121,39 +122,96 @@ async function createMember(page, identity) {
   return extractMemberId(page.url());
 }
 
-async function resolveMember(page, job) {
-  if (job.deciplus_member_id) {
-    const ok = await openMember(page, String(job.deciplus_member_id));
-    if (ok) return String(job.deciplus_member_id);
+function produitBadge() {
+  return String(process.env.DECIPLUS_BADGE_PRODUCT || 'Badge').trim() || 'Badge';
+}
+
+async function vendreBadge(page) {
+  const produit = produitBadge();
+  const ouvrir = page
+    .locator('a, button')
+    .filter({ hasText: /vendre|vente|achat carte|nouvelle vente/i })
+    .first();
+  if ((await ouvrir.count()) > 0) {
+    await ouvrir.click().catch(() => {});
+    await page.waitForTimeout(800);
   }
-  const identity = identityFromJob(job);
-  const found = await searchMember(page, identity);
-  if (found) {
-    await openMember(page, found);
-    return found;
+
+  const recherche = page
+    .locator(
+      'input[placeholder*="Rechercher un produit"], input[placeholder*="Rechercher"], input[placeholder*="prestation"], input[placeholder*="Produit"]',
+    )
+    .first();
+  if ((await recherche.count()) > 0) {
+    await recherche.fill(produit);
+    await page.waitForTimeout(700);
   }
-  const created = await createMember(page, identity);
-  if (!created) throw new Error('Membre Deciplus introuvable / non créé');
-  await openMember(page, created);
-  return created;
+
+  const tuile = page.getByText(new RegExp(`^${produit.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')).last();
+  if ((await tuile.count()) > 0) {
+    await tuile.click().catch(() => {});
+    await page.waitForTimeout(800);
+  }
+
+  const valider = page
+    .locator(
+      'button:has-text("Valider"), button:has-text("Encaisser"), button:has-text("Terminer"), input[type="submit"][value*="Valider"]',
+    )
+    .first();
+  if ((await valider.count()) > 0) {
+    await valider.click().catch(() => {});
+    await page.waitForTimeout(1000);
+  }
+
+  const texte = await page.locator('body').innerText().catch(() => '');
+  const hrefs = await page
+    .locator('a[href]')
+    .evaluateAll((els) => els.map((a) => a.href))
+    .catch(() => []);
+  const url = extraireUrlBadge(`${texte}\n${hrefs.join('\n')}`);
+  if (!url) {
+    const err = new Error('Vente badge sans URL Deciplus');
+    err.code = 'BADGE_URL_ABSENTE';
+    throw err;
+  }
+  return url;
+}
+
+async function couperBadge(page, job) {
+  const id = String(job.order_id || job.reservation_id || '').trim();
+  if (!id) return;
+  const ligne = page.getByText(id, { exact: false }).first();
+  if ((await ligne.count()) === 0) return;
+  const couper = page
+    .locator(
+      'button:has-text("Annuler"), button:has-text("Désactiver"), a:has-text("Annuler"), button:has-text("Supprimer")',
+    )
+    .first();
+  if ((await couper.count()) > 0) {
+    await couper.click().catch(() => {});
+    await page.waitForTimeout(600);
+  }
 }
 
 async function runAccessJob(job) {
   const action = String(job.action || '').toLowerCase();
   const grant = action === 'coach_grant' || action === 'grant';
+  const memberId = sharedMemberId();
   const { browser, context, page } = await launchBrowser();
   try {
     const site = gymLabel(job.club_id || job.gym);
     await login(page, { siteLabel: site });
     await handleChooseZone(page, site);
-    await gotoDeciplus(page, 'select.php').catch(() => {});
 
-    let memberId = job.deciplus_member_id || null;
-    if (grant || !memberId) {
-      memberId = await resolveMember(page, job);
+    const ouverte = await openMember(page, memberId);
+    if (!ouverte) throw new Error(`Fiche partagée introuvable: ${memberId}`);
+
+    let accessUrl = null;
+    if (grant) {
+      accessUrl = await vendreBadge(page);
+      await openMember(page, memberId);
     } else {
-      const ok = await openMember(page, String(memberId));
-      if (!ok) memberId = await resolveMember(page, { ...job, deciplus_member_id: null });
+      await couperBadge(page, job);
     }
 
     const verb = grant ? 'GRANT' : 'REVOKE';
@@ -163,11 +221,14 @@ async function runAccessJob(job) {
       member_id: memberId,
       marker: MARKER,
       site,
+      url_badge: Boolean(accessUrl),
     });
     await saveSession(context);
     return {
       status: grant ? 'granted' : 'revoked',
       deciplus_member_id: memberId,
+      access_url: accessUrl,
+      fiche_partagee: true,
       action: grant ? 'coach_grant' : 'coach_revoke',
     };
   } finally {

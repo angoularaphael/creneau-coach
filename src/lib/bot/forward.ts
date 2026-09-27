@@ -58,7 +58,7 @@ export async function envoyerJobDeciplus(job: JobDeciplus): Promise<void> {
   const { data: profil } = await sb
     .from('coach_profiles')
     .select(
-      'first_name, last_name, email, phone, birth_date, address_line, postal_code, city, deciplus_member_id',
+      'first_name, last_name, email, phone, birth_date, address_line, postal_code, city',
     )
     .eq('id', job.reservation.coach_id)
     .maybeSingle()
@@ -69,7 +69,7 @@ export async function envoyerJobDeciplus(job: JobDeciplus): Promise<void> {
     coach_id: job.reservation.coach_id,
     action: actionSql,
     status: 'queued',
-    deciplus_member_id: profil?.deciplus_member_id ? String(profil.deciplus_member_id) : null,
+    deciplus_member_id: null,
   })
 
   const url = `${botUrl()}/api/jobs`
@@ -90,7 +90,7 @@ export async function envoyerJobDeciplus(job: JobDeciplus): Promise<void> {
     qr_valid_to: job.reservation.qr_valid_to,
     starts_at: job.reservation.starts_at,
     ends_at: job.reservation.ends_at,
-    deciplus_member_id: profil?.deciplus_member_id || null,
+    deciplus_member_id: null,
     status_callback_base: String(process.env.SITE_URL || '').replace(/\/$/, ''),
     customer: {
       first_name: profil?.first_name,

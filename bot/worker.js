@@ -25,6 +25,7 @@ async function tick() {
     try {
       logInfo('Traitement job', { job_id: job.job_id, action: job.action });
       const result = await processAccessJob(job);
+      if (result.status === 'waiting') continue;
       markDone(job.file, { result, status: result.status || 'success' });
     } catch (err) {
       if (err.code === 'IMAP_NOT_CONFIGURED') {

@@ -1,7 +1,9 @@
 import type { ClubId } from '@/lib/api/types'
 import { lireQrPourMoi } from '@/lib/dal/reservations'
 import { exigerSession } from '@/lib/dal/acteur'
-import { pngQr } from '@/lib/qr-access'
+import { lireUrlAccesBadge } from '@/lib/bot/acces-badge'
+import { pngDepuisUrl } from '@/lib/qr-access'
+import { decisionAffichageQr } from '@/domain/qr-fenetre'
 import { contexteRequete } from '@/lib/security'
 import { reponseDepuisErreur, reponseErreur, reponseJson } from '@/lib/http/erreurs'
 
@@ -18,24 +20,39 @@ export async function GET(req: Request, ctxRoute: Ctx) {
   const secret = await lireQrPourMoi(ctx, session.valeur.supabase, id)
   if (!secret.ok) return reponseDepuisErreur(secret.erreur, ctx.requestId)
 
-  let png: string
-  try {
-    png = await pngQr(
-      secret.valeur.qr_jti,
-      secret.valeur.club_id,
-      secret.valeur.qr_valid_from,
-      secret.valeur.qr_valid_to,
-    )
-  } catch {
+  const accessUrl = await lireUrlAccesBadge(id).catch(() => null)
+  const affichage = decisionAffichageQr(
+    Date.now(),
+    secret.valeur.qr_valid_from,
+    secret.valeur.qr_valid_to,
+    accessUrl,
+  )
+
+  if (affichage === 'refus') {
     return reponseErreur('CONFLICT', {}, 'QR indisponible.', ctx.requestId)
   }
 
-  const now = Date.now()
-  const from = new Date(secret.valeur.qr_valid_from).getTime()
-  const to = new Date(secret.valeur.qr_valid_to).getTime()
-  let state: 'waiting' | 'active' | 'expired' = 'waiting'
-  if (now >= from && now <= to) state = 'active'
-  if (now > to) state = 'expired'
+  if (affichage === 'preparation' || !accessUrl) {
+    return reponseJson(
+      {
+        png_data_url: null,
+        valid_from: secret.valeur.qr_valid_from,
+        valid_to: secret.valeur.qr_valid_to,
+        club_id: secret.valeur.club_id as ClubId,
+        state: 'preparing',
+        message: 'Accès en préparation',
+      },
+      200,
+      ctx.requestId,
+    )
+  }
+
+  let png: string
+  try {
+    png = await pngDepuisUrl(accessUrl)
+  } catch {
+    return reponseErreur('CONFLICT', {}, 'QR indisponible.', ctx.requestId)
+  }
 
   return reponseJson(
     {
@@ -43,7 +60,7 @@ export async function GET(req: Request, ctxRoute: Ctx) {
       valid_from: secret.valeur.qr_valid_from,
       valid_to: secret.valeur.qr_valid_to,
       club_id: secret.valeur.club_id as ClubId,
-      state,
+      state: 'active',
     },
     200,
     ctx.requestId,

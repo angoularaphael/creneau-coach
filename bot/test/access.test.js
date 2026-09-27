@@ -62,17 +62,78 @@ test('isCoachAccessAction accepte grant et revoke', () => {
   assert.equal(isCoachAccessAction('sale'), false);
 });
 
+function fenetreOuverte() {
+  return {
+    qr_valid_from: new Date(Date.now() - 60_000).toISOString(),
+    qr_valid_to: new Date(Date.now() + 60_000).toISOString(),
+  };
+}
+
 test('processAccessJob refuse sans IMAP', async () => {
   const prevUser = process.env.DECIPLUS_IMAP_USER;
   const prevPass = process.env.DECIPLUS_IMAP_PASS;
   process.env.DECIPLUS_IMAP_USER = '';
   process.env.DECIPLUS_IMAP_PASS = '';
   await assert.rejects(
-    () => processAccessJob({ action: 'coach_grant', order_id: 'x' }),
+    () => processAccessJob({ action: 'coach_grant', order_id: 'x', ...fenetreOuverte() }),
     (err) => err.code === 'IMAP_NOT_CONFIGURED',
   );
   process.env.DECIPLUS_IMAP_USER = prevUser;
   process.env.DECIPLUS_IMAP_PASS = prevPass;
+});
+
+test('processAccessJob ne vend pas avant l heure', async () => {
+  let called = false;
+  const result = await processAccessJob(
+    {
+      action: 'coach_grant',
+      order_id: 'trop-tot',
+      qr_valid_from: new Date(Date.now() + 3600_000).toISOString(),
+      qr_valid_to: new Date(Date.now() + 7200_000).toISOString(),
+    },
+    {
+      runRpa: async () => {
+        called = true;
+        return { status: 'granted' };
+      },
+    },
+  );
+  assert.equal(result.status, 'waiting');
+  assert.equal(called, false);
+});
+
+test('processAccessJob après l heure révoque sans vendre', async () => {
+  const prevUser = process.env.DECIPLUS_IMAP_USER;
+  const prevPass = process.env.DECIPLUS_IMAP_PASS;
+  const prevUrl = process.env.COACH_APP_URL;
+  const prevSecret = process.env.SYNC_SECRET;
+  process.env.DECIPLUS_IMAP_USER = 'jeremyfidge@gmail.com';
+  process.env.DECIPLUS_IMAP_PASS = 'xxxx xxxx xxxx xxxx';
+  process.env.COACH_APP_URL = '';
+  process.env.SYNC_SECRET = '';
+
+  let seen = null;
+  const result = await processAccessJob(
+    {
+      action: 'coach_grant',
+      order_id: 'trop-tard',
+      qr_valid_from: new Date(Date.now() - 7200_000).toISOString(),
+      qr_valid_to: new Date(Date.now() - 3600_000).toISOString(),
+    },
+    {
+      runRpa: async (job) => {
+        seen = job;
+        return { status: 'revoked', deciplus_member_id: '88421', action: 'coach_revoke', fiche_partagee: true };
+      },
+    },
+  );
+  assert.equal(result.status, 'revoked');
+  assert.equal(seen.action, 'coach_revoke');
+
+  process.env.DECIPLUS_IMAP_USER = prevUser;
+  process.env.DECIPLUS_IMAP_PASS = prevPass;
+  process.env.COACH_APP_URL = prevUrl;
+  process.env.SYNC_SECRET = prevSecret;
 });
 
 test('processAccessJob appelle le RPA et le callback quand IMAP est là', async () => {
@@ -87,7 +148,7 @@ test('processAccessJob appelle le RPA et le callback quand IMAP est là', async 
 
   let seen = null;
   const result = await processAccessJob(
-    { action: 'coach_grant', reservation_id: 'resa-9', club_id: 'minimes' },
+    { action: 'coach_grant', reservation_id: 'resa-9', club_id: 'minimes', ...fenetreOuverte() },
     {
       runRpa: async (job) => {
         seen = job;

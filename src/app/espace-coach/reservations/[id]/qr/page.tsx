@@ -6,7 +6,9 @@ import { lireQrPourMoi, lireReservation } from '@/lib/dal/reservations';
 import { versReservationPublique } from '@/lib/dal/map';
 import { exigerSession } from '@/lib/dal/acteur';
 import { contextePage } from '@/lib/dal/page';
-import { pngQr } from '@/lib/qr-access';
+import { lireUrlAccesBadge } from '@/lib/bot/acces-badge';
+import { pngDepuisUrl } from '@/lib/qr-access';
+import { decisionAffichageQr } from '@/domain/qr-fenetre';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'QR d’accès' };
@@ -35,17 +37,25 @@ export default async function QrPage(ctx: Props) {
   const secret = await lireQrPourMoi(req, session.valeur.supabase, params.id);
   if (!secret.ok) notFound();
 
+  const accessUrl = await lireUrlAccesBadge(params.id).catch(() => null);
+  const affichage = decisionAffichageQr(
+    Date.now(),
+    secret.valeur.qr_valid_from,
+    secret.valeur.qr_valid_to,
+    accessUrl,
+  );
+
   let png = '';
-  try {
-    png = await pngQr(
-      secret.valeur.qr_jti,
-      secret.valeur.club_id,
-      secret.valeur.qr_valid_from,
-      secret.valeur.qr_valid_to,
-    );
-  } catch {
-    png = '';
+  if (affichage === 'afficher' && accessUrl) {
+    try {
+      png = await pngDepuisUrl(accessUrl);
+    } catch {
+      png = '';
+    }
   }
+
+  let message = 'Accès en préparation.';
+  if (affichage === 'refus') message = 'Le QR n’est accessible qu’à l’heure du créneau.';
 
   return (
     <>
@@ -67,13 +77,13 @@ export default async function QrPage(ctx: Props) {
             alt="QR d’accès créneau"
             width={280}
             height={280}
-            style={{ width: '100%', maxWidth: 280, background: '#fff' }}
+            style={{ width: '100%', maxWidth: 280, height: 'auto', background: '#fff' }}
           />
         ) : (
-          <p className="note">Votre code n’est pas encore disponible. Réessayez dans un instant.</p>
+          <p className="note">{message}</p>
         )}
         <p className="note">
-          Fenêtre : {reservation.qr_valid_from} → {reservation.qr_valid_to}
+          Fenêtre : {reservation.qr_valid_from} au {reservation.qr_valid_to}
         </p>
       </section>
     </>

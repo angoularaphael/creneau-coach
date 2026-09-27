@@ -24,6 +24,14 @@ export function nouvelJti(): string {
   return randomUUID()
 }
 
+export async function pngDepuisUrl(url: string): Promise<string> {
+  const u = new URL(String(url || '').trim())
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+    throw new Error('URL badge invalide')
+  }
+  return QRCode.toDataURL(u.toString(), { margin: 1, width: 280 })
+}
+
 export async function pngQr(jti: string, clubId: string, validFrom: string, validTo: string): Promise<string> {
   const payload = {
     jti,

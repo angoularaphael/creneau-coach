@@ -8,6 +8,16 @@ export const runtime = 'nodejs'
 
 const STATUTS = new Set(['queued', 'granted', 'revoked', 'error'])
 
+function membrePartage(): string {
+  return String(process.env.DECIPLUS_SHARED_MEMBER_ID || '').trim()
+}
+
+function urlBadge(valeur: unknown): string | null {
+  const url = String(valeur || '').trim().slice(0, 500)
+  if (!/^https?:\/\//i.test(url)) return null
+  return url
+}
+
 /**
  * Callback du robot Deciplus → app.
  *
@@ -35,6 +45,10 @@ export async function POST(req: Request) {
 
   const memberId = body.deciplus_member_id ? String(body.deciplus_member_id).slice(0, 40) : null
   const errMsg = body.error ? String(body.error).slice(0, 400) : null
+  const accessUrl = urlBadge(body.access_url)
+  const fichePartagee =
+    body.fiche_partagee === true ||
+    (Boolean(membrePartage()) && memberId === membrePartage())
   const sb = createServiceClient()
 
   const { data: resa } = await sb
@@ -68,11 +82,12 @@ export async function POST(req: Request) {
         status: jobStatus,
         deciplus_member_id: memberId,
         error: errMsg,
+        ...(accessUrl ? { access_url: accessUrl } : {}),
       })
       .eq('id', jobId)
   }
 
-  if (memberId && resa.coach_id) {
+  if (memberId && resa.coach_id && !fichePartagee) {
     await sb.from('coach_profiles').update({ deciplus_member_id: memberId }).eq('id', resa.coach_id)
   }
 
