@@ -15,9 +15,7 @@
     "/api"
   ],
   "cheminsAuth": [
-    "/connexion",
-    "/inscription",
-    "/verification"
+    "/auth"
   ],
   "clubs": [
     {
@@ -58,72 +56,80 @@
       "titreAbsolu": "Louer une salle de boxe à Toulouse · Boxing Center",
       "description": "Réservez un créneau dans cinq salles Boxing Center autour de Toulouse. Tarif à l’heure, réservation en ligne, accès au club le jour même.",
       "intent": "location salle coach indépendant Toulouse",
-      "status": "draft",
+      "status": "live",
       "inNav": true
     },
     {
       "path": "/clubs",
       "title": "Les cinq clubs",
-      "description": "Comparer les cinq salles du réseau : espaces disponibles, équipement, créneaux ouverts aux coachs indépendants.",
+      "description": "Minimes, Saint-Cyprien, États-Unis, Ramonville et Portet-sur-Garonne : 5 clubs Boxing Center et 8 rings à louer à l’heure pour coachs sportifs.",
       "intent": "comparer les clubs disponibles",
-      "status": "draft",
-      "inNav": true
+      "status": "live",
+      "inNav": true,
+      "titreAbsolu": "Nos 5 clubs à Toulouse : salles de boxe à louer à l’heure"
     },
     {
       "path": "/clubs/coaching-toulouse-minimes",
       "title": "Salle de Minimes",
-      "description": "Espaces, équipement et créneaux disponibles à la salle Boxing Center de Minimes, à Toulouse.",
+      "description": "12 rue de Fenouillet, 31200 Toulouse, à 5 minutes du métro Barrière de Paris : 3 rings et des sacs de frappe à louer à l’heure, dès 10 €.",
       "intent": "louer un espace de coaching à Minimes",
-      "status": "draft",
-      "inNav": false
+      "status": "live",
+      "inNav": false,
+      "titreAbsolu": "Salle de boxe à louer aux Minimes, Toulouse — 3 rings"
     },
     {
       "path": "/clubs/coaching-toulouse-st-cyprien",
       "title": "Salle de Saint-Cyprien",
-      "description": "Espaces, équipement et créneaux disponibles à la salle Boxing Center de Saint-Cyprien, à Toulouse.",
+      "description": "11 rue Sainte-Lucie, 31300 Toulouse : un ring, des sacs de frappe et un espace de tatamis à louer à l’heure pour coachs sportifs, dès 10 €.",
       "intent": "louer un espace de coaching à Saint-Cyprien",
-      "status": "draft",
-      "inNav": false
+      "status": "live",
+      "inNav": false,
+      "titreAbsolu": "Salle de boxe à louer à Saint-Cyprien, Toulouse — dès 10 €"
     },
     {
       "path": "/clubs/coaching-toulouse-etats-unis",
       "title": "Salle d’États-Unis",
-      "description": "Trois espaces à États-Unis : Boxe, MMA-Sol et Fitness. Plannings et capacités par espace, à Toulouse.",
+      "description": "388 avenue des États-Unis, 31200 Toulouse : 2 rings de compétition, une cage et 400 m² de tapis, en trois espaces à louer à l’heure.",
       "intent": "réserver Boxe, MMA ou Fitness à États-Unis",
-      "status": "draft",
-      "inNav": false
+      "status": "live",
+      "inNav": false,
+      "titreAbsolu": "Salle de boxe et MMA à louer avenue des États-Unis, Toulouse"
     },
     {
       "path": "/clubs/coaching-ramonville",
       "title": "Salle de Ramonville",
-      "description": "Espaces, équipement et créneaux disponibles à la salle Boxing Center de Ramonville-Saint-Agne.",
+      "description": "33 rue des Ormes, 31520 Ramonville-Saint-Agne : un ring olympique et un octogone de 7 m à louer à l’heure pour coachs sportifs, dès 10 €.",
       "intent": "louer un espace de coaching à Ramonville",
-      "status": "draft",
-      "inNav": false
+      "status": "live",
+      "inNav": false,
+      "titreAbsolu": "Salle de boxe à louer à Ramonville — ring et octogone"
     },
     {
       "path": "/clubs/coaching-portet-sur-garonne",
       "title": "Salle de Portet-sur-Garonne",
-      "description": "Deux espaces à Portet-sur-Garonne : Boxe-Fitness et MMA-Sol. Plannings, capacités et règles particulières.",
+      "description": "61 route d’Espagne, 31120 Portet-sur-Garonne : 500 m², un ring olympique, des tatamis et 24 sacs, en deux espaces à louer à l’heure.",
       "intent": "réserver Boxe-Fitness ou MMA à Portet",
-      "status": "draft",
-      "inNav": false
+      "status": "live",
+      "inNav": false,
+      "titreAbsolu": "Salle de boxe à louer à Portet-sur-Garonne — 500 m²"
     },
     {
       "path": "/comment-ca-marche",
       "title": "Comment ça marche",
-      "description": "Créer un compte, choisir un créneau, payer, signer les documents, entrer dans le club. Le parcours complet, étape par étape.",
+      "description": "Choisir son créneau, payer, signer une fois, entrer avec son QR code : le déroulé complet pour louer une salle Boxing Center à l’heure.",
       "intent": "comprendre le parcours",
-      "status": "draft",
-      "inNav": true
+      "status": "live",
+      "inNav": true,
+      "titreAbsolu": "Comment réserver une salle à l’heure pour coacher à Toulouse"
     },
     {
       "path": "/tarifs",
       "title": "Tarifs",
-      "description": "Heures creuses et heures pleines, ce qui est inclus, comment fonctionne un avoir. Les prix sont affichés, il n’y a pas à appeler pour les connaître.",
+      "description": "Une heure de salle coûte 10 € en heure creuse et 15 € en heure pleine dans les 5 clubs Boxing Center de Toulouse. Sans abonnement.",
       "intent": "connaître les prix",
-      "status": "draft",
-      "inNav": true
+      "status": "live",
+      "inNav": true,
+      "titreAbsolu": "Tarifs coachs : 10 € l’heure creuse, 15 € l’heure pleine"
     },
     {
       "path": "/devenir-coach-partenaire",
@@ -146,8 +152,9 @@
       "title": "Contact",
       "description": "Qui contacter selon votre sujet : réservation, accès au club, facturation, ou dossier de coach partenaire.",
       "intent": "obtenir de l’aide",
-      "status": "draft",
-      "inNav": true
+      "status": "live",
+      "inNav": true,
+      "titreAbsolu": "Contacter Boxing Center — location de salle pour coachs"
     },
     {
       "path": "/conditions-generales",
@@ -168,18 +175,54 @@
     {
       "path": "/confidentialite",
       "title": "Confidentialité",
-      "description": "Traitement des données personnelles, droits des personnes, durées de conservation et sous-traitants.",
+      "description": "Les données d’un compte coach Boxing Center : lesquelles, pourquoi, combien de temps, et comment les exporter ou les faire effacer.",
       "intent": "RGPD",
-      "status": "draft",
+      "status": "live",
       "inNav": true
     },
     {
       "path": "/mentions-legales",
       "title": "Mentions légales",
-      "description": "Éditeur du site, directeur de la publication et hébergeur.",
+      "description": "Éditeur du site : SAS BOXING CENTER, SIREN 821 817 889, siège à Toulouse. Directeur de la publication, hébergeur et propriété des contenus.",
       "intent": "éditeur/hébergeur",
-      "status": "draft",
+      "status": "live",
       "inNav": true
+    },
+    {
+      "path": "/location-salle-coach-sportif-toulouse",
+      "title": "Location de salle pour coach sportif",
+      "titreAbsolu": "Location de salle pour coach sportif à Toulouse — dès 10 €",
+      "description": "Louez une salle équipée à l’heure dans 5 clubs Boxing Center à Toulouse : 10 € en heure creuse, 15 € en heure pleine, sans abonnement ni caution.",
+      "intent": "location de salle pour coach sportif",
+      "status": "live",
+      "inNav": false
+    },
+    {
+      "path": "/location-salle-de-sport-a-l-heure-toulouse",
+      "title": "Location de salle de sport à l’heure",
+      "titreAbsolu": "Location de salle de sport à l’heure à Toulouse : 10 à 15 €",
+      "description": "Une heure de salle coûte 10 € ou 15 € selon le moment. La grille heure par heure et le coût d’une semaine de coaching, calculé, dans 5 clubs à Toulouse.",
+      "intent": "location salle de sport à l'heure",
+      "status": "live",
+      "inNav": false
+    },
+    {
+      "path": "/location-salle-de-boxe-toulouse",
+      "title": "Location de salle de boxe",
+      "titreAbsolu": "Location de salle de boxe à Toulouse — 5 clubs, 8 rings",
+      "description": "Rings, sacs, tatamis, cage et octogone : l’équipement de combat des 5 clubs Boxing Center à Toulouse, à louer à l’heure pour vos séances de coaching.",
+      "intent": "location salle de boxe toulouse",
+      "status": "live",
+      "inNav": false
+    },
+    {
+      "path": "/location-ring-de-boxe-toulouse",
+      "title": "Location de ring de boxe",
+      "titreAbsolu": "Location de ring de boxe à Toulouse : 8 rings à l’heure",
+      "description": "8 rings dans 5 clubs Boxing Center à Toulouse, dont deux olympiques, à réserver à l’heure : 10 € en heure creuse, 15 € en heure pleine, sans abonnement.",
+      "intent": "location ring de boxe toulouse",
+      "status": "live",
+      "inNav": false
     }
   ]
 }

@@ -3,6 +3,7 @@ import { Bebas_Neue, Montserrat } from 'next/font/google';
 import { Shell } from '@/components/Shell';
 import { JsonLd } from '@/components/JsonLd';
 import { Mouvement } from '@/components/Mouvement';
+import { ROBOTS_RACINE } from '@/lib/seo';
 import '@/styles/jetons.css';
 import '@/styles/boxing-center.css';
 
@@ -26,13 +27,23 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3041';
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Boxing Center — Réservation coachs',
+    default: 'Boxing Center — location de salles pour coachs à Toulouse',
     template: '%s · Boxing Center',
   },
   description:
-    'Réservez un créneau coach dans les 5 clubs Boxing Center : Minimes, Saint-Cyprien, États-Unis, Ramonville, Portet.',
+    'Louez une salle à l’heure dans les 5 clubs Boxing Center de Toulouse : Minimes, Saint-Cyprien, États-Unis, Ramonville, Portet.',
   applicationName: 'Boxing Center Coachs',
-  robots: { index: false, follow: false },
+  /*
+   * L'INTERRUPTEUR GOUVERNE AUSSI LA RACINE.
+   *
+   * Cette ligne valait `{ index: false, follow: false }`, en dur. Toute page
+   * sans directive propre en héritait — et basculer
+   * `NEXT_PUBLIC_SEO_INDEXABLE` n'y changeait rien. Le jour de l'ouverture, une
+   * partie du site serait restée invisible sans que personne ne comprenne
+   * pourquoi. `ROBOTS_RACINE` existait déjà, documenté, et n'était importé par
+   * personne.
+   */
+  robots: ROBOTS_RACINE,
 };
 
 export const viewport: Viewport = {

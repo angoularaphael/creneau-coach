@@ -175,3 +175,19 @@ export const DEVISE = 'eur' as const
 export function formaterCentimes(centimes: number): string {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(centimes / 100)
 }
+
+/**
+ * Le prix dans un TEXTE, pas dans un reçu : « 10 € », pas « 10,00 € ».
+ *
+ * `formaterCentimes` reste la forme des écrans de paiement, où les centimes
+ * rassurent. Dans une phrase, « 10,00 € » alourdit la lecture et contredit les
+ * titres et l'accueil, qui disent « 10 € ». Les centimes ne s'affichent que
+ * quand il y en a.
+ */
+export function prixCourt(centimes: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: centimes % 100 === 0 ? 0 : 2,
+  }).format(centimes / 100)
+}

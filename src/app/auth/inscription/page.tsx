@@ -5,6 +5,13 @@ import { authMode } from '@/lib/auth/config';
 
 export const metadata: Metadata = {
   title: 'Créer mon compte coach',
+  /*
+   * Hors index, mais liens suivis. Un formulaire n'a rien à faire dans les
+   * résultats de recherche ; en revanche les liens qu'il porte (tarifs, clubs)
+   * doivent rester parcourus. Sans cette ligne, la page héritait de la racine
+   * — donc passait en indexable le jour où l'interrupteur s'ouvre.
+   */
+  robots: { index: false, follow: true },
   description:
     'Créez votre compte en une minute et réservez votre première heure de salle dans un club Boxing Center à Toulouse.',
 };

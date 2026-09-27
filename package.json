@@ -27,7 +27,8 @@
     "db:reset": "node scripts/db-migrate.mjs --reset",
     "db:test": "node scripts/db-test.mjs",
     "mcp": "node mcp/server.mjs",
-    "verif:html": "node scripts/verifier-imbrications.mjs"
+    "verif:html": "node scripts/verifier-imbrications.mjs",
+    "verif:aeo": "node scripts/verifier-aeo.mjs"
   },
   "engines": {
     "node": ">=20.9.0"

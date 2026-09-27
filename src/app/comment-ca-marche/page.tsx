@@ -1,12 +1,9 @@
+import { metadataDeRoute } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
-export const metadata: Metadata = {
-  title: 'Comment réserver une salle',
-  description:
-    'Réserver une heure de salle chez Boxing Center : choisir son créneau, payer, signer, entrer avec son QR. Le déroulé complet, sans surprise.',
-};
+export const metadata = metadataDeRoute('/comment-ca-marche');
 
 /**
  * Comment ça marche.

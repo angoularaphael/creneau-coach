@@ -93,9 +93,20 @@ const PREFIXES_PRIVES = carte.prefixesPrives ?? []
 const CHEMINS_AUTH = carte.cheminsAuth ?? []
 const CHEMINS_PUBLICS = ROUTES.map((r) => r.path)
 
-/** Clés JSON-LD interdites tant que la décision D5 tient (aucun fait confirmé). */
+/**
+ * Clés JSON-LD interdites : les faits qui ne sont TOUJOURS PAS vérifiés.
+ *
+ * `address` et `telephone` en sont sortis le 27/09/2026 : les cinq adresses et
+ * le numéro du réseau ont été relevés sur boxingcenter.fr et consignés dans
+ * `src/lib/seo/verite.ts`. Ils ne sont pas pour autant libres — voir
+ * `faitsAutorises()` ci-dessous : une adresse publiée doit être L'UNE DES CINQ,
+ * au caractère près. Une interdiction aveugle protégeait de l'invention ; une
+ * correspondance au registre protège aussi de la faute de frappe.
+ *
+ * Coordonnées, horaires, notes et avis restent interdits : aucun n'est vérifié,
+ * et les notes ne le seront jamais sans avis réels.
+ */
 const CLES_JSONLD_INTERDITES = [
-  'address',
   'openingHours',
   'openingHoursSpecification',
   'geo',
@@ -104,9 +115,21 @@ const CLES_JSONLD_INTERDITES = [
   'ratingValue',
   'reviewCount',
   'priceRange',
-  'telephone',
   'faxNumber',
 ]
+
+/**
+ * Les faits autorisés, lus dans le registre lui-même — pas recopiés ici. Un
+ * script qui tiendrait sa propre liste d'adresses finirait par diverger du
+ * registre, et il validerait l'ancienne.
+ */
+function faitsAutorises() {
+  const registre = readFileSync(join(RACINE, 'src/lib/seo/verite.ts'), 'utf8')
+  const rues = new Set([...registre.matchAll(/^\s*rue:\s*'([^']+)'/gm)].map((m) => m[1]))
+  const tel = registre.match(/e164:\s*'([^']+)'/)?.[1] ?? null
+  return { rues, tel }
+}
+const FAITS = faitsAutorises()
 
 /** Ce qui ne doit jamais apparaître dans le HTML public (§14). */
 const FUITES_BLOQUANTES = [
@@ -378,10 +401,21 @@ section('0. Cohérence des sources')
     const sansCommentaires = contenu
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/(^|[^:])\/\/.*$/gm, '$1')
-    if (/https?:\/\/(?!localhost|schema\.org|www\.w3\.org|\$\{)/.test(sansCommentaires)) {
-      const extrait = sansCommentaires.match(
-        /https?:\/\/(?!localhost|schema\.org|www\.w3\.org|\$\{)[^\s'"`)]*/,
-      )?.[0]
+    /*
+     * La règle vise NOS PROPRES URL écrites en dur — le domaine de production,
+     * un domaine de prévisualisation Vercel. Celles-là doivent passer par
+     * `absoluteUrl()`, sinon elles pointent vers le mauvais environnement.
+     *
+     * Elle interdisait jusqu'ici TOUTE URL absolue. Or un lien vers Légifrance,
+     * la CNIL, l'INJEP ou la page officielle d'un club n'a rien à voir avec
+     * `absoluteUrl()` : c'est une source citée, et les sources citées sont ce
+     * qui fait citer une page par les moteurs de réponse (+28 % mesuré,
+     * Aggarwal et al., KDD 2024). Un contrôle qui pousse à retirer ses sources
+     * travaille contre le but.
+     */
+    const NOS_DOMAINES = /https?:\/\/(?:[a-z0-9-]+\.)*(?:coachings\.boxingcenter\.fr|coach\.boxingcenter\.fr|creneau-coach[a-z0-9-]*\.vercel\.app)/i
+    const extrait = sansCommentaires.match(new RegExp(NOS_DOMAINES.source + "[^\\s'\"`)]*", 'i'))?.[0]
+    if (extrait) {
       fautifs.push(`${relative(RACINE, f).replace(/\\/g, '/')} — ${extrait}`)
     }
   }
@@ -451,11 +485,13 @@ section('0. Cohérence des sources')
   }
 }
 
-// -- 0.6 next.config.ts : en-têtes et slash final ---------------------------
+// -- 0.6 next.config.mjs : en-têtes et slash final ---------------------------
 {
-  const config = lire('next.config.ts', { code: true })
+  // Un seul fichier de configuration : le .mjs (le doublon .ts, ignoré en silence
+  // par Next, a été supprimé). Chercher le .ts faisait échouer ce contrôle à vide.
+  const config = lire('next.config.mjs', { code: true })
   if (!config) {
-    fail('next.config.ts introuvable')
+    fail('next.config.mjs introuvable')
   } else {
     for (const prefixe of PREFIXES_PRIVES) {
       const attendu = new RegExp(`source:\\s*['"\`]${prefixe}/:path\\*['"\`]`)

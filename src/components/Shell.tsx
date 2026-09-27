@@ -77,12 +77,36 @@ export async function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="site-footer">
+      {/*
+        LES PAGES D'INTENTION, RELIÉES.
+
+        Quatre pages répondent chacune à une recherche relevée telle quelle
+        dans Google. Une page que rien ne lie est une page que les robots
+        découvrent mal, ou pas. Les ancres disent ce qu'on trouve derrière —
+        « location de ring de boxe », pas « en savoir plus » : c'est l'ancre qui
+        dit au moteur de quoi parle la page qu'elle désigne.
+
+        Quatre liens et pas vingt : un pied de page qui liste tout ressemble à
+        une ferme de liens, et il dilue ce qu'il devait renforcer.
+      */}
+      <nav aria-label="Louer à Toulouse" className="site-footer__louer">
+        <Link href="/location-salle-coach-sportif-toulouse">Location de salle pour coach sportif</Link>
+        <Link href="/location-salle-de-sport-a-l-heure-toulouse">Salle de sport à l’heure</Link>
+        <Link href="/location-salle-de-boxe-toulouse">Location de salle de boxe</Link>
+        <Link href="/location-ring-de-boxe-toulouse">Location de ring de boxe</Link>
+      </nav>
       <nav aria-label="Légal">
         <Link href="/mentions-legales">Mentions légales</Link>
         <Link href="/confidentialite">Confidentialité</Link>
         <Link href="/contact">Contact</Link>
+        {/* Le site officiel du réseau : c'est la même organisation, et le
+            dire est ce qui relie ce site à l'entité Boxing Center que les
+            moteurs connaissent déjà. */}
+        <a href="https://boxingcenter.fr/" rel="noopener">Le réseau Boxing Center</a>
       </nav>
-      <p className="muted">© Boxing Center — réservation coachs · Europe/Paris</p>
+      {/* « Europe/Paris » était un identifiant de fuseau horaire, affiché tel
+          quel sur chaque page publique. */}
+      <p className="muted">© Boxing Center — location de salles pour coachs à Toulouse</p>
     </footer>
   );
 }

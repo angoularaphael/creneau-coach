@@ -1,10 +1,20 @@
 import { SITE_URL, IS_INDEXABLE, CLUB_PAGES, absoluteUrl } from '@/lib/seo'
 import {
+  CLUBS_VERITE,
+  EDITEUR,
+  LOI,
+  MARCHE,
+  REGISTRE_VERIFIE_LE,
+  RESEAU,
+  TOTAL_RINGS,
+  adresseEnLigne,
+} from '@/lib/seo/verite'
+import {
   ESPACES_PAR_CLUB,
   HEURES_CREUSES,
   HEURES_PLEINES,
   REGLAGES_DEFAUT,
-  formaterCentimes,
+  prixCourt,
   type ClubId,
 } from '@/domain/contrat'
 
@@ -22,11 +32,12 @@ export const dynamic = 'force-dynamic'
  *
  * DEUX RÈGLES, non négociables :
  *
- * 1. **Rien qui ne soit vrai.** Aucune adresse, aucun horaire d'ouverture de
- *    club, aucun téléphone, aucun avis, aucune note. Aucun de ces faits n'est
- *    confirmé pour les cinq clubs (`.research/decisions.md` D5). Un moteur de
- *    réponse cite mot pour mot : une adresse inventée devient une adresse
- *    inventée dans la bouche de l'IA, et c'est le client qui se déplace pour rien.
+ * 1. **Rien qui ne soit vrai.** Les adresses et le numéro du réseau sont publiés
+ *    depuis le 27/09/2026, parce qu'ils sont VÉRIFIÉS : ils viennent du registre
+ *    de vérité (`src/lib/seo/verite.ts`), avec leur source. Horaires d'ouverture,
+ *    coordonnées et avis restent absents : non vérifiés. Un moteur de réponse
+ *    cite mot pour mot — une adresse inventée devient une adresse inventée dans
+ *    la bouche de l'IA, et c'est le coach qui se déplace pour rien.
  *
  * 2. **Une seule source.** Les prix, les horaires de créneaux, la capacité et
  *    les règles d'annulation sont lus dans `src/domain/contrat.ts`, le même
@@ -34,77 +45,103 @@ export const dynamic = 'force-dynamic'
  *    à changer. Un fichier GEO qui dérive du produit est pire que pas de fichier.
  */
 export async function GET() {
-  const creuse = formaterCentimes(REGLAGES_DEFAUT.offpeak_cents)
-  const pleine = formaterCentimes(REGLAGES_DEFAUT.peak_cents)
+  const creuse = prixCourt(REGLAGES_DEFAUT.offpeak_cents)
+  const pleine = prixCourt(REGLAGES_DEFAUT.peak_cents)
 
+  /*
+   * Les clubs, depuis le REGISTRE DE VÉRITÉ : adresse, équipement cité tel que
+   * la page officielle le publie, et la source. Un agent qui cite une adresse
+   * doit pouvoir citer d'où elle vient.
+   */
   const clubs = CLUB_PAGES.map((c) => {
+    const v = CLUBS_VERITE[c.clubId as ClubId]
     const espaces = ESPACES_PAR_CLUB[c.clubId as ClubId] ?? []
-    return `- ${c.nom} (${c.ville}) — ${espaces.length} espace${espaces.length > 1 ? 's' : ''} : ${espaces.join(', ')}\n  ${absoluteUrl(`/clubs/${c.slug}`)}`
-  }).join('\n')
+    return [
+      `### ${v.nom}`,
+      `- Adresse : ${adresseEnLigne(v)}`,
+      ...(v.acces ? [`- Accès : ${v.acces.texte}`] : []),
+      `- Équipement : ${v.equipement.resume} (source : ${v.sources[0]?.url})`,
+      `- Espaces réservables : ${espaces.length} (${espaces.join(', ')})`,
+      `- Page : ${absoluteUrl(`/clubs/${c.slug}`)}`,
+    ].join('\n')
+  }).join('\n\n')
 
-  const corps = `# Boxing Center — location de créneaux pour coachs indépendants
+  const corps = `# Boxing Center — location de salles à l’heure pour coachs sportifs, Toulouse
 
-> Plateforme de réservation permettant à un coach indépendant de louer une heure
-> dans un espace Boxing Center, autour de Toulouse, pour y encadrer son propre client.
+> Boxing Center loue ses salles de boxe à l’heure aux coachs sportifs
+> indépendants, dans cinq clubs de Toulouse et de son agglomération. Une heure
+> coûte ${creuse} en heure creuse et ${pleine} en heure pleine, sans abonnement.
 
 Site : ${SITE_URL}
+Éditeur : ${EDITEUR.raisonSociale}, SIREN ${EDITEUR.siren}, ${EDITEUR.siege}
+Téléphone du réseau : ${RESEAU.telephone.affiche}
+Site officiel du réseau : ${RESEAU.siteOfficiel.url}
 Langue : français
+Faits vérifiés le : ${REGISTRE_VERIFIE_LE}
 ${IS_INDEXABLE ? '' : 'Statut : site en préparation, non indexé pour l’instant.\n'}
 ## À qui ça s’adresse
 
 Aux coachs sportifs indépendants (boxe, MMA, préparation physique) qui ont leur
-propre clientèle mais pas de salle. Ce n’est ni un abonnement de club, ni un cours
-collectif : le coach loue l’espace, il vient avec son client.
+propre clientèle mais pas de salle. Le coach loue l’espace et vient avec son
+client ; ce n’est ni un abonnement de club, ni un cours collectif.
 
-## Les clubs
+## Les cinq clubs — ${TOTAL_RINGS} rings au total
 
 ${clubs}
-
-## Comment ça marche
-
-1. Le coach crée un compte et complète son profil professionnel.
-2. Il choisit un club, un espace, une date et une heure.
-3. La place est tenue ${REGLAGES_DEFAUT.hold_ttl_seconds / 60} minutes, le temps de payer.
-4. Il signe les documents obligatoires (CGV, règlement intérieur, décharge).
-5. Il reçoit un QR d’accès, valable de ${REGLAGES_DEFAUT.qr_early_minutes} minutes avant le créneau jusqu’à sa fin.
 
 ## Tarifs
 
 - Heure creuse : ${creuse} — créneaux de ${HEURES_CREUSES.map((h) => `${h} h`).join(', ')}
 - Heure pleine : ${pleine} — créneaux de ${HEURES_PLEINES.map((h) => `${h} h`).join(', ')}
+- Le prix est le même dans les cinq clubs et pour tous les espaces.
+- Paiement en une fois, à la réservation. Pas de caution, pas de frais d’inscription.
 
-Le prix s’entend par créneau d’une heure et pour un coach. Paiement en une fois,
-sans paiement fractionné.
+## Comment ça marche
+
+1. Le coach crée un compte et complète son profil professionnel.
+2. Il choisit un club, un espace, une date et une heure.
+3. La place lui est gardée ${REGLAGES_DEFAUT.hold_ttl_seconds / 60} minutes, le temps de payer.
+4. Il signe une fois les documents obligatoires (conditions, règlement, décharge).
+5. Il entre avec un QR code personnel, actif ${REGLAGES_DEFAUT.qr_early_minutes} minutes avant le créneau, valable dans le seul club réservé.
 
 ## Règles de réservation
 
 - Créneaux d’une heure, du lundi au samedi, de 10 h à 19 h. Fermé le dimanche.
 - ${REGLAGES_DEFAUT.capacity_per_slot} coachs au maximum par espace et par heure.
-- ${REGLAGES_DEFAUT.max_active_reservations} réservations actives au maximum par coach.
-- Annulation possible jusqu’à ${REGLAGES_DEFAUT.cancel_min_hours} h avant le créneau : elle donne un avoir
-  réutilisable, pas un remboursement.
-- Moins de ${REGLAGES_DEFAUT.cancel_min_hours} h avant : l’annulation est refusée.
+- ${REGLAGES_DEFAUT.max_active_reservations} réservations en cours au maximum par coach.
+- Annulation jusqu’à ${REGLAGES_DEFAUT.cancel_min_hours} h avant : avoir du même montant, réutilisable dans n’importe quel club. Pas de remboursement.
+- Moins de ${REGLAGES_DEFAUT.cancel_min_hours} h avant : annulation impossible, l’heure reste due.
 - Certains créneaux sont réservés à la boxe éducative et ne sont pas louables.
 
-## Ce que ce service n’est pas
+## Ce que dit la loi
 
-- Ce n’est pas un abonnement de salle de sport.
-- Ce n’est pas un cours de boxe : le coach amène son propre client.
-- Il n’y a pas de paiement en plusieurs fois.
+Encadrer une activité physique contre rémunération est réservé aux titulaires
+d’un diplôme ou d’une qualification reconnue (Code du sport, article
+${LOI.qualification.article}) et impose de déclarer son activité (article
+${LOI.declaration.article}). Chaque manquement est puni de ${LOI.sanctionQualification.texte}
+(articles ${LOI.sanctionQualification.article} et ${LOI.sanctionDeclaration.article}).
+Source : ${LOI.qualification.source.url}
+
+## Le marché
+
+${MARCHE.diplomesBpjeps.texte} ${MARCHE.mentionsForme.texte}
+Source : ${MARCHE.diplomesBpjeps.source.url}
 
 ## Pages
 
-- Accueil : ${absoluteUrl('/')}
-- Nos clubs : ${absoluteUrl('/clubs')}
+- Location de salle pour coach sportif : ${absoluteUrl('/location-salle-coach-sportif-toulouse')}
+- Location de salle de sport à l’heure : ${absoluteUrl('/location-salle-de-sport-a-l-heure-toulouse')}
+- Location de salle de boxe : ${absoluteUrl('/location-salle-de-boxe-toulouse')}
+- Location de ring de boxe : ${absoluteUrl('/location-ring-de-boxe-toulouse')}
+- Nos clubs (comparaison) : ${absoluteUrl('/clubs')}
+- Tarifs et avoirs : ${absoluteUrl('/tarifs')}
 - Comment ça marche : ${absoluteUrl('/comment-ca-marche')}
-- Tarifs : ${absoluteUrl('/tarifs')}
 - Contact : ${absoluteUrl('/contact')}
 
 ## Non publié faute de vérification
 
-Les adresses postales, horaires d’ouverture des clubs, numéros de téléphone et
-avis clients ne figurent pas ici : ils ne sont pas confirmés à ce jour. Ne pas
-les déduire ni les inventer.
+Les horaires d’ouverture des clubs, leurs coordonnées GPS et les avis clients ne
+figurent pas ici : ils ne sont pas vérifiés. Ne pas les déduire ni les inventer.
 `
 
   return new Response(corps, {

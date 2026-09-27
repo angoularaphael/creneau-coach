@@ -716,6 +716,13 @@ p {
 .page-hero[data-visuel='mentions-legales'] { --visuel: url('/visuels/hero-mentions-legales.webp'); }
 .page-hero[data-visuel='confidentialite'] { --visuel: url('/visuels/hero-confidentialite.webp'); }
 
+/* Les pages d'intention. Chacune a son image, jamais partagée avec une autre
+   page : deux pages qui s'ouvrent sur la même photo se lisent comme une seule. */
+.page-hero[data-visuel='coach-sportif'] { --visuel: url('/visuels/section-coach.webp'); }
+.page-hero[data-visuel='a-l-heure'] { --visuel: url('/visuels/section-duo.webp'); }
+.page-hero[data-visuel='salle-de-boxe'] { --visuel: url('/visuels/espace-sacs.webp'); }
+.page-hero[data-visuel='ring-de-boxe'] { --visuel: url('/visuels/espace-ring.webp'); }
+
 /* Les clubs : l'attribut porte l'identifiant du club, celui de l'API. Chaque
    salle a SA photo, faite à partir d'une vraie photo de cette salle-là. */
 .page-hero[data-visuel='minimes'] { --visuel: url('/visuels/hero-club-toulouse-minimes.webp'); }
@@ -2053,4 +2060,371 @@ p {
 @media (min-width: 30rem) {
   .invite__actions { flex-direction: row; }
   .invite__actions .btn { width: auto; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LES PAGES QUI RÉPONDENT — briques AEO.
+
+   Une page d'intention n'est pas une vitrine : elle répond à une question
+   qu'on a tapée. Tout ce bloc suit l'ordre de lecture d'un moteur de réponse
+   ET d'un coach pressé, qui est le même : la réponse, puis la preuve, puis le
+   détail.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* LA RÉPONSE. Deux phrases qui tiennent seules, extraites telles quelles par
+   un moteur. Elles portent le filet cuivre parce que c'est LA phrase de la
+   page — celle qu'on veut voir citée. */
+.reponse {
+  max-width: 62ch;
+  margin: 1rem 0 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--accent);
+  font-size: clamp(1.05rem, 2.6vw, 1.2rem);
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.maj {
+  margin: 0.9rem 0 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+/* ── Les clubs, en faits ─────────────────────────────────────────────── */
+.clubs-faits {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.clubs-faits li {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg-elevated);
+}
+
+.clubs-faits h3 {
+  margin: 0 0 0.35rem;
+  font-family: var(--pile-titre);
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.clubs-faits address {
+  font-style: normal;
+  color: var(--ink);
+}
+
+.clubs-faits p {
+  margin: 0.35rem 0 0;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+.clubs-faits a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent-hot);
+}
+
+@media (min-width: 48rem) {
+  .clubs-faits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 72rem) {
+  .clubs-faits { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ── Le tableau comparatif ───────────────────────────────────────────
+   Un VRAI tableau, pas des cartes : c'est la forme qu'un moteur sait lire
+   comme une comparaison, et la forme la plus citée par ChatGPT. Sur téléphone
+   il défile, avec la colonne des critères figée — la même règle que la grille
+   du back-office : ne jamais perdre de vue la ligne qu'on lit. */
+.comparatif {
+  margin: 1.5rem 0 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg-elevated);
+}
+
+.comparatif table {
+  width: 100%;
+  min-width: 38rem;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.comparatif caption {
+  caption-side: bottom;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.comparatif th,
+.comparatif td {
+  padding: 0.8rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+  line-height: 1.45;
+}
+
+.comparatif thead th {
+  font-family: var(--pile-titre);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  background: var(--bg-soft);
+}
+
+/* La colonne de l'offre est mise en avant : c'est elle qu'on compare. */
+.comparatif thead th:nth-child(2),
+.comparatif tbody td:nth-child(2) {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  color: var(--ink);
+}
+
+.comparatif tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-elevated);
+  font-weight: 600;
+  color: var(--ink);
+  box-shadow: 1px 0 0 var(--line);
+}
+
+/* ── La citation de loi ou d'un tiers ────────────────────────────────── */
+.citation {
+  margin: 1.25rem 0 0;
+  padding: 1rem 1.2rem;
+  border-left: 3px solid var(--ink-muted);
+  background: var(--bg-elevated);
+  border-radius: 0 5px 5px 0;
+}
+
+.citation p {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.citation footer {
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.citation a {
+  color: var(--accent-hot);
+}
+
+/* ── Les étapes ──────────────────────────────────────────────────────── */
+.etapes-aeo {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: etape;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.etapes-aeo li {
+  counter-increment: etape;
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.etapes-aeo li::before {
+  content: counter(etape, decimal-leading-zero);
+  font-family: var(--pile-titre);
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--accent-hot);
+}
+
+.etapes-aeo h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.etapes-aeo p {
+  margin: 0;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+/* ── La FAQ ──────────────────────────────────────────────────────────── */
+.faq-aeo {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.faq-aeo__item {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg-elevated);
+}
+
+.faq-aeo__question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 52px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-aeo__question::-webkit-details-marker { display: none; }
+
+/* Le repère d'ouverture : un « + » qui tourne en « × ». Il dit qu'il y a une
+   réponse derrière — une question sans repère ressemble à un simple titre. */
+.faq-aeo__question::after {
+  content: '+';
+  flex: 0 0 auto;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--accent-hot);
+  transition: transform 0.2s ease;
+}
+
+.faq-aeo__item[open] .faq-aeo__question::after { transform: rotate(45deg); }
+
+.faq-aeo__question h3 {
+  margin: 0;
+  font-family: var(--pile-texte);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.faq-aeo__reponse {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  max-width: 68ch;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+.faq-aeo__question:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+  border-radius: 5px;
+}
+
+/* ── Les sources ─────────────────────────────────────────────────────── */
+.sources {
+  padding: 2.5rem 0 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.sources__titre {
+  font-family: var(--pile-titre);
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.sources__note {
+  margin: 0.4rem 0 1rem;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.sources__liste {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.88rem;
+}
+
+.sources__liste a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sources__liste a:hover { color: var(--accent-hot); }
+
+
+/* Une fiche club sur la page « salle de boxe » : le nom, l'adresse, puis la
+   citation exacte de la page officielle. */
+.club-combat {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.club-combat:first-of-type { border-top: 0; padding-top: 0; }
+
+.club-combat h3 {
+  margin: 0 0 0.25rem;
+  font-family: var(--pile-titre);
+  font-size: 1.2rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.club-combat address {
+  font-style: normal;
+  color: var(--ink-muted);
+}
+
+.club-combat a { color: var(--accent-hot); }
+
+
+/* Le groupe « Louer à Toulouse » du pied de page : au-dessus des liens légaux,
+   un cran plus lisible — ce sont les liens qu'on veut voir suivis. */
+.site-footer__louer {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.site-footer__louer a { color: var(--ink); }
+.site-footer__louer a:hover { color: var(--accent-hot); }
+
+
+/* L'adresse d'un club, en bloc postal : c'est la forme que reconnaît l'œil, et
+   celle que les moteurs locaux rapprochent de leur fiche. */
+.adresse-club {
+  margin: 0.5rem 0 0;
+  font-style: normal;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* Le lien du fil d'Ariane faisait 16 px de haut. On agrandit la ZONE DE
+   TOUCHER sans déplacer le texte : le rembourrage vertical est annulé par une
+   marge négative égale. Le lien occupe 44 px au pouce et zéro pixel de plus à
+   l'œil — le titre en dessous ne bouge pas. */
+.sur a {
+  display: inline-block;
+  padding-block: 14px;
+  margin-block: -14px;
 }

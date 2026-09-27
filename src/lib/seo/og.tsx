@@ -80,6 +80,10 @@ const FONDS = {
     import.meta.url,
   ),
   'og-accueil': new URL('./fonds/og-accueil.jpg', import.meta.url),
+  'section-coach': new URL('./fonds/section-coach.jpg', import.meta.url),
+  'section-duo': new URL('./fonds/section-duo.jpg', import.meta.url),
+  'espace-sacs': new URL('./fonds/espace-sacs.jpg', import.meta.url),
+  'espace-ring': new URL('./fonds/espace-ring.jpg', import.meta.url),
 } as const
 
 export type NomDeFond = keyof typeof FONDS

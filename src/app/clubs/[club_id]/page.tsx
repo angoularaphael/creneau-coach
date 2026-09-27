@@ -1,3 +1,4 @@
+import { metadataDeRoute } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -7,7 +8,12 @@ import { getClubBySlug, getClubByApiId, cheminClub } from '@/lib/seo';
 import { redirect } from 'next/navigation';
 import { Calendrier } from '@/components/Calendrier';
 import { ClubSlotsToolbar } from './SlotsToolbar';
+import { SectionsClub } from './SectionsClub';
 import { getSessionMe } from '@/lib/auth/session';
+import { JsonLd } from '@/lib/seo/json-ld';
+import { breadcrumbJsonLd, lieuJsonLd } from '@/lib/seo/jsonld';
+import { CLUBS_VERITE, adresseEnLigne } from '@/lib/seo/verite';
+import { REGLAGES_DEFAUT, prixCourt } from '@/domain/contrat';
 
 type Props = {
   params: Promise<{ club_id: string }>;
@@ -35,17 +41,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const fiche = getClubBySlug(club_id) ?? getClubByApiId(club_id);
   if (!fiche) return { title: 'Club' };
 
-  const club = await lireClubPublic(fiche.clubId as Parameters<typeof lireClubPublic>[0]);
-  const nom = club.ok ? club.valeur.name : fiche.nom;
-  const espaces = club.ok ? club.valeur.spaces.length : 0;
-
-  return {
-    title: nom,
-    description: `Louez une heure de salle à ${fiche.ville}${
-      espaces ? ` — ${espaces} espace${espaces > 1 ? 's' : ''}` : ''
-    }. Créneaux libres, tarif à l'heure, réservation en ligne.`,
-    alternates: { canonical: cheminClub(fiche.slug) },
-  };
+  /*
+   * La métadonnée vient de la CARTE DES ROUTES, comme toutes les autres pages.
+   *
+   * Elle était construite ici à la main : un titre réduit au nom du club, une
+   * description générique (« Créneaux libres, tarif à l'heure »), et aucune
+   * directive robots liée au statut de la route. La carte, elle, porte pour
+   * chaque club un titre avec l'équipement et une description avec l'adresse —
+   * relevés dans le registre de vérité. Deux sources pour la même métadonnée,
+   * c'est la garantie qu'un jour elles se contredisent.
+   */
+  return metadataDeRoute(cheminClub(fiche.slug));
 }
 
 /**
@@ -106,19 +112,45 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
   });
   const grid = grille.ok ? grille.valeur : { club_id: club.id, space_id: spaceId, slots: [] };
 
+  const verite = CLUBS_VERITE[apiId];
+  const quartier = verite.ville === 'Toulouse'
+    ? `${verite.nom.replace('Boxing Center Toulouse ', '')}, Toulouse`
+    : verite.ville;
+  const creuse = prixCourt(REGLAGES_DEFAUT.offpeak_cents);
+  const pleine = prixCourt(REGLAGES_DEFAUT.peak_cents);
+
   return (
     <>
       {/* La photo de CE club. Elle a été faite à partir d'une vraie photo de
           cette salle-là, pas d'une image générique : deux clubs ouverts côte à
           côte doivent être impossibles à confondre. */}
+      {/*
+        L'EN-TÊTE RÉPOND, IL NE SE PRÉSENTE PAS.
+
+        Le H1 était le nom du club (« Boxing Center Saint-Cyprien »). Personne ne
+        tape ça pour louer une salle : on tape « salle de boxe à louer » et un
+        quartier. Le H1 porte donc la question, et le nom du club vit dans la
+        réponse juste en dessous.
+
+        La réponse, l'adresse et l'équipement viennent du REGISTRE DE VÉRITÉ, pas
+        de la base de réservation : ce sont des faits publics relevés sur le site
+        officiel du réseau, avec leur source. Le JSON-LD du lieu, émis plus bas,
+        en est le miroir exact — un balisage sans équivalent visible est ce que
+        Google ignore, au mieux.
+      */}
       <header className="page-hero page-hero--visuel" data-visuel={club.id}>
         <p className="muted">
-          <Link href="/clubs">Nos clubs</Link> / {club.city}
+          <Link href="/clubs">Nos clubs</Link> / {verite.ville}
         </p>
-        <h1>{club.name}</h1>
-        {club.description ? <p>{club.description}</p> : null}
+        <h1>Salle de boxe à louer à l’heure — {quartier}</h1>
+        <p className="reponse">
+          {verite.nom}, {adresseEnLigne(verite)}, loue {verite.equipement.resume} à
+          l’heure aux coachs sportifs. Une heure coûte {creuse} en heure creuse et{' '}
+          {pleine} en heure pleine, sans abonnement.
+        </p>
+        {verite.acces ? <p className="muted">{verite.acces.texte}</p> : null}
         {club.amenities?.length ? (
-          <p className="muted">{club.amenities.join(' · ')}</p>
+          <p className="muted">Sur place : {club.amenities.join(' · ')}</p>
         ) : null}
       </header>
 
@@ -176,6 +208,29 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
           loggedIn={loggedIn}
         />
       </section>
+
+      <SectionsClub
+        club={verite}
+        quartier={quartier}
+        dispo={{
+          libres: grid.slots.filter((s) => s.state === 'open').length,
+          libresCreuses: grid.slots.filter((s) => s.state === 'open' && s.tariff === 'offpeak').length,
+          espaceId: spaceId ?? 'salle',
+        }}
+      />
+
+      {/* Le lieu est DÉFINI ici, et seulement ici : les autres pages le
+          référencent par son identifiant, sans jamais le redéclarer. */}
+      <JsonLd
+        data={[
+          lieuJsonLd(apiId, cheminClub(parSlug.slug)),
+          breadcrumbJsonLd([
+            { name: 'Accueil', path: '/' },
+            { name: 'Nos clubs', path: '/clubs' },
+            { name: verite.nom, path: cheminClub(parSlug.slug) },
+          ]),
+        ]}
+      />
     </>
   );
 }

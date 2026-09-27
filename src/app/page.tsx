@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { metadataDeRoute, CLUB_PAGES } from '@/lib/seo';
 import { ESPACES_PAR_CLUB, type ClubId } from '@/domain/contrat';
+import { TOTAL_RINGS } from '@/lib/seo/verite';
 
 export const metadata = metadataDeRoute('/');
 
@@ -111,7 +112,12 @@ export default function HomePage() {
             </p>
             <p>
               Ici vous prenez une heure, dans le club qui vous arrange, et vous
-              repartez. Pas d’abonnement, pas de bail, pas de caution.
+              repartez. Pas d’abonnement, pas de bail, pas de caution. Tout ce
+              qu’il faut savoir pour{' '}
+              <Link href="/location-salle-coach-sportif-toulouse">
+                louer une salle et y coacher vos clients à Toulouse
+              </Link>
+              , y compris ce que dit la loi, est réuni sur une seule page.
             </p>
             <Link className="lien-fleche" href="/comment-ca-marche">
               Le déroulé complet
@@ -134,6 +140,12 @@ export default function HomePage() {
         <div className="enveloppe">
           <p className="sur mono">Ce que vous trouvez sur place</p>
           <h2>Trois surfaces, pas une salle vide.</h2>
+          <p className="intro">
+            {TOTAL_RINGS} rings, des sacs lourds, des tatamis, une cage et un octogone,
+            répartis entre les cinq clubs. Le détail, club par club, est sur la
+            page{' '}
+            <Link href="/location-salle-de-boxe-toulouse">location de salle de boxe à Toulouse</Link>.
+          </p>
           <div className="cartes">
             {ESPACES.map((e) => (
               <article className="carte" key={e.titre}>
@@ -236,8 +248,8 @@ export default function HomePage() {
                 n’apparaissent pas comme libres.
               </li>
             </ul>
-            <Link className="lien-fleche" href="/tarifs">
-              Tarifs et avoirs en détail
+            <Link className="lien-fleche" href="/location-salle-de-sport-a-l-heure-toulouse">
+              Ce que coûte une semaine de coaching, calculé
             </Link>
           </div>
         </div>

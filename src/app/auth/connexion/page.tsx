@@ -5,6 +5,13 @@ import { authMode } from '@/lib/auth/config';
 
 export const metadata: Metadata = {
   title: 'Connexion',
+  /*
+   * Hors index, mais liens suivis. Un formulaire n'a rien à faire dans les
+   * résultats de recherche ; en revanche les liens qu'il porte (tarifs, clubs)
+   * doivent rester parcourus. Sans cette ligne, la page héritait de la racine
+   * — donc passait en indexable le jour où l'interrupteur s'ouvre.
+   */
+  robots: { index: false, follow: true },
   description: 'Accédez à vos réservations, vos avoirs et vos QR d’accès Boxing Center.',
 };
 

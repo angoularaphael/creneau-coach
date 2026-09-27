@@ -4,16 +4,16 @@
  * ┌──────────────────────────────────────────────────────────────────────────┐
  * │ RÈGLE D5 — RIEN QUI NE SOIT VRAI                                         │
  * │                                                                          │
- * │ Ce projet n'a AUCUNE adresse de club confirmée, AUCUN horaire confirmé,  │
- * │ AUCUN avis. `.research/decisions.md` D5 et                               │
- * │ `docs/SEO-INFORMATION-ARCHITECTURE.md` §6 et §9 l'écrivent noir sur      │
- * │ blanc. Ce fichier ne livre donc que le balisage qui reste VRAI sans ces  │
- * │ données.                                                                 │
+ * │ Levée le 27/09/2026 pour ce qui est désormais VÉRIFIÉ : les cinq         │
+ * │ adresses et le numéro du réseau, relevés sur boxingcenter.fr et          │
+ * │ consignés dans `./verite.ts`. Ces faits ne s'écrivent pas ici : ils      │
+ * │ viennent du registre, qui porte leur source et leur date.                │
  * │                                                                          │
- * │ Le garde-fou n'est pas un commentaire : les types ci-dessous n'ont PAS   │
- * │ de champ `address`, `telephone`, `openingHours`, `geo`, `aggregateRating`│
- * │ ni `review`. Les ajouter est une erreur de compilation, pas un oubli.    │
- * │ `scripts/check-seo.mjs` refait le contrôle sur le HTML servi.            │
+ * │ MAINTENUE pour tout le reste : coordonnées, horaires, notes, avis. Les   │
+ * │ types ci-dessous n'ont PAS ces champs ; les ajouter est une erreur de    │
+ * │ compilation. `scripts/check-seo.mjs` refait le contrôle sur le HTML      │
+ * │ servi, et vérifie que chaque adresse publiée est l'une des cinq du       │
+ * │ registre, au caractère près.                                             │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * Pourquoi pas `schema-dts` : la bibliothèque n'est pas installée, et l'ajouter
@@ -25,6 +25,8 @@
  */
 
 import { LANGUE_BALISEE, SITE_NAME, SITE_URL, absoluteUrl } from './site'
+import { CLUBS_VERITE, RESEAU, type ClubVerite } from './verite'
+import { REGLAGES_DEFAUT, type ClubId } from '@/domain/contrat'
 
 const CONTEXTE = 'https://schema.org' as const
 type Contexte = typeof CONTEXTE
@@ -51,6 +53,14 @@ export type OrganisationJsonLd = {
   name: string
   url: string
   logo: string
+  /** Le numéro général du réseau, pris dans le registre. */
+  telephone: string
+  /**
+   * Le site officiel du réseau. C'est la même organisation : le dire permet à
+   * un moteur de relier ce site à l'entité Boxing Center qu'il connaît déjà,
+   * au lieu d'en inventer une deuxième.
+   */
+  sameAs: readonly string[]
 
   // ---------------------------------------------------------------------------
   // À AJOUTER AU TYPE **ET** À LA FONCTION quand la direction fournit les faits,
@@ -76,6 +86,8 @@ export function organizationJsonLd(): OrganisationJsonLd {
     url: absoluteUrl('/'),
     // Fichier réel, vérifié : public/images/logo.png, 186 × 88 px.
     logo: absoluteUrl('/images/logo.png'),
+    telephone: RESEAU.telephone.e164,
+    sameAs: [RESEAU.siteOfficiel.url],
   }
 }
 
@@ -122,6 +134,15 @@ export function webSiteJsonLd(): SiteWebJsonLd {
  * Figer un prix dans le balisage publierait une grille que le produit ne
  * respecte pas. À rouvrir seulement si la direction fige une grille publique.
  */
+type OffreJsonLd = {
+  '@type': 'Offer'
+  name: string
+  price: string
+  priceCurrency: 'EUR'
+  unitText: string
+  url: string
+}
+
 export type ServiceJsonLd = {
   '@context': Contexte
   '@type': 'Service'
@@ -130,17 +151,141 @@ export type ServiceJsonLd = {
   provider: Reference
   url: string
   areaServed: { '@type': 'AdministrativeArea'; name: string }
+  /**
+   * Les deux prix publics. L'ancienne version les écartait « tant que la
+   * direction n'a pas figé une grille publique ». La grille est publique : le
+   * cahier §8 la fixe et `/tarifs` l'affiche. La taire dans le balisage privait
+   * les moteurs de réponse du fait qu'on leur demande le plus : combien.
+   */
+  offers: readonly OffreJsonLd[]
+  /** Les cinq lieux où le service se consomme — chacun défini une seule fois, sur sa page. */
+  availableAtOrFrom: readonly Reference[]
 }
 
 export function serviceJsonLd(): ServiceJsonLd {
+  const euros = (cents: number) => (cents / 100).toFixed(2)
   return {
     '@context': CONTEXTE,
     '@type': 'Service',
     name: 'Location de créneaux pour coachs indépendants',
-    serviceType: 'Location d’espace de coaching sportif',
+    serviceType: 'Location de salle de sport à l’heure pour coach sportif',
     provider: { '@id': ORG_ID },
     url: absoluteUrl('/'),
     areaServed: { '@type': 'AdministrativeArea', name: 'Toulouse et agglomération' },
+    offers: [
+      {
+        '@type': 'Offer',
+        name: 'Créneau d’une heure — heure creuse',
+        price: euros(REGLAGES_DEFAUT.offpeak_cents),
+        priceCurrency: 'EUR',
+        unitText: 'heure',
+        url: absoluteUrl('/tarifs'),
+      },
+      {
+        '@type': 'Offer',
+        name: 'Créneau d’une heure — heure pleine',
+        price: euros(REGLAGES_DEFAUT.peak_cents),
+        priceCurrency: 'EUR',
+        unitText: 'heure',
+        url: absoluteUrl('/tarifs'),
+      },
+    ],
+    availableAtOrFrom: (Object.keys(CLUBS_VERITE) as ClubId[]).map((id) => ({ '@id': lieuId(id) })),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SportsActivityLocation — un par club
+// ---------------------------------------------------------------------------
+
+type AdressePostale = {
+  '@type': 'PostalAddress'
+  streetAddress: string
+  postalCode: string
+  addressLocality: string
+  addressRegion: string
+  addressCountry: 'FR'
+}
+
+/**
+ * Le lieu. SANS `geo`, SANS `openingHoursSpecification`, SANS note : aucun des
+ * trois n'est vérifié, et un lieu à moitié décrit vaut mieux qu'un lieu décrit
+ * faux. `address` et `name` suffisent au type.
+ *
+ * `@id` stable, défini UNE SEULE FOIS, sur la page du club. Les autres pages le
+ * référencent par cet identifiant, sans le redéclarer : une entité décrite deux
+ * fois devient deux entités.
+ */
+export type LieuJsonLd = {
+  '@context': Contexte
+  '@type': 'SportsActivityLocation'
+  '@id': string
+  name: string
+  url: string
+  address: AdressePostale
+  parentOrganization: Reference
+  telephone: string
+}
+
+/** Dérivé de l'identifiant API, qui ne change pas quand le slug change. */
+export function lieuId(clubId: ClubId): string {
+  return `${SITE_URL}/#lieu-${clubId}`
+}
+
+export function lieuJsonLd(clubId: ClubId, cheminPage: string): LieuJsonLd {
+  const c: ClubVerite = CLUBS_VERITE[clubId]
+  return {
+    '@context': CONTEXTE,
+    '@type': 'SportsActivityLocation',
+    '@id': lieuId(clubId),
+    name: c.nom,
+    url: absoluteUrl(cheminPage),
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: c.rue,
+      postalCode: c.codePostal,
+      addressLocality: c.ville,
+      addressRegion: 'Occitanie',
+      addressCountry: 'FR',
+    },
+    parentOrganization: { '@id': ORG_ID },
+    telephone: RESEAU.telephone.e164,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// FAQPage — uniquement le miroir d'une FAQ VISIBLE
+// ---------------------------------------------------------------------------
+
+export type QuestionReponse = { readonly question: string; readonly reponse: string }
+
+export type FaqJsonLd = {
+  '@context': Contexte
+  '@type': 'FAQPage'
+  mainEntity: Array<{
+    '@type': 'Question'
+    name: string
+    acceptedAnswer: { '@type': 'Answer'; text: string }
+  }>
+}
+
+/**
+ * Le balisage FAQ ne se construit QU'À PARTIR de la liste affichée : la page
+ * passe la même constante au composant visible et à cette fonction. Une FAQ
+ * balisée sans équivalent visible est ce que Google sanctionne ; une FAQ visible
+ * sans balisage prive les moteurs de réponse de la forme qu'ils citent le plus
+ * (HubSpot, State of AEO 2026).
+ */
+export function faqJsonLd(items: readonly QuestionReponse[]): FaqJsonLd {
+  if (items.length === 0) throw new Error('[seo/jsonld] FAQ vide : rien à baliser.')
+  return {
+    '@context': CONTEXTE,
+    '@type': 'FAQPage',
+    mainEntity: items.map((q) => ({
+      '@type': 'Question',
+      name: q.question,
+      acceptedAnswer: { '@type': 'Answer', text: q.reponse },
+    })),
   }
 }
 
