@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Parcours vente badge — créneau coach</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --encre: #1a1a1a;
+      --fond: #f4f1ec;
+      --carte: #fff;
+      --filet: #d9d3c8;
+      --accent: #9a3412;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
+      line-height: 1.45;
+      color: var(--encre);
+      background: var(--fond);
+    }
+    main {
+      width: min(100%, 40rem);
+      margin: 0 auto;
+      padding: 1.25rem 1rem 3rem;
+    }
+    h1 {
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      line-height: 1.2;
+      margin: 0 0 0.5rem;
+    }
+    h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
+    p { margin: 0 0 0.75rem; }
+    ol { margin: 0 0 1.25rem; padding-left: 1.2rem; }
+    li { margin: 0.25rem 0; }
+    section {
+      background: var(--carte);
+      border: 1px solid var(--filet);
+      padding: 1rem;
+      margin: 0 0 1rem;
+    }
+    button, input {
+      font: inherit;
+      font-size: 16px;
+    }
+    button {
+      min-height: 44px;
+      min-width: 44px;
+      padding: 0.55rem 0.9rem;
+      background: var(--accent);
+      color: #fff;
+      border: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+    @media (min-width: 600px) {
+      button { width: auto; }
+    }
+    label, .champ {
+      display: block;
+      margin: 0.75rem 0;
+    }
+    input[type="text"], input:not([type]) {
+      width: 100%;
+      min-height: 44px;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--filet);
+    }
+    input[type="checkbox"] {
+      width: 1.25rem;
+      height: 1.25rem;
+      vertical-align: middle;
+    }
+    .erreur { color: #9a3412; }
+    dl { margin: 0; }
+    dt { font-weight: bold; margin-top: 0.6rem; }
+    dd { margin: 0.15rem 0 0; }
+    a { color: var(--accent); }
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Parcours vente badge</h1>
+    <p>
+      Double local de l'écran Deciplus. Chromium le parcourt sans toucher
+      la production. La vente n'est retenue que si le début est la date du
+      créneau et si la durée est celle du créneau choisi.
+    </p>
+    <ol>
+      <li>Fiche du membre partagé.</li>
+      <li>Nouvelle vente.</li>
+      <li>Produit Badge.</li>
+      <li>Début = heure de Paris de <code>starts_at</code>.</li>
+      <li>Fin = heure de Paris de <code>ends_at</code>.</li>
+      <li>Durée en minutes = fin moins début.</li>
+      <li>Décocher « Conserver la durée ». Sinon le produit impose 12 mois.</li>
+      <li>Valider. Le lien du badge n'apparaît qu'après cette vente.</li>
+    </ol>
+
+    <section id="fiche">
+      <h2>Fiche membre</h2>
+      <p>COACHING SOUS LOC — fiche unique.</p>
+      <button type="button" id="ouvrir-vente">Nouvelle vente</button>
+    </section>
+
+    <section id="vente" hidden>
+      <h2>Vente</h2>
+      <label>
+        Produit
+        <input id="recherche" type="text" placeholder="Rechercher un produit" autocomplete="off" />
+      </label>
+      <button type="button" id="tuile-badge" hidden>Badge</button>
+    </section>
+
+    <section id="config" hidden>
+      <h2>Configuration de Badge</h2>
+      <p>Durée catalogue du produit : 12 mois, tant que la case reste cochée.</p>
+      <label>
+        <input id="conserver" type="checkbox" checked />
+        Conserver la durée
+      </label>
+      <p class="champ">Valide du</p>
+      <input id="date-debut" name="date_debut" type="text" autocomplete="off" />
+      <p class="champ">au</p>
+      <input id="date-fin" name="date_fin" type="text" autocomplete="off" />
+      <label>
+        Durée du créneau (minutes)
+        <input id="duree" name="duree_minutes" type="text" inputmode="numeric" autocomplete="off" />
+      </label>
+      <button type="button" id="valider">Valider</button>
+      <p id="message" class="erreur" hidden></p>
+    </section>
+
+    <section id="recu" hidden>
+      <h2>Vente enregistrée</h2>
+      <p><a id="lien-badge" href="https://boxingcenter.deciplus.pro/badge/enrol?c=CRENEAU">Ouvrir le badge</a></p>
+      <dl>
+        <dt>Début</dt>
+        <dd id="recu-debut"></dd>
+        <dt>Fin</dt>
+        <dd id="recu-fin"></dd>
+        <dt>Durée</dt>
+        <dd id="recu-duree"></dd>
+        <dt>Source</dt>
+        <dd id="recu-source"></dd>
+      </dl>
+    </section>
+  </main>
+  <script>
+    const vente = document.getElementById('vente');
+    const config = document.getElementById('config');
+    const tuile = document.getElementById('tuile-badge');
+    const recu = document.getElementById('recu');
+    const message = document.getElementById('message');
+
+    document.getElementById('ouvrir-vente').addEventListener('click', () => {
+      vente.hidden = false;
+    });
+
+    document.getElementById('recherche').addEventListener('input', (ev) => {
+      tuile.hidden = !/^badge$/i.test(String(ev.target.value || '').trim());
+    });
+
+    tuile.addEventListener('click', () => {
+      config.hidden = false;
+    });
+
+    function lireInstant(valeur) {
+      const m = String(valeur || '').trim().match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/);
+      if (!m) return null;
+      const jour = Number(m[1]);
+      const mois = Number(m[2]);
+      const annee = Number(m[3]);
+      const heure = Number(m[4]);
+      const minute = Number(m[5]);
+      if (mois < 1 || mois > 12 || jour < 1 || jour > 31 || heure > 23 || minute > 59) return null;
+      return Date.UTC(annee, mois - 1, jour, heure, minute);
+    }
+
+    document.getElementById('valider').addEventListener('click', () => {
+      message.hidden = true;
+      const conserver = document.getElementById('conserver').checked;
+      const debutTxt = document.getElementById('date-debut').value;
+      const finTxt = document.getElementById('date-fin').value;
+      const dureeSaisie = Number(String(document.getElementById('duree').value || '').trim());
+      let source = 'creneau';
+      let debut = debutTxt;
+      let fin = finTxt;
+      let duree = dureeSaisie;
+
+      if (conserver) {
+        source = 'produit';
+        const instant = lireInstant(debutTxt);
+        if (instant === null) {
+          message.textContent = 'Date de début illisible.';
+          message.hidden = false;
+          return;
+        }
+        const plus = new Date(instant);
+        plus.setUTCMonth(plus.getUTCMonth() + 12);
+        const jj = String(plus.getUTCDate()).padStart(2, '0');
+        const mm = String(plus.getUTCMonth() + 1).padStart(2, '0');
+        const hh = String(plus.getUTCHours()).padStart(2, '0');
+        const min = String(plus.getUTCMinutes()).padStart(2, '0');
+        fin = jj + '/' + mm + '/' + plus.getUTCFullYear() + ' ' + hh + ':' + min;
+        duree = Math.round((plus.getTime() - instant) / 60000);
+      } else {
+        const a = lireInstant(debutTxt);
+        const b = lireInstant(finTxt);
+        if (a === null || b === null || !(dureeSaisie > 0)) {
+          message.textContent = 'Début, fin ou durée manquants.';
+          message.hidden = false;
+          return;
+        }
+        const ecart = Math.round((b - a) / 60000);
+        if (ecart !== dureeSaisie) {
+          message.textContent = 'La durée ne correspond pas au créneau.';
+          message.hidden = false;
+          return;
+        }
+        duree = ecart;
+      }
+
+      recu.hidden = false;
+      recu.dataset.debut = debut;
+      recu.dataset.fin = fin;
+      recu.dataset.duree = String(duree);
+      recu.dataset.source = source;
+      document.getElementById('recu-debut').textContent = debut;
+      document.getElementById('recu-fin').textContent = fin;
+      document.getElementById('recu-duree').textContent = duree + ' min';
+      document.getElementById('recu-source').textContent = source;
+    });
+  </script>
+</body>
+</html>

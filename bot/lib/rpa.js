@@ -4,6 +4,7 @@ const { logInfo, logWarn } = require('./logger');
 const { launchBrowser, saveSession, login, gotoDeciplus, handleChooseZone } = require('./auth');
 const { gymLabel, slotNote, MARKER } = require('./slot-note');
 const { sharedMemberId, extraireUrlBadge } = require('./badge-window');
+const { bornesVenteBadge } = require('./badge-vente');
 
 function originOf(page) {
   try {
@@ -126,7 +127,57 @@ function produitBadge() {
   return String(process.env.DECIPLUS_BADGE_PRODUCT || 'Badge').trim() || 'Badge';
 }
 
-async function vendreBadge(page) {
+async function remplirVisible(page, selecteurs, valeur) {
+  for (const sel of selecteurs) {
+    const el = page.locator(sel).first();
+    if ((await el.count()) === 0) continue;
+    if (!(await el.isVisible().catch(() => false))) continue;
+    await el.fill('');
+    await el.fill(valeur);
+    return true;
+  }
+  return false;
+}
+
+async function poserFenetreBadge(page, job) {
+  const bornes = bornesVenteBadge(job);
+  const conserver = page.locator('label:has-text("Conserver la durée") input[type="checkbox"]').first();
+  if ((await conserver.count()) > 0 && (await conserver.isChecked().catch(() => false))) {
+    await conserver.uncheck({ force: true });
+  }
+
+  const debutOk = await remplirVisible(
+    page,
+    [
+      'input[name="date_debut"]',
+      'input[name="valide_du"]',
+      ':text("Valide du") >> xpath=following::input[1]',
+    ],
+    bornes.debutFr,
+  );
+  const finOk = await remplirVisible(
+    page,
+    [
+      'input[name="date_fin"]',
+      'input[name="valide_au"]',
+      ':text("Valide du") >> xpath=following::input[2]',
+    ],
+    bornes.finFr,
+  );
+  if (!debutOk || !finOk) {
+    const err = new Error('Champs date de badge introuvables');
+    err.code = 'BADGE_FENETRE_ABSENTE';
+    throw err;
+  }
+
+  const duree = page.locator('input[name="duree_minutes"]').first();
+  if ((await duree.count()) > 0 && (await duree.isVisible().catch(() => false))) {
+    await duree.fill(String(bornes.dureeMinutes));
+  }
+  return bornes;
+}
+
+async function vendreBadge(page, job) {
   const produit = produitBadge();
   const ouvrir = page
     .locator('a, button')
@@ -152,6 +203,8 @@ async function vendreBadge(page) {
     await tuile.click().catch(() => {});
     await page.waitForTimeout(800);
   }
+
+  await poserFenetreBadge(page, job);
 
   const valider = page
     .locator(
@@ -208,7 +261,7 @@ async function runAccessJob(job) {
 
     let accessUrl = null;
     if (grant) {
-      accessUrl = await vendreBadge(page);
+      accessUrl = await vendreBadge(page, job);
       await openMember(page, memberId);
     } else {
       await couperBadge(page, job);
@@ -236,4 +289,4 @@ async function runAccessJob(job) {
   }
 }
 
-module.exports = { runAccessJob, writeInfoCompta, searchMember, MARKER };
+module.exports = { runAccessJob, writeInfoCompta, searchMember, vendreBadge, MARKER };
