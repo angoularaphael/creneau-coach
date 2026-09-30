@@ -19,8 +19,10 @@ import {
   actionDebloquer,
   actionPoserHold,
   actionSupprimerReservation,
+  actionSupprimerCoach,
   actionCreerCoachDeTest,
 } from './actions'
+import { BoutonSupprimer } from './BoutonSupprimer'
 import { actionSortir } from './connexion/actions'
 import { actionFermerStudio, actionOuvrirStudio } from './studio/actions'
 import { studioActif } from '@/lib/studio/session'
@@ -31,6 +33,14 @@ export const dynamic = 'force-dynamic'
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'] as const
 
 /** Les dates de la grille sont des jours calendaires Paris, pas des instants. */
+/** Le verdict de la dernière action, lu dans l'URL. */
+const VERDICTS: Record<string, { ok: boolean; texte: string }> = {
+  hold_ok: { ok: true, texte: 'Hold créé — la place est bloquée 10 minutes.' },
+  reservation_supprimee: { ok: true, texte: 'Réservation supprimée, avec sa signature, son avoir et ses fichiers.' },
+  coach_supprime: { ok: true, texte: 'Coach supprimé : compte, profil, réservations et fichiers. L’adresse peut se réinscrire.' },
+  suppression_refusee: { ok: false, texte: 'Suppression refusée. Elle est réservée à la direction ; rechargez la page et réessayez.' },
+}
+
 function isoJour(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
@@ -249,6 +259,16 @@ export default async function BackOffice({
   const du = isoJour(lundi)
   const au = isoJour(samedi)
 
+  // Effacer est définitif : la direction seule, jamais un responsable de salle.
+  const peutSupprimer = staff.clubId === null && staff.role !== 'salle'
+  const vue = (
+    <>
+      <input type="hidden" name="club" value={club.id} />
+      <input type="hidden" name="espace" value={espace?.id ?? ''} />
+      <input type="hidden" name="semaine" value={params.semaine ?? ''} />
+    </>
+  )
+
   const [grille, reservations, coachs, documentsOk] = await Promise.all([
     lireGrille(club.id as ClubId, espace?.id ?? null, du, au),
     listerReservations(club.id as ClubId, du, au),
@@ -340,11 +360,9 @@ export default async function BackOffice({
         <p
           className="bo__verdict"
           role="status"
-          data-ok={params.resultat === 'hold_ok'}
+          data-ok={VERDICTS[params.resultat]?.ok ?? false}
         >
-          {params.resultat === 'hold_ok'
-            ? 'Hold créé — la place est bloquée 10 minutes.'
-            : `Refus du moteur : ${params.resultat}`}
+          {VERDICTS[params.resultat]?.texte ?? `Refus du moteur : ${params.resultat}`}
         </p>
       ) : null}
 
@@ -570,7 +588,7 @@ export default async function BackOffice({
         </section>
 
         <section className="bo__panneau">
-          <h2>Coachs d’essai</h2>
+          <h2>Coachs inscrits</h2>
           <form action={actionCreerCoachDeTest} className="bo__form">
             <input
               className="bo__champ"
@@ -582,14 +600,26 @@ export default async function BackOffice({
           </form>
           <ul className="bo__liste" style={{ marginTop: '0.75rem' }}>
             {coachs.map((c) => (
-              <li key={c.id} className="bo__ligne">
-                <span>{c.nom}</span>
+              <li key={c.id} className="bo__ligne bo__ligne--coach">
+                <span className="bo__coach">
+                  <b>{c.nom}</b>
+                  {c.email ? <small>{c.email}</small> : null}
+                </span>
                 <span
                   className="bo__etiquette"
                   style={{ color: c.status === 'active' ? 'var(--ok)' : 'var(--warn)' }}
                 >
                   {c.status}
                 </span>
+                {peutSupprimer ? (
+                  <form action={actionSupprimerCoach}>
+                    {vue}
+                    <input type="hidden" name="id" value={c.id} />
+                    <BoutonSupprimer
+                      question={`Supprimer définitivement ${c.nom}${c.email ? ` (${c.email})` : ''} ? Son compte, son profil, toutes ses réservations, signatures et fichiers partent. Irréversible.`}
+                    />
+                  </form>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -641,12 +671,15 @@ export default async function BackOffice({
                     </span>
                   </div>
 
-                  <form action={actionSupprimerReservation} className="bo__resa__action">
-                    <input type="hidden" name="id" value={r.id} />
-                    <button className="bo__bouton bo__bouton--discret" title="Supprimer (essai)">
-                      Supprimer
-                    </button>
-                  </form>
+                  {peutSupprimer ? (
+                    <form action={actionSupprimerReservation} className="bo__resa__action">
+                      {vue}
+                      <input type="hidden" name="id" value={r.id} />
+                      <BoutonSupprimer
+                        question={`Supprimer définitivement la réservation de ${r.coach_nom ?? 'ce coach'} du ${dateParis.format(new Date(r.starts_at))} à ${murParis(new Date(r.starts_at)).heure}h ? Signature, avoir et fichiers partent avec. Irréversible.`}
+                      />
+                    </form>
+                  ) : null}
                 </li>
               ))}
             </ul>

@@ -11,6 +11,8 @@ import {
   setMockSession,
 } from '@/lib/auth/mock-store';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { envoyerCourriel, gabarit, mailConfigure, urlPublique } from '@/lib/mail/envoi';
 import { checkRateLimit, emailHash, ipHash } from '@/lib/security';
 import { headers } from 'next/headers';
 
@@ -66,19 +68,30 @@ export async function signUpAction(
     redirect('/espace-coach');
   }
 
+  const hdrs = await headers();
+  const limite = await checkRateLimit('login', {
+    ipHash: ipHash(hdrs.get('x-vercel-forwarded-for') ?? hdrs.get('x-forwarded-for') ?? 'unknown'),
+    coachId: emailHash(email),
+  });
+  if (!limite.allowed) {
+    return { error: 'Trop de tentatives. Réessayez dans une minute.' };
+  }
+
+  const metadonnees = {
+    first_name,
+    last_name,
+    consent_cgu_at: new Date().toISOString(),
+    consent_privacy_at: new Date().toISOString(),
+  };
+
+  if (mailConfigure()) return inscrireAvecBrevo(email, password, first_name, metadonnees);
+
+  // Repli sans Brevo : le mailer de Supabase, et son adresse de site.
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      emailRedirectTo: `${siteUrl()}/auth/callback`,
-      data: {
-        first_name,
-        last_name,
-        consent_cgu_at: new Date().toISOString(),
-        consent_privacy_at: new Date().toISOString(),
-      },
-    },
+    options: { emailRedirectTo: `${siteUrl()}/auth/callback`, data: metadonnees },
   });
 
   if (error) return { error: 'Inscription impossible. Réessayez ou connectez-vous.' };
@@ -91,6 +104,85 @@ export async function signUpAction(
   }
 
   redirect('/espace-coach');
+}
+
+const MESSAGE_ENVOYE =
+  'C’est presque fini : ouvrez l’e-mail que nous venons de vous envoyer et cliquez sur « Confirmer mon adresse ». Pensez à regarder dans les indésirables.';
+
+/**
+ * Inscription dont l'e-mail part par Brevo (`src/lib/mail/envoi.ts`).
+ *
+ * `generateLink` crée le compte SANS rien envoyer et rend un jeton haché ; le
+ * lien est bâti sur NOTRE adresse publique et vérifié par `/auth/confirmer`.
+ *
+ * Adresse déjà inscrite : même réponse à l'écran (on ne dit pas à un inconnu
+ * qu'un compte existe), et un lien de connexion part à la vraie propriétaire —
+ * c'est aussi ce qui sauve le coach qui a perdu son premier e-mail.
+ */
+async function inscrireAvecBrevo(
+  email: string,
+  password: string,
+  prenom: string,
+  metadonnees: Record<string, string>,
+): Promise<AuthActionState> {
+  const admin = createServiceClient();
+  const base = urlPublique();
+
+  const nouveau = await admin.auth.admin.generateLink({
+    type: 'signup',
+    email,
+    password,
+    options: { data: metadonnees },
+  });
+
+  let lien: string;
+  let courriel: { sujet: string; html: string; texte: string };
+  let creeId: string | null = null;
+
+  if (!nouveau.error && nouveau.data.properties?.hashed_token) {
+    creeId = nouveau.data.user?.id ?? null;
+    lien = `${base}/auth/confirmer?token_hash=${encodeURIComponent(nouveau.data.properties.hashed_token)}&type=signup`;
+    const g = gabarit({
+      titre: `Bienvenue ${prenom}, confirmez votre adresse`,
+      paragraphes: [
+        'Votre compte coach Boxing Center est créé. Un clic pour confirmer votre adresse e-mail, et vous réservez vos créneaux dans nos cinq salles de Toulouse.',
+      ],
+      bouton: { libelle: 'Confirmer mon adresse', lien },
+      apres: 'Vous n’avez rien demandé ? Ignorez cet e-mail : sans confirmation, le compte reste inactif.',
+    });
+    courriel = { sujet: 'Confirmez votre adresse — Boxing Center', ...g };
+  } else {
+    const existant = await admin.auth.admin.generateLink({ type: 'magiclink', email });
+    if (existant.error || !existant.data.properties?.hashed_token) {
+      return { error: 'Inscription impossible. Réessayez ou connectez-vous.' };
+    }
+    lien = `${base}/auth/confirmer?token_hash=${encodeURIComponent(existant.data.properties.hashed_token)}&type=magiclink`;
+    const g = gabarit({
+      titre: 'Vous avez déjà un compte coach',
+      paragraphes: [
+        'Quelqu’un — sans doute vous — a demandé à créer un compte avec cette adresse, qui en a déjà un. Ce bouton vous connecte directement à votre espace.',
+      ],
+      bouton: { libelle: 'Entrer dans mon espace', lien },
+      apres: 'Ce n’était pas vous ? Ignorez cet e-mail : personne d’autre ne l’a reçu.',
+    });
+    courriel = { sujet: 'Votre accès à l’espace coach — Boxing Center', ...g };
+  }
+
+  const envoi = await envoyerCourriel({ a: email, ...courriel });
+  if (!envoi.ok) {
+    console.error('[inscription] e-mail non parti', { raison: envoi.raison });
+    // Un compte dont le lien n'est jamais parti bloquerait l'adresse : on
+    // l'efface, profil compris (la clé profil → compte est RESTRICT).
+    if (creeId) {
+      const { error } = await admin.rpc('coach_bo_supprimer_coach', { p_id: creeId, p_acteur: 'inscription-echouee' });
+      if (error) console.error('[inscription] compte orphelin', { message: error.message });
+    }
+    return {
+      error: 'L’e-mail de confirmation n’a pas pu partir. Rien n’a été créé : réessayez dans un instant.',
+    };
+  }
+
+  return { ok: true, message: MESSAGE_ENVOYE };
 }
 
 export async function signInAction(

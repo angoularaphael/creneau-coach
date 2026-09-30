@@ -70,6 +70,8 @@ finie, même si elle est belle à 1440.
 | L8 | **Poser des questions plutôt que rater.** Pas de gaspillage de crédits. | « Tu n'as pas le droit à l'échec. » « You know how to ask questions using ask-user-question. » **Nuance apprise : le widget a été refusé une fois, le 17 septembre. Depuis, les questions se posent en texte numéroté, avec une réponse proposée pour chacune.** |
 | L9 | **Apporter quelque chose, pas rendre une copie.** | « Bring me something interesting. » Va avec L7 : apporter une idée, **et la montrer à l'écran**. Un compte rendu écrit ne vaut pas livraison. |
 | L10 | **Les skills sont un prérequis, pas une option.** | « You know about all the skills that I need you to work with. » `fusion-baffled`, `depot-partage`, `second-brain`, `veille-references-web`. |
+| L11 | **Tout ce qui se crée se supprime depuis le back-office.** Chaque nouvelle entité (coach, réservation, avoir, document…) arrive avec son bouton « Supprimer » (direction seule, confirmation, journal d'audit) et sa fonction SQL qui efface les lignes filles dans l'ordre des clés. | 30/09/2026 : « on a testé, il y a des entrées de test, on ne peut pas les supprimer — ça doit devenir une règle. » Modèle : `coach_bo_supprimer_*` (migration 0029). |
+| L12 | **Tous les e-mails partent par Brevo, configuration BOXPLUS** (`BREVO_*`), avec des liens bâtis sur `SITE_URL` — jamais par le mailer de Supabase. | 30/09/2026 : la confirmation d'inscription menait à localhost. `src/lib/mail/envoi.ts`. |
 
 ---
 

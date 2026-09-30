@@ -484,7 +484,28 @@
   font-weight: 400;
 }
 
+.bo__bouton--danger {
+  background: transparent;
+  color: #ec8079;
+  border-color: color-mix(in srgb, #ec8079 45%, transparent);
+  font-weight: 500;
+}
+
+.bo__bouton--danger:hover,
+.bo__bouton--danger:focus-visible {
+  background: #ec8079;
+  color: #1a0f0e;
+  filter: none;
+}
+
 .bo__bouton:hover { filter: brightness(1.1); }
+
+/* Coachs inscrits : nom et e-mail à gauche, statut, puis la suppression. */
+.bo__ligne--coach { flex-wrap: wrap; }
+.bo__coach { display: grid; min-width: 0; flex: 1 1 12rem; }
+.bo__coach b { font-weight: 600; overflow-wrap: anywhere; }
+.bo__coach small { color: var(--ink-muted); font-size: 0.75rem; overflow-wrap: anywhere; }
+.bo__ligne--coach form { margin: 0; }
 
 .bo__vide-texte {
   color: var(--ink-muted);

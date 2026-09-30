@@ -8,7 +8,8 @@ import {
   bloquerCreneau,
   debloquerCreneau,
   poserHoldDeTest,
-  annulerReservation,
+  supprimerCoach,
+  supprimerReservation,
 } from '@/lib/dal/back-office'
 import { createServiceClient } from '@/lib/supabase/service'
 import { estClubId, type ClubId } from '@/domain/contrat'
@@ -65,9 +66,47 @@ export async function actionPoserHold(form: FormData) {
   redirect(`/admin?${q.toString()}`)
 }
 
+/**
+ * Retour sur la même vue (club, espace, semaine), avec le verdict dans l'URL :
+ * une suppression refusée se lit, elle ne finit pas sur une page d'erreur.
+ */
+function retour(form: FormData, resultat: string): never {
+  const q = new URLSearchParams({ resultat })
+  for (const cle of ['club', 'espace', 'semaine'] as const) {
+    const v = String(form.get(cle) || '')
+    if (v) q.set(cle, v)
+  }
+  redirect(`/admin?${q.toString()}`)
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function actionSupprimerReservation(form: FormData) {
-  await annulerReservation(String(form.get('id')))
+  const id = String(form.get('id') || '')
+  let resultat = 'reservation_supprimee'
+  try {
+    if (!UUID.test(id)) throw new Error('identifiant invalide')
+    await supprimerReservation(id)
+  } catch (e) {
+    console.warn('[back-office] suppression réservation', e instanceof Error ? e.message : e)
+    resultat = 'suppression_refusee'
+  }
   revalidatePath('/admin')
+  retour(form, resultat)
+}
+
+export async function actionSupprimerCoach(form: FormData) {
+  const id = String(form.get('id') || '')
+  let resultat = 'coach_supprime'
+  try {
+    if (!UUID.test(id)) throw new Error('identifiant invalide')
+    await supprimerCoach(id)
+  } catch (e) {
+    console.warn('[back-office] suppression coach', e instanceof Error ? e.message : e)
+    resultat = 'suppression_refusee'
+  }
+  revalidatePath('/admin')
+  retour(form, resultat)
 }
 
 /**

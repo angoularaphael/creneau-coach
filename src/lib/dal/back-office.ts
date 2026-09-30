@@ -3,6 +3,7 @@ import 'server-only'
 import { cookies } from 'next/headers'
 
 import { createServiceClient } from '@/lib/supabase/service'
+import { SEAU_PRIVE } from '@/lib/documents/obligatoires'
 import { COOKIE_BO, lireSession } from '@/lib/admin/session'
 import { sessionEncoreValable } from '@/lib/admin/revalidation'
 import type { ClubId } from '@/domain/contrat'
@@ -244,25 +245,57 @@ export async function poserHoldDeTest(
   return r.ok ? { ok: true } : { ok: false, code: r.error?.code, message: r.error?.message }
 }
 
-/** Les coachs de test disponibles pour poser des holds depuis le back-office. */
-export async function listerCoachsDeTest(): Promise<{ id: string; nom: string; status: string }[]> {
+/** Tous les coachs inscrits, les plus récents d'abord : holds d'essai et nettoyage. */
+export async function listerCoachsDeTest(): Promise<
+  { id: string; nom: string; email: string | null; status: string; cree_le: string }[]
+> {
   await garde()
   const sb = createServiceClient()
   const { data, error } = await sb
     .from('coach_profiles')
-    .select('id, first_name, last_name, status')
-    .order('created_at')
-    .limit(20)
+    .select('id, first_name, last_name, email, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(200)
   if (error) throw new Error(`coachs : ${error.message}`)
   return (data ?? []).map((c) => ({
     id: c.id as string,
     nom: `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim() || (c.id as string).slice(0, 8),
+    email: (c.email as string | null) ?? null,
     status: c.status as string,
+    cree_le: c.created_at as string,
   }))
 }
 
-export async function annulerReservation(id: string): Promise<void> {
+/**
+ * Suppression définitive — réservée à la direction (Eddy, 30/09/2026).
+ *
+ * Les essais laissaient des lignes qu'aucun bouton n'effaçait : signatures,
+ * jobs Deciplus et avoirs retiennent la réservation, qui retient le coach
+ * (clés RESTRICT, volontaires). `coach_bo_supprimer_*` efface tout dans l'ordre
+ * des clés, en une transaction, et écrit la suppression au journal d'audit, qui
+ * lui ne s'efface jamais. Les fichiers (attestations, photo) partent ensuite.
+ */
+async function gardeDirection(): Promise<string> {
   await garde()
+  const session = lireSession((await cookies()).get(COOKIE_BO)?.value)
+  if (!session || session.clubId !== null || session.role === 'salle') {
+    throw new Error('Back-office : suppression réservée à la direction.')
+  }
+  return session.identifiant
+}
+
+async function retirerFichiers(chemins: unknown): Promise<void> {
+  const liste = Array.isArray(chemins)
+    ? [...new Set(chemins.filter((c): c is string => typeof c === 'string' && c !== ''))]
+    : []
+  if (liste.length === 0) return
+  const { error } = await createServiceClient().storage.from(SEAU_PRIVE).remove(liste)
+  // La ligne est déjà effacée : un fichier resté orphelin ne se voit plus nulle part.
+  if (error) console.warn('[back-office] fichiers non retirés', { nombre: liste.length, message: error.message })
+}
+
+export async function supprimerReservation(id: string): Promise<void> {
+  const acteur = await gardeDirection()
   const sb = createServiceClient()
   const { data } = await sb
     .from('coach_reservations')
@@ -278,6 +311,29 @@ export async function annulerReservation(id: string): Promise<void> {
       },
     )
   }
-  const { error } = await sb.from('coach_reservations').delete().eq('id', id)
+  const { data: chemins, error } = await sb.rpc('coach_bo_supprimer_reservation', {
+    p_id: id,
+    p_acteur: acteur,
+  })
   if (error) throw new Error(`suppression : ${error.message}`)
+  await retirerFichiers(chemins)
+}
+
+export async function supprimerCoach(id: string): Promise<void> {
+  const acteur = await gardeDirection()
+  const sb = createServiceClient()
+  const { data: resas } = await sb
+    .from('coach_reservations')
+    .select(
+      'id, coach_id, club_id, space_id, starts_at, ends_at, qr_valid_from, qr_valid_to, deciplus_job_status',
+    )
+    .eq('coach_id', id)
+  for (const r of resas ?? []) {
+    if (doitRevoquerDeciplus(String(r.deciplus_job_status))) {
+      await envoyerJobDeciplus(reservationVersJob(r as Record<string, unknown>, 'coach_revoke')).catch(() => {})
+    }
+  }
+  const { data: chemins, error } = await sb.rpc('coach_bo_supprimer_coach', { p_id: id, p_acteur: acteur })
+  if (error) throw new Error(`suppression du coach : ${error.message}`)
+  await retirerFichiers(chemins)
 }
