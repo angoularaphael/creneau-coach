@@ -86,8 +86,9 @@ export default async function PageStudio() {
         </li>
         <li>Choisis un club → un créneau → Payer (Payplug TEST).</li>
         <li>
-          Carte de test du portail Payplug (mode TEST), pas ta CB. Après succès,
-          tu dois arriver à la signature.
+          Carte de test du portail Payplug (mode TEST), pas ta CB. Au retour,
+          le site re-lit le paiement chez Payplug et t’envoie à la signature —
+          même si le webhook TEST n’est pas encore passé.
         </li>
       </ol>
 

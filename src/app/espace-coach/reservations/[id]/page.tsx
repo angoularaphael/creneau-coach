@@ -11,6 +11,7 @@ import { libelleEspace, retourPaiement } from '@/lib/libelles-coach';
 import { ReservationActions } from './ReservationActions'
 import { studioActif } from '@/lib/studio/session';
 import { paypalActif } from '@/lib/payments/paypal';
+import { synchroniserPaiementPayplug } from '@/lib/payments/payplug-sync';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +38,31 @@ export default async function ReservationPage(ctx: Props) {
 
   const lecture = await lireReservation(req, session.valeur.supabase, session.valeur.acteur, params.id);
   if (!lecture.ok) notFound();
-  const reservation = versReservationPublique(lecture.valeur as unknown as Record<string, unknown>)
+  let reservation = versReservationPublique(lecture.valeur as unknown as Record<string, unknown>)
+
+  // Retour Payplug (ou rechargement tant que le webhook TEST n'est pas passé) :
+  // on re-lit le paiement chez Payplug, puis on envoie le coach à la signature.
+  if (reservation.status === 'held' && reservation.payment_status === 'unpaid') {
+    const verdict = await synchroniserPaiementPayplug(params.id)
+    if (verdict === 'ok' || verdict === 'replay') {
+      redirect(`/espace-coach/reservations/${params.id}/signature`)
+    }
+    if (verdict === 'attente' && query.paiement === 'retour') {
+      redirect(`/espace-coach/reservations/${params.id}?paiement=attente`)
+    }
+  }
+  if (reservation.status === 'awaiting_signature' && query.paiement === 'retour') {
+    redirect(`/espace-coach/reservations/${params.id}/signature`)
+  }
+
+  // Relecture si la sync a changé le statut sans redirect (cas rare).
+  if (reservation.status === 'held') {
+    const relire = await lireReservation(req, session.valeur.supabase, session.valeur.acteur, params.id)
+    if (relire.ok) {
+      reservation = versReservationPublique(relire.valeur as unknown as Record<string, unknown>)
+    }
+  }
+
   const paiementsTest = await studioActif();
   const paypalDisponible = paypalActif(paiementsTest);
   // Une option dont le délai est passé n'est plus une place gardée, même si la

@@ -16,11 +16,9 @@ const UUID =
 export type VerdictPaiement = 'ok' | 'replay' | 'mismatch' | 'indisponible' | 'unknown'
 
 /**
- * Marquage carte — UNIQUEMENT depuis le webhook prestataire.
- *
- * `service_role` ici n'est pas un raccourci pour un coach : il n'y a pas de
- * session. Le navigateur ne peut pas appeler cette fonction (server-only) et
- * `POST …/payment/sync` répond 404.
+ * Marquage carte — webhook Payplug / PayPal, OU re-lecture du paiement au
+ * retour navigateur (`synchroniserPaiementPayplug`). Le navigateur ne pose
+ * jamais le statut tout seul : on ne croit que ce que Payplug confirme.
  */
 export async function marquerPayeCarte(entree: {
   reservationId: string
@@ -61,6 +59,53 @@ export async function marquerPayeCarte(entree: {
   if (e2) return 'mismatch'
   // Course perdue entre la lecture et l'écriture : un autre paiement est passé.
   return maj && maj.length > 0 ? 'ok' : 'indisponible'
+}
+
+/**
+ * On retient l'id Payplug dès la création du checkout, AVANT le retour.
+ * Sans ça, au retour navigateur (quand le webhook n'est pas encore passé,
+ * courant en mode TEST), on ne saurait pas quel paiement re-lire.
+ */
+export async function memoriserPaiementEnCours(entree: {
+  reservationId: string
+  paymentId: string
+  provider: 'payplug' | 'paypal'
+}): Promise<boolean> {
+  if (!UUID.test(entree.reservationId) || !entree.paymentId) return false
+  const { data, error } = await createServiceClient()
+    .from('coach_reservations')
+    .update({
+      payment_provider: entree.provider,
+      payment_id: entree.paymentId,
+    })
+    .eq('id', entree.reservationId)
+    .eq('status', 'held')
+    .eq('payment_status', 'unpaid')
+    .select('id')
+  return !error && Boolean(data?.length)
+}
+
+export async function lirePaiementEnCours(reservationId: string): Promise<{
+  readonly payment_id: string | null
+  readonly payment_provider: string | null
+  readonly status: string
+  readonly payment_status: string
+  readonly amount_cents: number
+} | null> {
+  if (!UUID.test(reservationId)) return null
+  const { data, error } = await createServiceClient()
+    .from('coach_reservations')
+    .select('payment_id, payment_provider, status, payment_status, amount_cents')
+    .eq('id', reservationId)
+    .maybeSingle()
+  if (error || !data) return null
+  return {
+    payment_id: data.payment_id ? String(data.payment_id) : null,
+    payment_provider: data.payment_provider ? String(data.payment_provider) : null,
+    status: String(data.status),
+    payment_status: String(data.payment_status),
+    amount_cents: Number(data.amount_cents),
+  }
 }
 
 /**

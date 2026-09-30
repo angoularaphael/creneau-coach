@@ -7,6 +7,7 @@ import { exigerSession } from '@/lib/dal/acteur'
 import { lireMonProfil } from '@/lib/dal/profil'
 import { estUrlCheckoutSure } from '@/lib/paiement-url'
 import { creerPaiementPayplug } from '@/lib/payments/payplug'
+import { memoriserPaiementEnCours } from '@/lib/dal/paiements'
 import { creerCommandePaypal } from '@/lib/payments/paypal'
 import { studioActif } from '@/lib/studio/session'
 import {
@@ -103,6 +104,11 @@ export async function POST(req: NextRequest, ctxRoute: Ctx) {
         ctx.requestId,
       )
     }
+    await memoriserPaiementEnCours({
+      reservationId: resa.id,
+      paymentId: hosted.payment_id,
+      provider: 'payplug',
+    })
     return reponseJson(
       {
         reservation_id: resa.id,

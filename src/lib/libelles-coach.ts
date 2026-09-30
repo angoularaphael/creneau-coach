@@ -61,7 +61,11 @@ export const libelleEspace = (v: string): string => ESPACE[v] ?? v
  * message arbitraire.
  */
 const RETOURS_PAIEMENT: Record<string, { ton: 'ok' | 'info' | 'alerte'; texte: string }> = {
-  attente: { ton: 'info', texte: 'PayPal valide encore votre paiement. Rechargez cette page dans quelques minutes pour voir sa confirmation.' },
+  retour: {
+    ton: 'info',
+    texte: 'Nous vérifions votre paiement auprès de Payplug. Si la page ne change pas, rechargez-la dans quelques secondes.',
+  },
+  attente: { ton: 'info', texte: 'Payplug valide encore votre paiement. Rechargez cette page dans quelques minutes pour voir sa confirmation.' },
   deja: { ton: 'info', texte: 'Cette réservation était déjà réglée : aucun second paiement n’a été pris.' },
   expire: { ton: 'alerte', texte: 'Le délai pour payer était écoulé et la place a été libérée. Aucun paiement n’a été pris.' },
   refuse: { ton: 'alerte', texte: 'Le paiement n’a pas abouti. Aucun paiement n’a été pris : vous pouvez réessayer.' },
