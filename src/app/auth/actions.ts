@@ -22,13 +22,6 @@ export type AuthActionState = {
   message?: string;
 };
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(
-    /\/$/,
-    '',
-  );
-}
-
 export async function signUpAction(
   _prev: AuthActionState,
   formData: FormData,
@@ -84,42 +77,29 @@ export async function signUpAction(
     consent_privacy_at: new Date().toISOString(),
   };
 
-  if (mailConfigure()) return inscrireAvecBrevo(email, password, first_name, metadonnees);
-
-  // Repli sans Brevo : le mailer de Supabase, et son adresse de site.
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: `${siteUrl()}/auth/callback`, data: metadonnees },
-  });
-
-  if (error) return { error: 'Inscription impossible. Réessayez ou connectez-vous.' };
-  if (!data.session) {
+  if (!mailConfigure()) {
     return {
-      ok: true,
-      message:
-        'Compte créé. Vérifiez votre e-mail avant de vous connecter (lien de confirmation).',
+      error: 'L’e-mail de confirmation n’est pas disponible pour le moment. Réessayez dans un instant.',
     };
   }
-
-  redirect('/espace-coach');
+  return inscrireParCourriel(email, password, first_name, metadonnees);
 }
 
 const MESSAGE_ENVOYE =
   'C’est presque fini : ouvrez l’e-mail que nous venons de vous envoyer et cliquez sur « Confirmer mon adresse ». Pensez à regarder dans les indésirables.';
 
 /**
- * Inscription dont l'e-mail part par Brevo (`src/lib/mail/envoi.ts`).
+ * Inscription dont l'e-mail part de no-reply (`src/lib/mail/envoi.ts`).
  *
  * `generateLink` crée le compte SANS rien envoyer et rend un jeton haché ; le
  * lien est bâti sur NOTRE adresse publique et vérifié par `/auth/confirmer`.
+ * Supabase n'envoie pas la confirmation.
  *
  * Adresse déjà inscrite : même réponse à l'écran (on ne dit pas à un inconnu
  * qu'un compte existe), et un lien de connexion part à la vraie propriétaire —
  * c'est aussi ce qui sauve le coach qui a perdu son premier e-mail.
  */
-async function inscrireAvecBrevo(
+async function inscrireParCourriel(
   email: string,
   password: string,
   prenom: string,

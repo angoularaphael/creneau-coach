@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 const TYPES: readonly EmailOtpType[] = ['signup', 'magiclink', 'email']
 
 /**
- * Le lien des e-mails Brevo (`src/lib/mail/envoi.ts`) arrive ici.
+ * Le lien de l'e-mail no-reply (`src/lib/mail/envoi.ts`) arrive ici.
  *
  * Il porte un jeton haché à usage unique, vérifié par Supabase côté serveur :
  * la vérification pose la session dans les cookies, sur NOTRE domaine. Aucun

@@ -1,16 +1,13 @@
 import 'server-only'
 
 /**
- * Tous les e-mails de la plateforme partent par Brevo, avec la configuration de
- * BOXPLUS (Eddy, 30/09/2026) : même clé, même expéditeur, même adresse de
- * réponse que la boutique et le bot de gestion — `BREVO_*` dans l'environnement.
- *
- * Avant, la confirmation d'inscription partait du serveur de mails de Supabase,
- * avec SON adresse de site : le coach recevait un lien vers localhost. Désormais
- * le lien est fabriqué ici, sur `urlPublique()`, et Supabase n'envoie plus rien.
+ * La confirmation d'inscription part de no-reply@boxingcenter.fr, par Resend
+ * (même canal que la boutique). Supabase ne crée que le jeton : il n'envoie
+ * plus l'e-mail, et le lien est bâti ici, sur `urlPublique()`.
  */
 
-const API_BREVO = 'https://api.brevo.com/v3/smtp/email'
+const API_RESEND = 'https://api.resend.com/emails'
+const EXPEDITEUR = 'no-reply@boxingcenter.fr'
 
 export type Courriel = {
   readonly a: string
@@ -20,7 +17,7 @@ export type Courriel = {
 }
 
 export function mailConfigure(): boolean {
-  return Boolean(process.env.BREVO_API_KEY?.trim() && process.env.BREVO_SENDER_EMAIL?.trim())
+  return Boolean(process.env.RESEND_API_KEY?.trim())
 }
 
 /**
@@ -48,33 +45,36 @@ export function urlPublique(): string {
   return `http://localhost:${process.env.PORT || 3041}`
 }
 
+function expediteur(): string {
+  const nom = process.env.RESEND_SENDER_NAME?.trim() || 'Boxing Center'
+  const adresse = process.env.RESEND_SENDER_EMAIL?.trim() || EXPEDITEUR
+  return `${nom} <${adresse}>`
+}
+
 export async function envoyerCourriel(c: Courriel): Promise<{ ok: true } | { ok: false; raison: string }> {
-  if (!mailConfigure()) return { ok: false, raison: 'brevo_non_configure' }
-  const reponse = process.env.BREVO_REPLY_TO?.trim()
+  const cle = process.env.RESEND_API_KEY?.trim()
+  if (!cle) return { ok: false, raison: 'resend_non_configure' }
+  const reponse = process.env.RESEND_REPLY_TO?.trim() || process.env.MAIL_REPLY_TO?.trim()
   try {
-    const res = await fetch(API_BREVO, {
+    const res = await fetch(API_RESEND, {
       method: 'POST',
       headers: {
-        'api-key': process.env.BREVO_API_KEY!.trim(),
+        Authorization: `Bearer ${cle}`,
         'content-type': 'application/json',
-        accept: 'application/json',
       },
       body: JSON.stringify({
-        sender: {
-          name: process.env.BREVO_SENDER_NAME?.trim() || 'Boxing Center',
-          email: process.env.BREVO_SENDER_EMAIL!.trim(),
-        },
-        to: [{ email: c.a }],
-        ...(reponse ? { replyTo: { email: reponse } } : {}),
+        from: expediteur(),
+        to: [c.a],
+        ...(reponse ? { reply_to: reponse } : {}),
         subject: c.sujet,
-        htmlContent: c.html,
-        textContent: c.texte,
+        html: c.html,
+        text: c.texte,
       }),
       signal: AbortSignal.timeout(10_000),
     })
     if (!res.ok) {
       // Jamais le corps de la requête ni l'adresse dans le journal : seulement le code.
-      return { ok: false, raison: `brevo_${res.status}` }
+      return { ok: false, raison: `resend_${res.status}` }
     }
     return { ok: true }
   } catch (e) {
