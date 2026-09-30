@@ -59,8 +59,9 @@ n'apparaît pas — rien ne casse.
 
 ## 0 ter. E-mails — no-reply via Resend (à poser sur Vercel, 2 minutes)
 
-La confirmation d'inscription part de `no-reply@boxingcenter.fr` (Resend).
-Supabase ne fait qu'émettre le jeton : il n'envoie plus l'e-mail. Sur Vercel
+Tous les e-mails (confirmation, à signer, créneau confirmé, contact) partent de
+`no-reply@boxingcenter.fr` (Resend). Supabase ne fait qu'émettre le jeton
+d'inscription : il n'envoie plus d'e-mail. Sur Vercel
 → projet `creneau-coach` → Settings → Environment Variables (Production) :
 `RESEND_API_KEY`, `RESEND_SENDER_EMAIL=no-reply@boxingcenter.fr`,
 `RESEND_SENDER_NAME=Boxing Center`, `RESEND_REPLY_TO`, puis **Redeploy**.

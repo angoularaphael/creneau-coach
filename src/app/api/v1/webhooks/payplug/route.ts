@@ -1,5 +1,6 @@
 import { jsonError, jsonOk } from '@/lib/api/http'
 import { marquerPayeCarte } from '@/lib/dal/paiements'
+import { prevenirASigner } from '@/lib/mail/transactionnel'
 import {
   paiementPayplugRegle,
   recupererPaiementPayplug,
@@ -51,6 +52,8 @@ export async function POST(req: Request) {
     amountCents: Number(payment.amount),
     provider: 'payplug',
   })
+
+  if (verdict === 'ok') await prevenirASigner(reservationId)
 
   if (verdict === 'mismatch') {
     return jsonError(409, 'PRICE_MISMATCH', 'Montant ou réservation incohérents.')

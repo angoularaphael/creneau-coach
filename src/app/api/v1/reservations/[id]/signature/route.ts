@@ -18,6 +18,7 @@ import {
 } from '@/lib/security'
 import { reponse429 } from '@/lib/security/rate-limit'
 import { reponseDepuisErreur, reponseErreur, reponseJson } from '@/lib/http/erreurs'
+import { prevenirConfirme } from '@/lib/mail/transactionnel'
 
 export const dynamic = 'force-dynamic'
 
@@ -163,6 +164,7 @@ export async function POST(req: NextRequest, ctxRoute: Ctx) {
   if (!signe.ok) return reponseDepuisErreur(signe.erreur, ctx.requestId)
 
   const row = signe.valeur as Record<string, unknown>
+  await prevenirConfirme(id)
 
   return reponseJson(versReservationPublique(row), 200, ctx.requestId)
 }

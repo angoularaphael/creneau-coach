@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { lireEtatPaiement, marquerPayeCarte } from '@/lib/dal/paiements'
+import { prevenirASigner } from '@/lib/mail/transactionnel'
 import { createServiceClient } from '@/lib/supabase/service'
 
 import {
@@ -84,6 +85,7 @@ export async function enregistrerCapture(
     montant === null
       ? 'mismatch'
       : await marquerPayeCarte({ reservationId, paymentId: capture.id, amountCents: montant, provider: 'paypal' })
+  if (verdict === 'ok') await prevenirASigner(reservationId)
   if (verdict === 'ok' || verdict === 'replay') return { issue: 'paye', reservationId }
 
   // De l'argent sans place en face : on le rend.

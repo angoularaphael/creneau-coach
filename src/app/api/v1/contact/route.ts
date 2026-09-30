@@ -10,6 +10,7 @@ import {
 } from '@/lib/security'
 import { reponse429 } from '@/lib/security/rate-limit'
 import { reponseErreur } from '@/lib/http/erreurs'
+import { envoyerContact } from '@/lib/mail/transactionnel'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +26,19 @@ export async function POST(req: NextRequest) {
   const body = valider(schemas.ContactBody, corps.json, ctx.requestId)
   if (!body.ok) return body.reponse
 
-  console.info('[contact]', { len: body.data.message.length, requestId: ctx.requestId })
+  const envoi = await envoyerContact({
+    nom: body.data.name,
+    email: body.data.email,
+    message: body.data.message,
+  })
+  if (!envoi.ok) {
+    console.error('[contact] e-mail non parti', { raison: envoi.raison, requestId: ctx.requestId })
+    return reponseErreur(
+      'CONFLICT',
+      {},
+      'Le message n’a pas pu partir. Réessayez dans un instant.',
+      ctx.requestId,
+    )
+  }
   return new Response(null, { status: 204, headers: { 'x-request-id': ctx.requestId } })
 }

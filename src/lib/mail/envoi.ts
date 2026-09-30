@@ -1,9 +1,9 @@
 import 'server-only'
 
 /**
- * La confirmation d'inscription part de no-reply@boxingcenter.fr, par Resend
- * (même canal que la boutique). Supabase ne crée que le jeton : il n'envoie
- * plus l'e-mail, et le lien est bâti ici, sur `urlPublique()`.
+ * Tous les e-mails de la plateforme partent d'ici : no-reply@boxingcenter.fr,
+ * par Resend (même canal que la boutique). Supabase ne crée que les jetons
+ * d'inscription : il n'envoie plus rien. Les liens sont bâtis sur `urlPublique()`.
  */
 
 const API_RESEND = 'https://api.resend.com/emails'
@@ -14,6 +14,8 @@ export type Courriel = {
   readonly sujet: string
   readonly html: string
   readonly texte: string
+  /** Réponse du destinataire. Sinon l'adresse de réponse du compte Resend. */
+  readonly reponse?: string
 }
 
 export function mailConfigure(): boolean {
@@ -54,7 +56,7 @@ function expediteur(): string {
 export async function envoyerCourriel(c: Courriel): Promise<{ ok: true } | { ok: false; raison: string }> {
   const cle = process.env.RESEND_API_KEY?.trim()
   if (!cle) return { ok: false, raison: 'resend_non_configure' }
-  const reponse = process.env.RESEND_REPLY_TO?.trim() || process.env.MAIL_REPLY_TO?.trim()
+  const reponse = c.reponse?.trim() || process.env.RESEND_REPLY_TO?.trim() || process.env.MAIL_REPLY_TO?.trim()
   try {
     const res = await fetch(API_RESEND, {
       method: 'POST',

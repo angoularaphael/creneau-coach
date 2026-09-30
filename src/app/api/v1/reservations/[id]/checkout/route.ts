@@ -21,6 +21,7 @@ import {
 import { reponse429 } from '@/lib/security/rate-limit'
 import { reponseDepuisErreur, reponseErreur, reponseJson } from '@/lib/http/erreurs'
 import { MESSAGE_DOCUMENTS_EN_ATTENTE, documentsPublies } from '@/lib/documents/obligatoires'
+import { prevenirASigner } from '@/lib/mail/transactionnel'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest, ctxRoute: Ctx) {
     const paye = await payerParAvoir(ctx, supabase, id)
     if (!paye.ok) return reponseDepuisErreur(paye.erreur, ctx.requestId)
     const resa = versReservationPublique(paye.valeur as Record<string, unknown>)
+    if (resa.status === 'awaiting_signature') await prevenirASigner(resa.id)
     return reponseJson(
       {
         reservation_id: resa.id,
