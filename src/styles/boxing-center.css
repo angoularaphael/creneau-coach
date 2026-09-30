@@ -927,6 +927,49 @@ p {
   margin-top: 0.35rem;
 }
 
+/* Les règles du mot de passe, cochées pendant la saisie. Une règle tenue
+   passe en encre pleine avec sa coche ; après une tentative d'envoi, celles
+   qui manquent passent en alerte — jamais avant. */
+.mdp-regles {
+  margin: -0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.mdp-regles li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  transition: color 0.15s ease;
+}
+
+.mdp-regles__marque {
+  display: inline-block;
+  width: 1ch;
+  text-align: center;
+  font-weight: 700;
+}
+
+.mdp-regles li[data-ok='true'] {
+  color: var(--ink);
+}
+
+.mdp-regles li[data-ok='true'] .mdp-regles__marque {
+  color: var(--accent);
+}
+
+.mdp-regles li[data-alerte='true'] {
+  color: #ffb3bf;
+}
+
+.espace-clair .mdp-regles li[data-alerte='true'] {
+  color: #b42318;
+}
+
 .field-hint {
   margin: -0.35rem 0 0;
   font-size: 0.85rem;

@@ -27,6 +27,9 @@ export function ChampMotDePasse({
   className = 'bo-porte__champ',
   autoFocus = false,
   'aria-describedby': describedBy,
+  'aria-invalid': invalide,
+  value,
+  onChange,
 }: {
   id?: string;
   name?: string;
@@ -35,6 +38,14 @@ export function ChampMotDePasse({
   className?: string;
   autoFocus?: boolean;
   'aria-describedby'?: string;
+  'aria-invalid'?: boolean;
+  /**
+   * Champ CONTRÔLÉ quand `value` est fourni. C'est ce qui garde la saisie après
+   * un envoi refusé : React 19 remet à zéro les champs non contrôlés d'un
+   * `<form action={…}>` à la fin de chaque action, succès ou refus.
+   */
+  value?: string;
+  onChange?: (valeur: string) => void;
 }) {
   const [visible, setVisible] = useState(false);
   const genere = useId();
@@ -50,7 +61,11 @@ export function ChampMotDePasse({
         autoComplete={autoComplete}
         autoFocus={autoFocus}
         aria-describedby={describedBy}
+        aria-invalid={invalide || undefined}
         className={`${className} mdp__champ`}
+        {...(value !== undefined
+          ? { value, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange?.(e.target.value) }
+          : {})}
       />
       <button
         type="button"
