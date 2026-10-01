@@ -112,7 +112,7 @@ ${clubs}
 - ${REGLAGES_DEFAUT.max_active_reservations} réservations en cours au maximum par coach.
 - Annulation jusqu’à ${REGLAGES_DEFAUT.cancel_min_hours} h avant : avoir du même montant, réutilisable dans n’importe quel club. Pas de remboursement.
 - Moins de ${REGLAGES_DEFAUT.cancel_min_hours} h avant : annulation impossible, l’heure reste due.
-- Certains créneaux sont réservés à la boxe éducative et ne sont pas louables.
+- Les heures où le club donne un cours (anglaise, MMA, boxe éducative, etc.) suivent le planning réel de chaque salle et ne se louent pas ; l’accès libre des adhérents, lui, reste louable.
 
 ## Ce que dit la loi
 

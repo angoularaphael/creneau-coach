@@ -244,8 +244,9 @@ export default function HomePage() {
                 réutilisable. En dessous, le créneau est dû.
               </li>
               <li>
-                <b>Certains créneaux sont réservés</b> à la boxe éducative et
-                n’apparaissent pas comme libres.
+                <b>Les heures de cours du club</b> (anglaise, MMA, boxe
+                éducative…) suivent le planning réel de chaque salle : elles
+                s’affichent « Cours du club », toutes les autres se réservent.
               </li>
             </ul>
             <Link className="lien-fleche" href="/location-salle-de-sport-a-l-heure-toulouse">
