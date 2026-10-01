@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SignUpForm } from '../AuthForms';
 import { authMode } from '@/lib/auth/config';
+import { cheminInterneSur } from '@/lib/auth/redirect';
 
 export const metadata: Metadata = {
   title: 'Créer mon compte coach',
@@ -27,8 +28,13 @@ export const metadata: Metadata = {
  * Règle, sur toutes les pages publiques : on écrit ce que la personne gagne,
  * jamais comment c'est fait. Le détail technique vit dans le code, en commentaire.
  */
-export default function SignUpPage() {
+type Props = { searchParams: Promise<{ next?: string }> };
+
+export default async function SignUpPage({ searchParams }: Props) {
   const mode = authMode();
+  // Le créneau choisi avant l'inscription voyage jusqu'au lien de confirmation.
+  const next = cheminInterneSur((await searchParams).next ?? '', '/espace-coach');
+  const versConnexion = next === '/espace-coach' ? '/auth/connexion' : `/auth/connexion?next=${encodeURIComponent(next)}`;
 
   return (
     <>
@@ -51,9 +57,9 @@ export default function SignUpPage() {
           </p>
         ) : (
           <>
-            <SignUpForm />
+            <SignUpForm next={next} />
             <p className="muted" style={{ marginTop: '1.25rem' }}>
-              Vous avez déjà un compte ? <Link href="/auth/connexion">Connectez-vous</Link>
+              Vous avez déjà un compte ? <Link href={versConnexion}>Connectez-vous</Link>
             </p>
           </>
         )}

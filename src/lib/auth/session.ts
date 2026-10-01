@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { cache } from 'react'
+
 import { REGLAGES_DEFAUT } from '@/domain/contrat'
 import type { Me } from '@/lib/api/types'
 import { authMode } from '@/lib/auth/config'
@@ -18,7 +20,18 @@ import { lireSession } from '@/lib/supabase/session'
  * Session courante → Me. Statut, crédits et actives viennent de la base,
  * rôle de `app_metadata` (jamais `user_metadata`).
  */
-export async function getSessionMe(): Promise<Me | null> {
+/**
+ * UNE lecture de session par requête, quel que soit le nombre d'appelants.
+ *
+ * L'en-tête du site ET la page (club, espace coach, réservation) l'appelaient
+ * chacun de leur côté : deux fois l'appel au serveur d'authentification, deux
+ * fois `coach_ensure_own_profile`, deux fois le profil, les réservations
+ * actives et le solde d'avoirs — six à dix allers-retours vers la base pour
+ * afficher une page. `cache()` les ramène à un seul passage.
+ */
+export const getSessionMe = cache(lireSessionMe)
+
+async function lireSessionMe(): Promise<Me | null> {
   const mode = authMode()
 
   if (mode === 'mock') {

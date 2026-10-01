@@ -7,17 +7,18 @@ import { isClubId } from '@/lib/clubs';
 import { getClubBySlug, getClubByApiId, cheminClub } from '@/lib/seo';
 import { redirect } from 'next/navigation';
 import { Calendrier } from '@/components/Calendrier';
-import { ClubSlotsToolbar } from './SlotsToolbar';
 import { SectionsClub } from './SectionsClub';
 import { getSessionMe } from '@/lib/auth/session';
 import { JsonLd } from '@/lib/seo/json-ld';
 import { breadcrumbJsonLd, lieuJsonLd } from '@/lib/seo/jsonld';
 import { CLUBS_VERITE, adresseEnLigne } from '@/lib/seo/verite';
 import { REGLAGES_DEFAUT, prixCourt } from '@/domain/contrat';
+import { studioActif } from '@/lib/studio/session';
+import { paypalActif } from '@/lib/payments/paypal';
 
 type Props = {
   params: Promise<{ club_id: string }>;
-  searchParams: Promise<{ space_id?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ space_id?: string; from?: string; to?: string; creneau?: string }>;
 };
 
 function todayParis(): string {
@@ -86,17 +87,20 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
   if (!clubRes.ok) notFound();
   const club = clubRes.valeur;
 
-  const me = await getSessionMe().catch(() => null);
+  const [me, paiementsTest] = await Promise.all([
+    getSessionMe().catch(() => null),
+    studioActif().catch(() => false),
+  ]);
   const loggedIn = Boolean(me && me.status === 'active');
 
+  // Une semaine glissante qui commence aujourd'hui au plus tôt : une date
+  // passée dans l'URL (lien ancien, partage) ramène à aujourd'hui.
+  const aujourdhui = todayParis();
   const from =
-    sp.from && /^\d{4}-\d{2}-\d{2}$/.test(sp.from)
+    sp.from && /^\d{4}-\d{2}-\d{2}$/.test(sp.from) && sp.from >= aujourdhui
       ? sp.from
-      : todayParis();
-  const to =
-    sp.to && /^\d{4}-\d{2}-\d{2}$/.test(sp.to)
-      ? sp.to
-      : addDaysIso(from, 6);
+      : aujourdhui;
+  const to = addDaysIso(from, 6);
 
   const spaceId =
     sp.space_id &&
@@ -156,45 +160,27 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
 
       <section className="section">
         <div className="section-head">
-          <h2>Créneaux</h2>
+          <h2>Le planning en direct : les heures libres, au prix affiché</h2>
           <p>
-            Le prix est affiché d’avance et ne bouge plus une fois votre créneau
-            réservé. Connectez-vous pour prendre une heure.
+            Touchez une heure libre : le prix est affiché d’avance, vous payez,
+            vous signez, votre QR ouvre la salle. Rien d’autre.
           </p>
         </div>
 
-        <ClubSlotsToolbar
-          clubId={club.id}
-          spaces={club.spaces}
-          spaceId={spaceId}
-          from={from}
-          to={to}
-        />
-
-        {/*
-          LE MOMENT OÙ LE VISITEUR DÉCIDE.
-
-          C'était une phrase avec deux liens de dix-huit pixels de haut. La
-          norme d'accessibilité tolère un lien dans une phrase — mais ici ce
-          n'est pas une phrase avec des liens dedans, c'est la SEULE porte vers
-          la réservation pour quelqu'un qui n'a pas de compte. Sur téléphone,
-          il visait deux mots soulignés au milieu d'un paragraphe.
-
-          Deux vrais boutons. Le premier est celui de la majorité — la plupart
-          des gens qui arrivent ici ont déjà un compte ; créer le sien est
-          l'exception, donc le bouton secondaire.
-        */}
+        {/* Sans compte, on le dit AVANT le clic, en une ligne, avec deux vraies
+            portes — et le récapitulatif d'un créneau ramène ici après la
+            connexion, créneau rouvert. */}
         {!loggedIn ? (
           <div className="invite">
             <p className="invite__texte">
-              Les créneaux sont visibles par tous. Pour en prendre un, il faut un
-              compte coach — c’est gratuit et ça prend une minute.
+              Le planning est ouvert à tous. Pour réserver, un compte coach
+              gratuit suffit — une minute, puis vous revenez ici.
             </p>
             <div className="invite__actions">
-              <Link className="btn btn-primary" href="/auth/connexion">
+              <Link className="btn btn-primary" href={`/auth/connexion?next=${encodeURIComponent(cheminClub(parSlug.slug))}`}>
                 Me connecter
               </Link>
-              <Link className="btn btn-ghost" href="/auth/inscription">
+              <Link className="btn btn-ghost" href={`/auth/inscription?next=${encodeURIComponent(cheminClub(parSlug.slug))}`}>
                 Créer mon compte
               </Link>
             </div>
@@ -203,9 +189,18 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
 
         <Calendrier
           clubId={club.id}
+          clubNom={quartier}
+          chemin={cheminClub(parSlug.slug)}
+          spaces={club.spaces}
           spaceId={spaceId!}
+          du={from}
+          aujourdhui={aujourdhui}
           slots={grid.slots}
           loggedIn={loggedIn}
+          creditsCents={me?.credits_cents ?? 0}
+          paypalDisponible={paypalActif(paiementsTest)}
+          paiementsTest={paiementsTest}
+          creneauInitial={sp.creneau}
         />
       </section>
 

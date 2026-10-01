@@ -422,7 +422,7 @@ p {
         rgba(8, 8, 8, 0.94) 78%,
         var(--bg) 100%
       ),
-      url('/visuels/hero-accueil.webp') center 38% / cover no-repeat;
+      url('/visuels/hero-accueil-m.webp') center 38% / cover no-repeat;
   }
 
   .page-hero--visuel {
@@ -741,6 +741,33 @@ p {
 .page-hero[data-visuel='etats-unis'] { --visuel: url('/visuels/hero-club-toulouse-etats-unis.webp'); }
 .page-hero[data-visuel='ramonville'] { --visuel: url('/visuels/hero-club-ramonville.webp'); }
 .page-hero[data-visuel='portet'] { --visuel: url('/visuels/hero-club-portet-sur-garonne.webp'); }
+
+/* Téléphone : la même photo, recadrée à 960 px et 4 à 5 fois plus légère
+   (300 Ko → 60 Ko). Sur une 4G de métro, c'est la différence entre une page
+   qui s'ouvre et une page qu'on quitte. Fichiers générés depuis les originaux
+   (`*-m.webp`), jamais à la main. */
+@media (max-width: 47.99rem) {
+  .page-hero[data-visuel='clubs'] { --visuel: url('/visuels/hero-clubs-m.webp'); }
+  .page-hero[data-visuel='comment-ca-marche'] { --visuel: url('/visuels/hero-comment-ca-marche-m.webp'); }
+  .page-hero[data-visuel='tarifs'] { --visuel: url('/visuels/hero-tarifs-m.webp'); }
+  .page-hero[data-visuel='contact'] { --visuel: url('/visuels/hero-contact-m.webp'); }
+  .page-hero[data-visuel='connexion'] { --visuel: url('/visuels/hero-connexion-m.webp'); }
+  .page-hero[data-visuel='inscription'] { --visuel: url('/visuels/hero-inscription-m.webp'); }
+  .page-hero[data-visuel='mentions-legales'] { --visuel: url('/visuels/hero-mentions-legales-m.webp'); }
+  .page-hero[data-visuel='confidentialite'] { --visuel: url('/visuels/hero-confidentialite-m.webp'); }
+  .page-hero[data-visuel='conditions-generales'] { --visuel: url('/visuels/hero-conditions-generales-m.webp'); }
+  .page-hero[data-visuel='reglement-interieur'] { --visuel: url('/visuels/hero-reglement-interieur-m.webp'); }
+  .page-hero[data-visuel='decharge-de-responsabilite'] { --visuel: url('/visuels/hero-decharge-de-responsabilite-m.webp'); }
+  .page-hero[data-visuel='coach-sportif'] { --visuel: url('/visuels/section-coach-m.webp'); }
+  .page-hero[data-visuel='a-l-heure'] { --visuel: url('/visuels/section-duo-m.webp'); }
+  .page-hero[data-visuel='salle-de-boxe'] { --visuel: url('/visuels/espace-sacs-m.webp'); }
+  .page-hero[data-visuel='ring-de-boxe'] { --visuel: url('/visuels/espace-ring-m.webp'); }
+  .page-hero[data-visuel='minimes'] { --visuel: url('/visuels/hero-club-toulouse-minimes-m.webp'); }
+  .page-hero[data-visuel='st-cyprien'] { --visuel: url('/visuels/hero-club-toulouse-st-cyprien-m.webp'); }
+  .page-hero[data-visuel='etats-unis'] { --visuel: url('/visuels/hero-club-toulouse-etats-unis-m.webp'); }
+  .page-hero[data-visuel='ramonville'] { --visuel: url('/visuels/hero-club-ramonville-m.webp'); }
+  .page-hero[data-visuel='portet'] { --visuel: url('/visuels/hero-club-portet-sur-garonne-m.webp'); }
+}
 
 .slot-toolbar {
   display: flex;
@@ -2038,9 +2065,369 @@ p {
 .cal__pastille[data-etat='blocked'] { background: rgba(168, 171, 196, 0.35); }
 .cal__pastille[data-etat='past'] { background: transparent; opacity: 0.3; }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   LE RÉSERVATEUR (01/10/2026) — la barre, la bande de jours, la fiche.
+
+   Changer de semaine ou d'espace ne recharge plus la page : la grille seule
+   est relue. Pendant ce temps elle reste à sa place, voilée — jamais un écran
+   blanc, jamais un saut de mise en page.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.resa { position: relative; }
+
+.resa__barre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.resa__espaces {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+}
+
+.resa__espace {
+  min-height: 40px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--pile-titre);
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.resa__espace:hover { color: var(--ink); }
+
+.resa__espace[aria-checked='true'] {
+  background: var(--accent);
+  color: #0b0b0d;
+}
+
+.resa__semaine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.resa__fleche {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.resa__fleche:hover:not(:disabled) { border-color: var(--accent); background: var(--bg-soft); }
+.resa__fleche:disabled { opacity: 0.3; cursor: default; }
+
+.resa__dates {
+  display: grid;
+  min-width: 9.5rem;
+  margin: 0;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.resa__dates span {
+  font-family: var(--pile-titre);
+  font-size: 1.3rem;
+  letter-spacing: 0.05em;
+}
+
+.resa__dates small {
+  color: var(--accent-hot);
+  font-size: 0.75rem;
+}
+
+.resa__lien {
+  min-height: 40px;
+  padding: 0 0.75rem;
+  border: 0;
+  background: none;
+  color: var(--accent-hot);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.resa__aller input {
+  min-height: 40px;
+  padding: 0 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  color-scheme: dark;
+}
+
+.resa__vide {
+  padding: 2rem 1.25rem;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+/* La bande de jours — téléphone seulement. */
+.resa__jours {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0 0 0.25rem;
+  padding: 0.25rem 0 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.resa__jours::-webkit-scrollbar { display: none; }
+
+.resa__jour {
+  display: grid;
+  flex: 0 0 auto;
+  min-width: 4.4rem;
+  min-height: 56px;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  text-align: center;
+  scroll-snap-align: start;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.resa__jour span {
+  font-family: var(--pile-titre);
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.resa__jour small { color: var(--accent-hot); font-size: 0.7rem; }
+.resa__jour[data-vide] { opacity: 0.5; }
+.resa__jour[data-vide] small { color: var(--ink-muted); }
+
+.resa__jour[aria-selected='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #0b0b0d;
+  opacity: 1;
+}
+
+.resa__jour[aria-selected='true'] small { color: #0b0b0d; }
+
+/* Téléphone : un jour à la fois, sans les heures passées. */
+.cal__jour:not([data-actif]) { display: none; }
+.cal__creneau[data-etat='past'] { display: none; }
+.cal__jour-libres { display: none; }
+
+/* Relecture en cours : la grille reste, voilée, et ne se clique plus. */
+.cal { transition: opacity 0.2s ease; }
+.cal[data-chargement] { opacity: 0.4; pointer-events: none; }
+
+/* Le créneau ouvert dans la fiche. */
+.cal__creneau[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b0b0d;
+}
+
+.cal__creneau[aria-pressed='true'] .cal__prix { color: #0b0b0d; }
+
+/* Les heures du coach, déjà réservées. */
+.cal__creneau[data-etat='mien'] {
+  border-left-color: var(--accent-hot);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+/* ── LA FICHE ───────────────────────────────────────────────────────────
+   Un <dialog> natif : focus piégé, Échap, fond inerte. Feuille du bas sur
+   téléphone (le pouce y est déjà), fenêtre centrée sur ordinateur. */
+.resa-fiche {
+  width: 100%;
+  max-width: 100%;
+  max-height: 92dvh;
+  margin: auto 0 0;
+  padding: 0;
+  border: 0;
+  border-top: 2px solid var(--accent);
+  border-radius: 18px 18px 0 0;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.resa-fiche[open] { animation: fiche-monte 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+.resa-fiche::backdrop {
+  background: rgba(4, 4, 8, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+@keyframes fiche-monte {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.resa-fiche__corps {
+  position: relative;
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom));
+}
+
+.resa-fiche__fermer {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.resa-fiche__fermer:hover { color: var(--ink); background: var(--bg-soft); }
+
+.resa-fiche__lieu {
+  margin: 0;
+  padding-right: 3rem;
+  color: var(--accent-hot);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.resa-fiche__titre {
+  display: grid;
+  margin: 0;
+  font-family: var(--pile-titre);
+  font-size: clamp(1.7rem, 6vw, 2.2rem);
+  line-height: 1.05;
+  letter-spacing: 0.03em;
+}
+
+.resa-fiche__titre::first-letter { text-transform: uppercase; }
+
+.resa-fiche__titre span {
+  color: var(--accent-hot);
+  font-variant-numeric: tabular-nums;
+}
+
+.resa-fiche__prix {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  padding: 0.75rem 0;
+  border-block: 1px solid var(--line);
+}
+
+.resa-fiche__prix strong {
+  font-family: var(--pile-titre);
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.resa-fiche__prix span { color: var(--ink-muted); font-size: 0.85rem; }
+
+.resa-fiche__etapes {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: etape;
+}
+
+.resa-fiche__etapes li {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  align-items: baseline;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  counter-increment: etape;
+}
+
+.resa-fiche__etapes li::before {
+  content: counter(etape);
+  color: var(--accent-hot);
+  font-family: var(--pile-titre);
+  font-size: 1.1rem;
+}
+
+.resa-fiche__actions {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.resa-fiche__actions .btn {
+  width: 100%;
+  min-height: 52px;
+  justify-content: center;
+}
+
+.resa-fiche__note {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+@media (min-width: 40rem) {
+  .resa-fiche {
+    width: min(30rem, calc(100% - 2rem));
+    margin: auto;
+    border-radius: 14px;
+    border-top-width: 3px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  }
+
+  .resa-fiche__corps { padding: 1.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resa-fiche[open] { animation: none; }
+  .cal { transition: none; }
+}
+
 /* ── LA GRILLE, à partir de la tablette ─────────────────────────────── */
 @media (min-width: 60rem) {
   .cal {
+    --entete-jour: 3.4rem;
     grid-template-columns: 3.25rem repeat(var(--jours), minmax(0, 1fr));
     gap: 0;
     border: 1px solid var(--line);
@@ -2058,9 +2445,13 @@ p {
     border-right: 1px solid var(--line);
   }
 
+  /* L'étiquette « 10h » doit tomber SUR la ligne de 10h. Les pistes des jours
+     commencent sous l'en-tête du jour ; la colonne des heures, elle, n'a pas
+     d'en-tête. Sans ce décalage, tout le planning se lisait une heure plus
+     tard que la réalité (le 10:00–11:00 en face de « 11h »). */
   .cal__heure {
     position: absolute;
-    top: calc(var(--h) * var(--heure));
+    top: calc(var(--entete-jour) + var(--h) * var(--heure));
     right: 0.5rem;
     font-size: 0.7rem;
     font-variant-numeric: tabular-nums;
@@ -2075,6 +2466,8 @@ p {
 
   .cal__titre-jour {
     top: 0;
+    box-sizing: border-box;
+    height: var(--entete-jour);
     margin: 0;
     padding: 0.55rem 0.5rem;
     text-align: center;
@@ -2115,6 +2508,20 @@ p {
   }
 
   .cal__creneau:hover:not(:disabled) { transform: none; }
+
+  /* Sur grande largeur, la semaine entière se lit d'un coup d'œil. */
+  .resa__jours { display: none; }
+  .cal__jour:not([data-actif]) { display: block; }
+  .cal__creneau[data-etat='past'] { display: flex; }
+  .cal__jour-libres {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--ink-muted);
+    font-family: var(--pile-texte);
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
 
   .cal__h { font-size: 0.68rem; }
   .cal__prix { font-size: 0.85rem; }
@@ -2813,4 +3220,47 @@ p {
     max-height: calc(100vh - 8rem);
     overflow-y: auto;
   }
+}
+
+/* ── L'ATTENTE D'UNE NAVIGATION ─────────────────────────────────────────
+   La silhouette de la page suivante, pendant qu'elle se calcule. Un reflet
+   qui passe, pas une roue qui tourne : on voit QUOI arrive, pas seulement
+   que quelque chose arrive. */
+.chargement__hero {
+  display: grid;
+  gap: 0.9rem;
+  padding-top: clamp(3.5rem, 9vw, 6rem);
+  padding-bottom: clamp(2rem, 5vw, 3rem);
+  border-bottom: 2px solid var(--accent);
+  background: linear-gradient(100deg, var(--bg) 0%, var(--bg-elevated) 100%);
+}
+
+.chargement__ligne {
+  display: block;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--bg-elevated) 0%, var(--bg-soft) 50%, var(--bg-elevated) 100%);
+  background-size: 200% 100%;
+  animation: reflet 1.2s ease-in-out infinite;
+}
+
+.chargement__ligne { height: 1rem; width: min(36rem, 90%); }
+.chargement__ligne--court { width: min(12rem, 50%); }
+.chargement__ligne--titre { height: 2.4rem; width: min(30rem, 85%); }
+
+.chargement__carte {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 36rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+@keyframes reflet {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chargement__ligne { animation: none; }
 }

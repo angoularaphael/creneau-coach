@@ -45,7 +45,7 @@ function envoyerSansEffacer(e: React.FormEvent<HTMLFormElement>, action: (fd: Fo
   const donnees = new FormData(e.currentTarget);
   startTransition(() => action(donnees));
 }
-export function SignUpForm() {
+export function SignUpForm({ next = '/espace-coach' }: { next?: string }) {
   const [state, action, enCours] = useActionState(signUpAction, initial);
   const [champs, setChamps] = useState({ first_name: '', last_name: '', email: '', password: '' });
   const [cgu, setCgu] = useState(false);
@@ -80,6 +80,7 @@ export function SignUpForm() {
 
   return (
     <form action={action} onSubmit={avantEnvoi} className="auth-form">
+      <input type="hidden" name="next" value={next} />
       <label>
         Prénom
         <input

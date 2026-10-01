@@ -82,7 +82,8 @@ export async function signUpAction(
       error: 'L’e-mail de confirmation n’est pas disponible pour le moment. Réessayez dans un instant.',
     };
   }
-  return inscrireParCourriel(email, password, first_name, metadonnees);
+  const suite = cheminInterneSur(String(formData.get('next') || ''), '/espace-coach');
+  return inscrireParCourriel(email, password, first_name, metadonnees, suite);
 }
 
 const MESSAGE_ENVOYE =
@@ -104,9 +105,12 @@ async function inscrireParCourriel(
   password: string,
   prenom: string,
   metadonnees: Record<string, string>,
+  suite = '/espace-coach',
 ): Promise<AuthActionState> {
   const admin = createServiceClient();
   const base = urlPublique();
+  // Le lien ramène là où le coach s'est inscrit — le créneau qu'il visait.
+  const suiteEncodee = suite === '/espace-coach' ? '' : `&next=${encodeURIComponent(suite)}`;
 
   const nouveau = await admin.auth.admin.generateLink({
     type: 'signup',
@@ -121,7 +125,7 @@ async function inscrireParCourriel(
 
   if (!nouveau.error && nouveau.data.properties?.hashed_token) {
     creeId = nouveau.data.user?.id ?? null;
-    lien = `${base}/auth/confirmer?token_hash=${encodeURIComponent(nouveau.data.properties.hashed_token)}&type=signup`;
+    lien = `${base}/auth/confirmer?token_hash=${encodeURIComponent(nouveau.data.properties.hashed_token)}&type=signup${suiteEncodee}`;
     const g = gabarit({
       titre: `Bienvenue ${prenom}, confirmez votre adresse`,
       paragraphes: [
@@ -136,7 +140,7 @@ async function inscrireParCourriel(
     if (existant.error || !existant.data.properties?.hashed_token) {
       return { error: 'Inscription impossible. Réessayez ou connectez-vous.' };
     }
-    lien = `${base}/auth/confirmer?token_hash=${encodeURIComponent(existant.data.properties.hashed_token)}&type=magiclink`;
+    lien = `${base}/auth/confirmer?token_hash=${encodeURIComponent(existant.data.properties.hashed_token)}&type=magiclink${suiteEncodee}`;
     const g = gabarit({
       titre: 'Vous avez déjà un compte coach',
       paragraphes: [

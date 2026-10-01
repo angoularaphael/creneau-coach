@@ -48,7 +48,9 @@ export default async function SignInPage({ searchParams }: Props) {
             <SignInForm next={next} />
             <p className="muted" style={{ marginTop: '1.25rem' }}>
               Pas encore de compte ?{' '}
-              <Link href="/auth/inscription">Créez-en un, c’est gratuit</Link>
+              <Link href={next === '/espace-coach' ? '/auth/inscription' : `/auth/inscription?next=${encodeURIComponent(next)}`}>
+                Créez-en un, c’est gratuit
+              </Link>
             </p>
           </>
         )}
