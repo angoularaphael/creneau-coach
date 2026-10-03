@@ -7,11 +7,13 @@ import { isClubId } from '@/lib/clubs';
 import { getClubBySlug, getClubByApiId, cheminClub } from '@/lib/seo';
 import { redirect } from 'next/navigation';
 import { Calendrier } from '@/components/Calendrier';
+import { PrechargeVisuel } from '@/components/PrechargeVisuel';
 import { SectionsClub } from './SectionsClub';
 import { getSessionMe } from '@/lib/auth/session';
 import { JsonLd } from '@/lib/seo/json-ld';
-import { breadcrumbJsonLd, lieuJsonLd } from '@/lib/seo/jsonld';
-import { CLUBS_VERITE, adresseEnLigne } from '@/lib/seo/verite';
+import { FilAriane } from '@/components/aeo/FilAriane';
+import { lieuJsonLd } from '@/lib/seo/jsonld';
+import { CLUBS_VERITE, REGLES, adresseEnLigne } from '@/lib/seo/verite';
 import { REGLAGES_DEFAUT, prixCourt } from '@/domain/contrat';
 import { studioActif } from '@/lib/studio/session';
 import { paypalActif } from '@/lib/payments/paypal';
@@ -34,6 +36,16 @@ function addDaysIso(isoDate: string, days: number): string {
   const d = new Date(`${isoDate}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+/** « du 2 au 8 octobre » (ou « du 29 septembre au 5 octobre »). */
+function periodeLisible(du: string, au: string): string {
+  const jour = (iso: string, mois: boolean) =>
+    new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', day: 'numeric', ...(mois ? { month: 'long' } : {}) }).format(
+      new Date(`${iso}T12:00:00Z`),
+    );
+  const memeMois = du.slice(0, 7) === au.slice(0, 7);
+  return `du ${jour(du, !memeMois)} au ${jour(au, true)}`;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -120,6 +132,8 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
   const quartier = verite.ville === 'Toulouse'
     ? `${verite.nom.replace('Boxing Center Toulouse ', '')}, Toulouse`
     : verite.ville;
+  // « du club Minimes » : une seule tournure, juste pour les cinq clubs.
+  const nomCourt = `du club ${verite.nom.replace('Boxing Center Toulouse ', '').replace('Boxing Center ', '').replace(/-sur-.*$/, '')}`;
   const creuse = prixCourt(REGLAGES_DEFAUT.offpeak_cents);
   const pleine = prixCourt(REGLAGES_DEFAUT.peak_cents);
 
@@ -142,10 +156,16 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
         en est le miroir exact — un balisage sans équivalent visible est ce que
         Google ignore, au mieux.
       */}
+      <PrechargeVisuel fichier={`hero-club-${parSlug.slug.replace(/^coaching-/, '')}`} />
       <header className="page-hero page-hero--visuel" data-visuel={club.id}>
-        <p className="muted">
-          <Link href="/clubs">Nos clubs</Link> / {verite.ville}
-        </p>
+        {/* Le fil visible et le fil balisé viennent de la MÊME liste. */}
+        <FilAriane
+          items={[
+            { name: 'Accueil', path: '/' },
+            { name: 'Nos clubs', path: '/clubs' },
+            { name: verite.nom, path: cheminClub(parSlug.slug) },
+          ]}
+        />
         <h1>Salle de boxe à louer à l’heure — {quartier}</h1>
         <p className="reponse">
           {verite.nom}, {adresseEnLigne(verite)}, loue {verite.equipement.resume} à
@@ -160,11 +180,12 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
 
       <section className="section">
         <div className="section-head">
-          <h2>Le planning en direct : les heures libres, au prix affiché</h2>
+          <h2>Le planning {nomCourt} en direct : les heures libres, au prix affiché</h2>
           <p>
             Touchez une heure libre : le prix est affiché d’avance, vous payez,
-            vous signez, votre QR ouvre la salle. Rien d’autre.
+            vous signez, votre QR ouvre la salle.
           </p>
+          <p className="muted">{REGLES.coursDuClub.texte}</p>
         </div>
 
         {/* Sans compte, on le dit AVANT le clic, en une ligne, avec deux vraies
@@ -174,7 +195,7 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
           <div className="invite">
             <p className="invite__texte">
               Le planning est ouvert à tous. Pour réserver, un compte coach
-              gratuit suffit — une minute, puis vous revenez ici.
+              gratuit suffit — et vous revenez ici, sur ce planning.
             </p>
             <div className="invite__actions">
               <Link className="btn btn-primary" href={`/auth/connexion?next=${encodeURIComponent(cheminClub(parSlug.slug))}`}>
@@ -211,6 +232,7 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
           libres: grid.slots.filter((s) => s.state === 'open').length,
           libresCreuses: grid.slots.filter((s) => s.state === 'open' && s.tariff === 'offpeak').length,
           espaceId: spaceId ?? 'salle',
+          periode: periodeLisible(from, to),
         }}
       />
 
@@ -219,11 +241,6 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
       <JsonLd
         data={[
           lieuJsonLd(apiId, cheminClub(parSlug.slug)),
-          breadcrumbJsonLd([
-            { name: 'Accueil', path: '/' },
-            { name: 'Nos clubs', path: '/clubs' },
-            { name: verite.nom, path: cheminClub(parSlug.slug) },
-          ]),
         ]}
       />
     </>

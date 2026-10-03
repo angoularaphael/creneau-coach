@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { studioActif } from '@/lib/studio/session'
+import '@/styles/espace-coach.css'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,13 +17,21 @@ export default async function EspaceCoachLayout({ children }: { children: ReactN
    * l'en-tête du site reste sombre au-dessus. Ce n'est pas un compromis
    * technique, c'est la séparation qu'on veut voir — la barre de marque d'un
    * côté, l'espace de travail de l'autre.
+   *
+   * La feuille `espace-coach.css` n'est importée QU'ICI : le site public ne la
+   * télécharge jamais, et elle ne peut rien y casser.
    */
   return (
     <div className="espace-clair">
       {test ? (
-        <p className="note" role="status" style={{ margin: '0.75rem 1rem' }}>
-          Mode studio : Payplug TEST, pas d’argent réel. Éteindre depuis le
-          back-office.
+        // Le bandeau du mode studio : visible sur chaque page de l'espace, pour
+        // qu'aucun paiement d'essai ne soit pris pour un vrai.
+        <p className="ec-studio" role="status">
+          <span className="ec-studio__point" aria-hidden="true" />
+          <span>
+            <b>Mode studio</b> — paiements d’essai, aucun argent réel n’est pris. Se coupe depuis le
+            back-office.
+          </span>
         </p>
       ) : null}
       {children}

@@ -3222,45 +3222,611 @@ p {
   }
 }
 
-/* ── L'ATTENTE D'UNE NAVIGATION ─────────────────────────────────────────
-   La silhouette de la page suivante, pendant qu'elle se calcule. Un reflet
-   qui passe, pas une roue qui tourne : on voit QUOI arrive, pas seulement
-   que quelque chose arrive. */
-.chargement__hero {
-  display: grid;
-  gap: 0.9rem;
-  padding-top: clamp(3.5rem, 9vw, 6rem);
-  padding-bottom: clamp(2rem, 5vw, 3rem);
-  border-bottom: 2px solid var(--accent);
-  background: linear-gradient(100deg, var(--bg) 0%, var(--bg-elevated) 100%);
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   « LIBRE MAINTENANT » (accueil, 02/10/2026)
+
+   La preuve avant l'argumentaire : les prochaines heures réellement libres
+   des cinq clubs, chacune à un geste de sa fiche de réservation. Cinq colonnes
+   sur ordinateur ; sur téléphone, un ruban qu'on fait glisser au pouce — la
+   même information, pas une version amputée.
+   ═══════════════════════════════════════════════════════════════════════ */
+.libre {
+  padding-top: clamp(2.5rem, 6vw, 4rem);
+  padding-bottom: clamp(2.5rem, 6vw, 4rem);
+  border-bottom: 1px solid var(--line);
 }
 
-.chargement__ligne {
-  display: block;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--bg-elevated) 0%, var(--bg-soft) 50%, var(--bg-elevated) 100%);
-  background-size: 200% 100%;
-  animation: reflet 1.2s ease-in-out infinite;
+.libre__tete { max-width: 46rem; margin-bottom: 1.75rem; }
+.libre__tete h2 { margin: 0.35rem 0 0.5rem; }
+.libre__sous { margin: 0; color: var(--ink-muted); }
+
+.libre__direct {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--accent-hot);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
-.chargement__ligne { height: 1rem; width: min(36rem, 90%); }
-.chargement__ligne--court { width: min(12rem, 50%); }
-.chargement__ligne--titre { height: 2.4rem; width: min(30rem, 85%); }
+.libre__pouls {
+  position: relative;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #4ade80;
+}
 
-.chargement__carte {
+.libre__pouls::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: pouls 1.8s ease-out infinite;
+}
+
+@keyframes pouls {
+  from { transform: scale(1); opacity: 0.7; }
+  to { transform: scale(3); opacity: 0; }
+}
+
+.libre__clubs {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15rem, 78%);
+  gap: 0.75rem;
+  margin: 0 calc(var(--space, 1rem) * -1);
+  padding: 0.25rem var(--space, 1rem) 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  list-style: none;
+}
+
+.libre__clubs::-webkit-scrollbar { display: none; }
+
+.libre__club {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   gap: 0.9rem;
-  max-width: 36rem;
-  padding: 1.5rem;
+  padding: 1.1rem;
   border: 1px solid var(--line);
+  border-top: 2px solid var(--accent);
   border-radius: 6px;
+  background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg) 100%);
+  scroll-snap-align: start;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-@keyframes reflet {
-  from { background-position: 100% 0; }
-  to { background-position: -100% 0; }
+.libre__club:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.libre__nom {
+  display: grid;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.libre__nom span {
+  font-family: var(--pile-titre);
+  font-size: 1.65rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.libre__nom small { color: var(--ink-muted); font-size: 0.78rem; }
+
+.libre__heures {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.libre__heure {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: var(--tap);
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.libre__heure:hover,
+.libre__heure:focus-visible {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b0b0d;
+  transform: translateX(3px);
+}
+
+.libre__jour {
+  margin: 0.35rem 0 0.1rem;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.libre__heure b span { color: var(--ink-muted); font-size: 0.85em; }
+.libre__heure:hover b span,
+.libre__heure:focus-visible b span { color: #0b0b0d; }
+
+.libre__heure b {
+  font-family: var(--pile-titre);
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.libre__prix {
+  min-width: 2.6rem;
+  color: var(--accent-hot);
+  font-family: var(--pile-titre);
+  font-size: 1.05rem;
+  text-align: right;
+}
+
+.libre__heure:hover .libre__prix,
+.libre__heure:focus-visible .libre__prix { color: #0b0b0d; }
+
+.libre__plein { margin: 0; color: var(--ink-muted); font-size: 0.85rem; }
+
+.libre__tout {
+  color: var(--accent-hot);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.libre__tout:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+@media (min-width: 48rem) {
+  .libre__clubs { grid-auto-columns: minmax(15rem, 46%); }
+}
+
+@media (min-width: 72rem) {
+  .libre__clubs {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chargement__ligne { animation: none; }
+  .libre__pouls::after { animation: none; }
+  .libre__club, .libre__heure { transition: none; }
+  .libre__club:hover, .libre__heure:hover { transform: none; }
+}
+
+/* Le ruban va jusqu'au bord de l'écran sur téléphone : la carte suivante
+   dépasse franchement, on comprend qu'on peut glisser. La règle commune des
+   sections (`margin-inline: auto`) l'emportait — d'où la spécificité. */
+.section.libre > .libre__clubs {
+  max-width: none;
+  margin-inline: calc(var(--space) * -1);
+  scroll-padding-inline: var(--space);
+}
+
+@media (min-width: 72rem) {
+  .section.libre > .libre__clubs {
+    max-width: var(--max);
+    margin-inline: auto;
+  }
+}
+
+/* ── Le réservateur au pouce (téléphone) ────────────────────────────────
+   Les espaces prennent toute la largeur (trois cibles égales), la semaine se
+   lit au centre entre ses deux flèches, et le choix d'une date se range
+   dessous, centré — plus de champ orphelin. La bande de jours déborde jusqu'au
+   bord de l'écran : le jour suivant dépasse, on comprend qu'on peut glisser. */
+@media (max-width: 47.99rem) {
+  .resa__barre { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; gap: 0.85rem; }
+  .resa__espaces { display: flex; width: 100%; }
+  .resa__espace { flex: 1 1 0; padding: 0 0.5rem; }
+
+  .resa__semaine {
+    display: grid;
+    grid-template-columns: var(--tap) 1fr var(--tap);
+    align-items: center;
+    width: 100%;
+  }
+
+  .resa__semaine .resa__lien,
+  .resa__semaine .resa__aller {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+
+  .resa__jours {
+    margin-inline: calc(var(--space) * -1);
+    padding-inline: var(--space);
+    scroll-padding-inline: var(--space);
+  }
+}
+
+/* ── CONNEXION ET INSCRIPTION (02/10/2026) ──────────────────────────────
+   Le formulaire dans une carte à largeur de lecture, ce qui l'attend à côté.
+   Sur téléphone, la carte d'abord (on est venu pour elle), le reste dessous. */
+.acces {
+  display: grid;
+  gap: clamp(1.75rem, 4vw, 3.5rem);
+  align-items: start;
+}
+
+.acces__carte {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.acces__a-cote { display: grid; gap: 1.1rem; }
+
+.acces__retour {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.acces__retour span { color: var(--accent-hot); font-size: 1.15rem; }
+
+.acces__titre { margin: 0.25rem 0 0; }
+
+.acces__etapes {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: acces;
+}
+
+.acces__etapes li {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.75rem;
+  counter-increment: acces;
+}
+
+.acces__etapes li::before {
+  content: counter(acces, decimal-leading-zero);
+  grid-row: 1 / 3;
+  color: var(--accent-hot);
+  font-family: var(--pile-titre);
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.acces__etapes b {
+  font-family: var(--pile-titre);
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.acces__etapes span { color: var(--ink-muted); font-size: 0.9rem; }
+
+.acces__garanties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.acces__garanties li {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
+.acces__garanties li::before { content: '✓ '; color: var(--accent-hot); }
+
+@media (min-width: 60rem) {
+  .acces { grid-template-columns: minmax(0, 32rem) minmax(0, 1fr); }
+  .acces__a-cote { padding-top: 0.5rem; }
+}
+
+/* ── LA FICHE DU CLUB EN MOSAÏQUE (02/10/2026) ──────────────────────────
+   Quatre cartes au lieu de quatre bandes de texte collées à gauche. Sur
+   ordinateur : l'équipement et les heures libres en haut, l'adresse et les
+   espaces en bas. Sur téléphone : les cartes s'empilent, rien ne disparaît. */
+.fiche-club { border-top: 1px solid var(--line); }
+
+.fiche-club__grille {
+  display: grid;
+  gap: 1rem;
+}
+
+.fiche-club__carte {
+  display: grid;
+  align-content: start;
+  gap: 0.85rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+}
+
+.fiche-club__carte h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.05;
+}
+
+.fiche-club__carte p { margin: 0; color: var(--ink-muted); line-height: 1.6; }
+
+.fiche-club__citation {
+  margin: 0;
+  padding: 0 0 0 1rem;
+  border-left: 3px solid var(--accent);
+}
+
+.fiche-club__citation p {
+  color: var(--ink);
+  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  line-height: 1.45;
+}
+
+.fiche-club__citation footer { margin-top: 0.5rem; color: var(--ink-muted); font-size: 0.8rem; }
+.fiche-club__citation a { color: var(--accent-hot); }
+
+.fiche-club__carte--dispo {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background:
+    radial-gradient(120% 90% at 100% 0%, var(--accent-soft) 0%, transparent 60%),
+    var(--bg-elevated);
+}
+
+.fiche-club__chiffre {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  color: var(--accent-hot) !important;
+  font-family: var(--pile-titre);
+  font-size: clamp(4rem, 9vw, 6.5rem);
+  line-height: 0.9 !important;
+}
+
+.fiche-club__chiffre small {
+  color: var(--ink-muted);
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fiche-club__liens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+
+.fiche-club__liens a { color: var(--accent-hot); }
+
+.fiche-club__carte--adresse .adresse-club { font-style: normal; color: var(--ink); line-height: 1.6; }
+
+@media (min-width: 60rem) {
+  .fiche-club__grille {
+    grid-template-columns: 1.25fr 1fr;
+    gap: 1.25rem;
+  }
+}
+
+/* ── CONTACT : les blocs à côté du formulaire ──────────────────────────── */
+.contact-bloc {
+  display: grid;
+  gap: 0.6rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.contact-bloc:last-child { border-bottom: 0; }
+.contact-bloc h2 { margin: 0; font-size: clamp(1.4rem, 2.6vw, 1.8rem); }
+.contact-bloc p { margin: 0; color: var(--ink-muted); }
+
+.contact-bloc__tel {
+  color: var(--accent-hot);
+  font-family: var(--pile-titre);
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.contact-bloc__tel:hover { color: var(--ink); }
+
+.contact-bloc__liens {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-bloc__liens a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.contact-bloc__liens a::after { content: '→'; color: var(--accent-hot); }
+.contact-bloc__liens a:hover { border-color: var(--accent); background: var(--bg-elevated); }
+
+/* Pages légales sur téléphone : la grille prenait la largeur de son plus long
+   mot (une adresse e-mail, une URL) et toute la page débordait de 45 px. Un
+   élément de grille a `min-width: auto` par défaut — on le ramène à zéro, et
+   les mots trop longs se coupent au lieu de pousser l'écran. */
+.juridique__grille > * { min-width: 0; }
+.juridique__texte { overflow-wrap: anywhere; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LE CHARGEUR — le logo dans son anneau cuivré (03/10/2026)
+
+   L'anneau tourne, le logo respire. Le voile n'apparaît qu'après 180 ms
+   (côté script) puis se lève en fondu : une page rapide ne fait rien
+   clignoter, une page lente n'est jamais un écran figé.
+   ═══════════════════════════════════════════════════════════════════════ */
+.chargeur {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+}
+
+.chargeur__disque {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--taille, 128px);
+  height: var(--taille, 128px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #1e2044 0%, #0b0b14 70%);
+  box-shadow:
+    0 0 0 1px rgba(184, 118, 58, 0.25),
+    0 18px 50px rgba(0, 0, 0, 0.55),
+    0 0 60px rgba(184, 118, 58, 0.18);
+}
+
+.chargeur__anneau {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  animation: chargeur-tour 1.1s linear infinite;
+}
+
+.chargeur__piste {
+  fill: none;
+  stroke: rgba(184, 118, 58, 0.16);
+  stroke-width: 3;
+}
+
+.chargeur__traine,
+.chargeur__arc {
+  fill: none;
+  stroke-linecap: round;
+  transform-origin: 50% 50%;
+}
+
+/* La traîne : la moitié du cercle, pâle. L'arc : un quart, cuivre franc.
+   Les deux finissent au même point, en haut — là où brille le point. */
+.chargeur__traine {
+  stroke: rgba(201, 138, 75, 0.35);
+  stroke-width: 3;
+  stroke-dasharray: 145 144;
+  transform: rotate(-90deg) scaleY(-1);
+}
+
+.chargeur__arc {
+  stroke: #d39251;
+  stroke-width: 4.2;
+  stroke-dasharray: 72 217;
+  transform: rotate(-90deg) scaleY(-1);
+}
+
+.chargeur__point {
+  fill: #ffd9a8;
+  filter: drop-shadow(0 0 5px rgba(255, 217, 168, 0.95));
+}
+
+.chargeur__logo {
+  width: 64%;
+  height: auto;
+  animation: chargeur-souffle 1.6s ease-in-out infinite;
+}
+
+.chargeur__texte {
+  margin: 0;
+  color: var(--ink-muted);
+  font-family: var(--pile-titre);
+  font-size: 0.9rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@keyframes chargeur-tour { to { transform: rotate(360deg); } }
+
+@keyframes chargeur-souffle {
+  0%, 100% { transform: scale(0.96); opacity: 0.85; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+/* Le voile de navigation : par-dessus la page qu'on quitte. */
+.chargeur-voile {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 8, 8, 0.55);
+  backdrop-filter: blur(3px);
+  animation: chargeur-voile 0.22s ease-out both;
+}
+
+.chargeur-voile .chargeur__texte { color: #e6e6ea; }
+
+@keyframes chargeur-voile {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Dans un écran de chargement de page : centré dans la zone de contenu. */
+.chargeur-page {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+  padding: 3rem 1rem;
+}
+
+.chargeur-page--sur {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  min-height: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chargeur__anneau { animation: none; }
+  .chargeur__logo { animation: chargeur-souffle 2.4s ease-in-out infinite; }
+  .chargeur-voile { animation: none; }
 }

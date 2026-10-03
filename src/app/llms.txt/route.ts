@@ -1,13 +1,16 @@
-import { SITE_URL, IS_INDEXABLE, CLUB_PAGES, absoluteUrl } from '@/lib/seo'
+import { SITE_URL, IS_INDEXABLE, CLUB_PAGES, INDEXABLE_ROUTES, absoluteUrl } from '@/lib/seo'
 import {
   CLUBS_VERITE,
   EDITEUR,
   LOI,
   MARCHE,
   REGISTRE_VERIFIE_LE,
+  REGLES,
+  REGLES_VERIFIEES_LE,
   RESEAU,
   TOTAL_RINGS,
   adresseEnLigne,
+  plagesHoraires,
 } from '@/lib/seo/verite'
 import {
   ESPACES_PAR_CLUB,
@@ -43,6 +46,16 @@ export const dynamic = 'force-dynamic'
  *    les règles d'annulation sont lus dans `src/domain/contrat.ts`, le même
  *    fichier que le moteur. Changer un tarif ici est impossible : il n'y a rien
  *    à changer. Un fichier GEO qui dérive du produit est pire que pas de fichier.
+ *
+ * 3. **Les règles du service viennent de `REGLES`** (registre de vérité), avec
+ *    l'article du contrat qui les fonde. Jusqu'au 02/10/2026, ce fichier
+ *    disait « Il signe une fois les documents obligatoires » : faux, la
+ *    signature suit chaque paiement (CG art. 9). Un agent qui lit llms.txt
+ *    répète ce qu'il y trouve, sans la page autour pour le corriger.
+ *
+ * La liste des pages est DÉRIVÉE de la carte de routes (pages « live »), avec
+ * la question que chacune tranche : une page ajoutée ou retirée de la carte
+ * l'est ici aussi, sans oubli possible.
  */
 export async function GET() {
   const creuse = prixCourt(REGLAGES_DEFAUT.offpeak_cents)
@@ -66,6 +79,15 @@ export async function GET() {
     ].join('\n')
   }).join('\n\n')
 
+  /** Les règles, chacune avec l'article qui la fonde — citable telle quelle. */
+  const regle = (r: { texte: string; source: { libelle: string; url: string } }) =>
+    `- ${r.texte} (${r.source.libelle} : ${r.source.url.startsWith('/') ? absoluteUrl(r.source.url) : r.source.url})`
+
+  /** Les pages : celles que la carte déclare « live », avec leur question. */
+  const pages = INDEXABLE_ROUTES.filter((r) => !r.path.startsWith('/clubs/'))
+    .map((r) => `- ${r.title} : ${absoluteUrl(r.path)}${r.question ? ` — ${r.question}` : ''}`)
+    .join('\n')
+
   const corps = `# Boxing Center — location de salles à l’heure pour coachs sportifs, Toulouse
 
 > Boxing Center loue ses salles de boxe à l’heure aux coachs sportifs
@@ -77,7 +99,8 @@ Site : ${SITE_URL}
 Téléphone du réseau : ${RESEAU.telephone.affiche}
 Site officiel du réseau : ${RESEAU.siteOfficiel.url}
 Langue : français
-Faits vérifiés le : ${REGISTRE_VERIFIE_LE}
+Faits extérieurs (adresses, loi, marché) vérifiés le : ${REGISTRE_VERIFIE_LE}
+Règles du service relues contre le contrat le : ${REGLES_VERIFIEES_LE}
 ${IS_INDEXABLE ? '' : 'Statut : site en préparation, non indexé pour l’instant.\n'}
 ## À qui ça s’adresse
 
@@ -91,28 +114,39 @@ ${clubs}
 
 ## Tarifs
 
-- Heure creuse : ${creuse} — créneaux de ${HEURES_CREUSES.map((h) => `${h} h`).join(', ')}
-- Heure pleine : ${pleine} — créneaux de ${HEURES_PLEINES.map((h) => `${h} h`).join(', ')}
-- Le prix est le même dans les cinq clubs et pour tous les espaces.
-- Paiement en une fois, à la réservation. Pas de caution, pas de frais d’inscription.
+- Heure creuse : ${creuse} — ${plagesHoraires(HEURES_CREUSES)}
+- Heure pleine : ${pleine} — ${plagesHoraires(HEURES_PLEINES)}
+- Le prix est le même dans les cinq clubs et pour tous les espaces, toutes taxes comprises.
+- Paiement en une fois, à la réservation, par carte bancaire ou avec un avoir qui couvre tout le prix. Pas de caution, pas de frais d’inscription.
 
 ## Comment ça marche
 
-1. Le coach crée un compte et complète son profil professionnel.
-2. Il choisit un club, un espace, une date et une heure.
+1. Le coach crée un compte gratuit et complète son profil professionnel.
+2. Il choisit un club, un espace, une date et une heure libre sur le planning.
 3. La place lui est gardée ${REGLAGES_DEFAUT.hold_ttl_seconds / 60} minutes, le temps de payer.
-4. Il signe une fois les documents obligatoires (conditions, règlement, décharge).
+4. Après chaque paiement, il signe à l’écran les trois documents en vigueur (conditions générales, règlement intérieur, décharge de responsabilité).
 5. Il entre avec un QR code personnel, actif ${REGLAGES_DEFAUT.qr_early_minutes} minutes avant le créneau, valable dans le seul club réservé.
 
 ## Règles de réservation
 
-- Créneaux d’une heure, du lundi au samedi, de 10 h à 19 h. Fermé le dimanche.
-- ${REGLAGES_DEFAUT.capacity_per_slot} coachs au maximum par espace et par heure.
-- Un client par réservation : c’est un cours privé, le coach et son client.
-- ${REGLAGES_DEFAUT.max_active_reservations} réservations en cours au maximum par coach.
-- Annulation jusqu’à ${REGLAGES_DEFAUT.cancel_min_hours} h avant : avoir du même montant, réutilisable dans n’importe quel club. Pas de remboursement.
-- Moins de ${REGLAGES_DEFAUT.cancel_min_hours} h avant : annulation impossible, l’heure reste due.
-- Les heures où le club donne un cours (anglaise, MMA, boxe éducative, etc.) suivent le planning réel de chaque salle et ne se louent pas ; l’accès libre des adhérents, lui, reste louable.
+${[
+    REGLES.grille,
+    REGLES.coursDuClub,
+    REGLES.partage,
+    REGLES.unClient,
+    REGLES.limite,
+    REGLES.signature,
+    REGLES.qr,
+    REGLES.retard,
+    REGLES.annulation,
+    REGLES.avoir,
+    REGLES.annulationParLeClub,
+    REGLES.qualification,
+    REGLES.independance,
+  ]
+    .map(regle)
+    .join('\n')}
+- Pas de créneau le dimanche.
 
 ## Ce que dit la loi
 
@@ -130,14 +164,7 @@ Source : ${MARCHE.diplomesBpjeps.source.url}
 
 ## Pages
 
-- Location de salle pour coach sportif : ${absoluteUrl('/location-salle-coach-sportif-toulouse')}
-- Location de salle de sport à l’heure : ${absoluteUrl('/location-salle-de-sport-a-l-heure-toulouse')}
-- Location de salle de boxe : ${absoluteUrl('/location-salle-de-boxe-toulouse')}
-- Location de ring de boxe : ${absoluteUrl('/location-ring-de-boxe-toulouse')}
-- Nos clubs (comparaison) : ${absoluteUrl('/clubs')}
-- Tarifs et avoirs : ${absoluteUrl('/tarifs')}
-- Comment ça marche : ${absoluteUrl('/comment-ca-marche')}
-- Contact : ${absoluteUrl('/contact')}
+${pages}
 
 ## Non publié faute de vérification
 

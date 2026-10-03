@@ -1,7 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { ProchainesHeures } from '@/components/ProchainesHeures';
+import { JsonLd } from '@/lib/seo/json-ld';
+import { pageWebJsonLd, serviceJsonLd } from '@/lib/seo/jsonld';
+import { PrechargeVisuel } from '@/components/PrechargeVisuel';
 import { metadataDeRoute, CLUB_PAGES } from '@/lib/seo';
-import { ESPACES_PAR_CLUB, type ClubId } from '@/domain/contrat';
+import { ESPACES_PAR_CLUB, REGLAGES_DEFAUT, prixCourt, type ClubId } from '@/domain/contrat';
 import { TOTAL_RINGS } from '@/lib/seo/verite';
 
 export const metadata = metadataDeRoute('/');
@@ -49,42 +53,47 @@ const ESPACES = [
   },
 ] as const;
 
+// Les montants et les délais viennent des réglages, jamais écrits en dur : la
+// signature, qui manquait au déroulé, y est — elle suit CHAQUE paiement (CG
+// art. 9), et l'oublier ici, c'était promettre un QR sans elle.
 const ETAPES = [
   {
     n: '01',
     titre: 'Choisissez l’heure',
-    texte:
-      'Vous voyez les créneaux réellement libres, club par club. Le prix est affiché d’avance : 10 € en heure creuse, 15 € en heure pleine.',
+    texte: `Vous voyez les créneaux réellement libres, club par club. Le prix est affiché d’avance : ${prixCourt(REGLAGES_DEFAUT.offpeak_cents)} en heure creuse, ${prixCourt(REGLAGES_DEFAUT.peak_cents)} en heure pleine.`,
   },
   {
     n: '02',
     titre: 'Payez en une fois',
-    texte:
-      'La place est tenue dix minutes, le temps de régler. Pas de paiement fractionné, pas d’abonnement, pas d’engagement.',
+    texte: `La place est tenue ${REGLAGES_DEFAUT.hold_ttl_seconds / 60} minutes, le temps de régler. Pas de paiement fractionné, pas d’abonnement, pas d’engagement.`,
   },
   {
     n: '03',
-    titre: 'Entrez avec un QR',
-    texte:
-      'Votre QR s’ouvre cinq minutes avant le créneau et se ferme à la fin. Il ne fonctionne que dans le club réservé.',
+    titre: 'Signez, puis entrez avec un QR',
+    texte: `Après le paiement, vous signez à l’écran les documents du club ; votre QR s’ouvre ${REGLAGES_DEFAUT.qr_early_minutes} minutes avant le créneau et ne fonctionne que dans le club réservé.`,
   },
 ] as const;
 
-export default function HomePage() {
+export default async function HomePage() {
   return (
     <>
+      {/* Bascule à 40rem : c'est celle du voile vertical de l'accueil. */}
+      <PrechargeVisuel fichier="hero-accueil" bascule="40rem" />
       <section className="hero" aria-label="Louer une salle">
         {/* Chaque ligne est un élément à part : c'est ce qui permet de les
             découvrir l'une après l'autre. Un `<br>` ne se cible pas. */}
         <h1 className="hero-titre">
-          <span className="ligne">Louez une salle</span>
+          <span className="ligne">Louez une salle de boxe</span>
           <span className="ligne">
-            <em>à l’heure.</em>
+            <em>à l’heure, à Toulouse.</em>
           </span>
         </h1>
-        <p className="hero-sous">
-          Vous avez le client. Nous avons la salle, le ring et les sacs. Réservez
-          l’heure qu’il vous faut, entrez avec un QR, repartez.
+        <p className="hero-sous reponse">
+          Vous avez le client, Boxing Center a la salle : cinq clubs à Toulouse
+          et autour, {prixCourt(REGLAGES_DEFAUT.offpeak_cents)} l’heure creuse,{' '}
+          {prixCourt(REGLAGES_DEFAUT.peak_cents)} l’heure pleine, sans abonnement.
+          Vous réservez en ligne, signez à l’écran, et votre QR ouvre le club{' '}
+          {REGLAGES_DEFAUT.qr_early_minutes} minutes avant votre heure.
         </p>
         <div className="hero-actions">
           <Link className="btn btn-primary" href="/clubs">
@@ -99,12 +108,15 @@ export default function HomePage() {
         </p>
       </section>
 
+      {/* ── Libre maintenant — la preuve avant l'argumentaire ─────────────── */}
+      <ProchainesHeures />
+
       {/* ── Pour qui — on nomme le visiteur dès la deuxième section ───────── */}
       <section className="section section--encre" data-polarite="encre">
         <div className="enveloppe bande">
           <div className="bande__texte">
             <p className="sur mono">Pour les coachs indépendants</p>
-            <h2>Votre client vous suit. Il lui faut un endroit.</h2>
+            <h2>Un lieu équipé pour coacher vos clients, sans abonnement.</h2>
             <p>
               Vous êtes éducateur, préparateur physique ou coach de boxe. Vous avez
               vos clients, votre méthode et votre matériel. Ce qui vous manque, c’est
@@ -139,7 +151,7 @@ export default function HomePage() {
       <section className="section">
         <div className="enveloppe">
           <p className="sur mono">Ce que vous trouvez sur place</p>
-          <h2>Trois surfaces, pas une salle vide.</h2>
+          <h2>Ring, sacs, tatamis : trois surfaces de travail.</h2>
           <p className="intro">
             {TOTAL_RINGS} rings, des sacs lourds, des tatamis, une cage et un octogone,
             répartis entre les cinq clubs. Le détail, club par club, est sur la
@@ -170,7 +182,7 @@ export default function HomePage() {
       <section className="section section--encre" data-polarite="encre">
         <div className="enveloppe">
           <p className="sur mono">Cinq clubs autour de Toulouse</p>
-          <h2>Celui qui est sur votre route.</h2>
+          <h2>Cinq clubs à Toulouse, Ramonville et Portet-sur-Garonne.</h2>
           <p className="intro">
             Chaque club a ses espaces et son planning. Un créneau se réserve dans un
             club précis, et le QR n’ouvre que celui-là.
@@ -199,8 +211,8 @@ export default function HomePage() {
       {/* ── Le déroulé ────────────────────────────────────────────────────── */}
       <section className="section">
         <div className="enveloppe">
-          <p className="sur mono">En trois temps</p>
-          <h2>De la grille à la porte du club.</h2>
+          <p className="sur mono">Trois temps, un QR</p>
+          <h2>Réserver, payer, signer, entrer : le déroulé.</h2>
           <ol className="etapes">
             {ETAPES.map((e) => (
               <li className="etape" key={e.n}>
@@ -227,14 +239,14 @@ export default function HomePage() {
           </figure>
           <div className="bande__texte">
             <p className="sur mono">Ce qu’il faut savoir avant</p>
-            <h2>Les règles tiennent en cinq lignes.</h2>
+            <h2>Les règles de réservation, en cinq lignes.</h2>
             <ul className="regles">
               <li>
                 <b>Une heure</b>, du lundi au samedi, de 10 h à 19 h.
               </li>
               <li>
-                <b>Deux coachs maximum</b> par espace et par heure. Vous ne serez
-                jamais à cinq sur le même tapis.
+                <b>Deux coachs maximum</b> par espace et par heure, chacun avec un
+                seul client ; l’espace reste partagé avec les adhérents du club.
               </li>
               <li>
                 <b>Trois réservations</b> en cours au maximum.
@@ -271,6 +283,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <JsonLd data={[serviceJsonLd(), pageWebJsonLd('/', { surLeService: true, sansFil: true })]} />
     </>
   );
 }

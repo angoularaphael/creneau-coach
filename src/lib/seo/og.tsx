@@ -117,10 +117,18 @@ export async function vignetteOg({
   surtitre: string
   /** Un fait, jamais un slogan. Ex. « 2 espaces · lun–sam 10h–19h ». */
   detail?: string
-  /** La photo de CETTE page — la même que son héros. */
-  fond: NomDeFond
+  /**
+   * La photo de CETTE page — la même que son héros. Facultative depuis le
+   * 02/10/2026 : `/faq` et `/devenir-coach-partenaire` n'ont pas encore de
+   * visuel généré (Higgsfield, GPT Image — consigne d'Eddy, pas une photo
+   * recyclée d'une autre page). Sans fond, la vignette est typographique :
+   * l'encre Boxing Center, le filet cuivre, et le titre propre à la page.
+   * Elle reste distincte de toutes les autres, ce qu'une photo empruntée ne
+   * serait pas.
+   */
+  fond?: NomDeFond
 }) {
-  const image = await fondEnBase64(fond)
+  const image = fond ? await fondEnBase64(fond) : null
 
   return new ImageResponse(
     (
@@ -136,13 +144,28 @@ export async function vignetteOg({
           position: 'relative',
         }}
       >
-        {/* La photo de la page. */}
-        <img
-          src={image}
-          width={1200}
-          height={630}
-          style={{ position: 'absolute', top: 0, left: 0, objectFit: 'cover' }}
-        />
+        {/* La photo de la page — ou, sans photo, la profondeur de l'encre. */}
+        {image ? (
+          <img
+            src={image}
+            width={1200}
+            height={630}
+            style={{ position: 'absolute', top: 0, left: 0, objectFit: 'cover' }}
+          />
+        ) : (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 1200,
+              height: 630,
+              display: 'flex',
+              background:
+                'radial-gradient(circle at 88% 18%, rgba(184,118,58,0.28) 0%, rgba(30,32,68,0.9) 38%, #080808 78%)',
+            }}
+          />
+        )}
 
         {/* Le voile. Sans lui le titre se pose sur la photo et se perd : une
             vignette se lit en vignette, à deux centimètres, dans un fil. */}

@@ -1,17 +1,31 @@
 import Link from 'next/link'
 
 import { Faq } from '@/components/aeo/Faq'
+import { FilAriane } from '@/components/aeo/FilAriane'
+import { Fondement } from '@/components/aeo/Fondement'
+import { MisAJour } from '@/components/aeo/MisAJour'
 import { Sources } from '@/components/aeo/Sources'
 import { metadataDeRoute } from '@/lib/seo'
 import { JsonLd } from '@/lib/seo/json-ld'
-import { breadcrumbJsonLd, serviceJsonLd, type QuestionReponse } from '@/lib/seo/jsonld'
-import { CLUBS_VERITE, REGISTRE_VERIFIE_LE, RESEAU, type Source } from '@/lib/seo/verite'
+import { pageWebJsonLd, serviceJsonLd, type QuestionReponse } from '@/lib/seo/jsonld'
 import {
+  COMPARAISON,
+  CLUBS_VERITE,
+  REGISTRE_VERIFIE_LE,
+  REGLES,
+  RESEAU,
+  plagesHoraires,
+  type Source,
+} from '@/lib/seo/verite'
+import {
+  DERNIERE_HEURE_DEBUT,
   HEURES_CREUSES,
   HEURES_PLEINES,
+  PREMIERE_HEURE,
   REGLAGES_DEFAUT,
   prixCourt,
 } from '@/domain/contrat'
+import '@/styles/contenu.css'
 
 const CHEMIN = '/location-salle-de-sport-a-l-heure-toulouse'
 export const metadata = metadataDeRoute(CHEMIN)
@@ -24,16 +38,30 @@ export const metadata = metadataDeRoute(CHEMIN)
  * veut pas d'abonnement et veut savoir ce que coûte une heure.
  *
  * L'ANGLE DE CETTE PAGE : LE CALCUL. Ce que coûtent une semaine et un mois de
- * coaching, selon l'heure choisie. Chaque montant est DÉRIVÉ des deux tarifs du
- * domaine — aucun n'est tapé à la main. Si un tarif change, toute la page suit,
- * et aucun chiffre publié ne peut contredire la grille réelle.
+ * coaching, selon l'heure choisie, et le calcul qui départage l'heure et
+ * l'abonnement. Chaque montant est DÉRIVÉ des deux tarifs du domaine — aucun
+ * n'est tapé à la main. Si un tarif change, toute la page suit, et aucun
+ * chiffre publié ne peut contredire la grille réelle.
  *
  * Les chiffres précis sont ce qui fait citer une page (+33 % de visibilité
  * mesurée, Aggarwal et al., KDD 2024). Encore faut-il qu'ils soient vrais :
  * c'est pour ça qu'ils sont calculés, pas rédigés.
+ *
+ * ── CORRIGÉ LE 02/10/2026 ─────────────────────────────────────────────
+ *
+ * La page disait qu'une heure creuse annulée « couvre les deux tiers d'une
+ * heure pleine », et la FAQ que l'avoir « se déduit » de la réservation
+ * suivante. Les deux sont faux : un avoir paie une réservation ENTIÈRE et ne
+ * se combine pas avec la carte (CG art. 10.5 ; `src/domain/avoirs.ts` refuse
+ * le paiement mixte). C'était un calcul, sur la page du calcul : le pire
+ * endroit pour une erreur, parce que c'est celui qu'un moteur cite.
+ *
+ * LE COMPARATIF « À L'HEURE OU ABONNEMENT ». La requête porte un choix ; la
+ * forme comparative est celle que ChatGPT cite le plus (HubSpot 2026). On ne
+ * publie AUCUN prix d'abonnement concurrent : aucun n'est vérifié. On publie la
+ * règle de calcul, qui reste vraie quel que soit l'abonnement du lecteur.
  */
 
-const MIS_A_JOUR = '2026-09-27'
 const C = REGLAGES_DEFAUT.offpeak_cents
 const P = REGLAGES_DEFAUT.peak_cents
 const f = prixCourt
@@ -49,16 +77,21 @@ const SCENARIOS = [
   { libelle: '5 séances par semaine, heure creuse', semaine: 5 * C },
 ] as const
 
+/** Le mois, en heures : de quoi comparer à n'importe quel abonnement. */
+const HEURES_PAR_MOIS = [4, 8, 12, 20] as const
+
 const QUESTIONS: readonly QuestionReponse[] = [
   {
-    question: 'Y a-t-il un nombre minimum d’heures à réserver ?',
-    reponse:
-      'Non. Vous pouvez réserver une seule heure, une fois, sans engagement pour la suite. Il n’y a ni forfait ni carnet à acheter d’avance.',
+    question: 'Combien coûtent dix heures de coaching par mois ?',
+    reponse: `${f(10 * C)} si les dix heures sont en heure creuse, ${f(10 * P)} si elles sont en heure pleine, et ${f(5 * C + 5 * P)} pour cinq de chaque. Il n’y a rien d’autre à payer : ni abonnement, ni frais d’inscription.`,
   },
   {
     question: 'Peut-on réserver deux heures d’affilée ?',
-    reponse:
-      'Oui : chaque heure est un créneau distinct, vous en réservez deux qui se suivent. Elles comptent pour deux dans la limite de trois réservations en cours.',
+    reponse: `Oui : chaque heure est un créneau distinct, vous en réservez deux qui se suivent. Elles comptent pour deux dans la limite de ${REGLAGES_DEFAUT.max_active_reservations} réservations en cours.`,
+  },
+  {
+    question: 'Peut-on réserver dans plusieurs clubs la même semaine ?',
+    reponse: `Oui. Les cinq clubs se réservent depuis le même compte, au même prix. La seule limite est de ${REGLAGES_DEFAUT.max_active_reservations} réservations en cours à la fois, tous clubs confondus.`,
   },
   {
     question: 'Le prix peut-il changer après la réservation ?',
@@ -72,30 +105,32 @@ const QUESTIONS: readonly QuestionReponse[] = [
   },
   {
     question: 'Peut-on payer une heure avec un avoir ?',
-    reponse:
-      'Oui. Un avoir obtenu en annulant plus de 24 heures avant un créneau se déduit de votre prochaine réservation, dans n’importe quel club.',
-  },
-  {
-    question: 'Les tarifs sont-ils les mêmes dans les cinq clubs ?',
-    reponse: `Oui. Le prix dépend uniquement de l’heure : ${f(C)} en heure creuse, ${f(P)} en heure pleine, quel que soit le club ou l’espace choisi.`,
+    reponse: `Oui, si l’avoir couvre tout le prix de l’heure : il ne se combine pas avec la carte. Un avoir de ${f(C)} paie une heure creuse ; s’il dépasse le prix, le solde reste sur votre compte, utilisable dans n’importe quel club.`,
   },
 ]
 
 const SOURCES: readonly Source[] = [
+  REGLES.prix.source,
+  REGLES.limite.source,
+  REGLES.avoir.source,
+  REGLES.coursDuClub.source,
+  COMPARAISON.basicFit.source,
   RESEAU.siteOfficiel,
   ...Object.values(CLUBS_VERITE).flatMap((c) => c.sources),
 ]
 
 export default function Page() {
-  const dateMaj = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date(MIS_A_JOUR))
   const heures = [...HEURES_CREUSES, ...HEURES_PLEINES].sort((a, b) => a - b)
 
   return (
     <>
       <header className="page-hero page-hero--visuel" data-visuel="a-l-heure">
-        <p className="sur mono">
-          <Link href="/">Accueil</Link> / Location de salle de sport à l’heure
-        </p>
+        <FilAriane
+          items={[
+            { name: 'Accueil', path: '/' },
+            { name: 'Location de salle de sport à l’heure', path: CHEMIN },
+          ]}
+        />
         <h1>Louer une salle de sport à l’heure à Toulouse : ce que ça coûte</h1>
         <p className="reponse">
           Une heure de salle coûte {f(C)} en heure creuse et {f(P)} en heure pleine
@@ -103,21 +138,21 @@ export default function Page() {
           séances par semaine en heure creuse reviennent à {f(3 * C)} par semaine,
           sans abonnement ni frais d’inscription.
         </p>
-        <p className="maj">
-          Mis à jour le <time dateTime={MIS_A_JOUR}>{dateMaj}</time>
-        </p>
+        <MisAJour chemin={CHEMIN} />
       </header>
 
       <section className="section">
         <div className="enveloppe">
-          <h2>Le prix de chaque heure, de 10 h à 19 h</h2>
+          <h2>
+            Le prix de chaque heure, de {PREMIERE_HEURE} h à {DERNIERE_HEURE_DEBUT + 1} h
+          </h2>
           <p className="intro">
-            Neuf créneaux d’une heure par jour, du lundi au samedi. Le prix ne
+            {heures.length} créneaux d’une heure par jour, du lundi au samedi. Le prix ne
             dépend que de l’heure de début.
           </p>
           <div className="comparatif">
             <table>
-              <caption>Grille appliquée dans les cinq clubs, du lundi au samedi.</caption>
+              <caption>Grille appliquée dans les cinq clubs, du lundi au samedi, toutes taxes comprises.</caption>
               <thead>
                 <tr>
                   <th scope="col">Créneau</th>
@@ -139,6 +174,7 @@ export default function Page() {
               </tbody>
             </table>
           </div>
+          <p>{REGLES.coursDuClub.texte}</p>
         </div>
       </section>
 
@@ -199,13 +235,13 @@ export default function Page() {
                 </tr>
                 <tr>
                   <th scope="row">Horaires</th>
-                  <td>10 h-12 h et 14 h-17 h</td>
-                  <td>12 h-14 h et 17 h-19 h</td>
+                  <td>{plagesHoraires(HEURES_CREUSES)}</td>
+                  <td>{plagesHoraires(HEURES_PLEINES)}</td>
                 </tr>
                 <tr>
-                  <th scope="row">Pour quels clients</th>
-                  <td>Indépendants, retraités, horaires décalés</td>
-                  <td>Salariés à la pause de midi ou en sortie de bureau</td>
+                  <th scope="row">Le moment de la journée</th>
+                  <td>La matinée et le début d’après-midi</td>
+                  <td>La pause de midi et la fin de journée</td>
                 </tr>
               </tbody>
             </table>
@@ -215,35 +251,63 @@ export default function Page() {
 
       <section className="section section--encre" data-polarite="encre">
         <div className="enveloppe">
-          <h2>Pas d’abonnement, pas de caution, pas de frais d’inscription</h2>
+          <h2>Location à l’heure ou abonnement : le calcul qui tranche</h2>
           <p>
-            Vous payez l’heure que vous réservez, et rien d’autre. Aucun mois ne vous
-            est facturé si vous ne coachez pas, et l’inscription est gratuite. C’est
-            la différence avec une salle classique, où l’abonnement court que vous
-            veniez ou non.
+            Un abonnement se paie chaque mois, que vous coachiez ou non ; une heure louée ne
+            se paie que le jour où vous coachez. Pour comparer, divisez le prix mensuel de
+            l’abonnement par {f(C)} : c’est le nombre d’heures creuses par mois au-delà
+            duquel il devient plus avantageux — à condition que son règlement vous autorise à
+            y faire travailler vos clients, ce qui chez {COMPARAISON.basicFit.marque} demande
+            une autorisation écrite préalable.
           </p>
+          <div className="comparatif">
+            <table>
+              <caption>Ce que coûte un mois de coaching à l’heure, selon le nombre d’heures et la plage.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Heures par mois</th>
+                  <th scope="col">Toutes en heure creuse</th>
+                  <th scope="col">Toutes en heure pleine</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Mois sans séance</th>
+                  <td>{f(0)}</td>
+                  <td>{f(0)}</td>
+                </tr>
+                {HEURES_PAR_MOIS.map((n) => (
+                  <tr key={n}>
+                    <th scope="row">{n} heures</th>
+                    <td>{f(n * C)}</td>
+                    <td>{f(n * P)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
       <section className="section">
         <div className="enveloppe">
-          <h2>Trois réservations en cours, pas davantage</h2>
+          <h2>Une heure suffit : ni minimum, ni forfait, ni carnet</h2>
           <p>
-            Vous pouvez tenir jusqu’à trois créneaux réservés à la fois. Dès qu’une
-            séance est passée, une place se libère. La limite existe pour qu’aucun
-            coach ne bloque la semaine des autres.
+            Vous pouvez réserver une seule heure, une fois, sans engagement pour la suite.
+            Aucun forfait ni carnet ne s’achète d’avance : chaque heure se paie au moment où
+            vous la réservez, en une fois, par carte bancaire ou avec un avoir qui en couvre
+            le prix.
           </p>
+          <Fondement regle={REGLES.paiement} />
         </div>
       </section>
 
       <section className="section section--encre" data-polarite="encre">
         <div className="enveloppe">
-          <h2>Une heure annulée à temps devient un avoir</h2>
+          <h2>Trois réservations en cours à la fois, pour partager la semaine</h2>
           <p>
-            Plus de 24 heures avant le créneau, l’annulation vous rend un avoir du
-            montant payé, utilisable sur n’importe quelle autre heure. Une heure
-            creuse annulée à temps finance donc une autre heure creuse, ou couvre
-            les deux tiers d’une heure pleine.
+            {REGLES.limite.texte} La limite existe pour qu’aucun coach ne bloque la semaine
+            des autres.
           </p>
         </div>
       </section>
@@ -252,7 +316,7 @@ export default function Page() {
 
       <section className="section section--final">
         <div className="enveloppe">
-          <h2 className="final__titre">Choisissez votre heure</h2>
+          <h2 className="final__titre">Calculez, puis réservez</h2>
           <p>
             Pour savoir qui a le droit de coacher en salle et où se trouvent les
             clubs, voir{' '}
@@ -272,17 +336,9 @@ export default function Page() {
         </div>
       </section>
 
-      <Sources items={SOURCES} verifieLe={REGISTRE_VERIFIE_LE} />
+      <Sources items={SOURCES} verifieLe={REGISTRE_VERIFIE_LE} titre="Les sources de la grille et des calculs" />
 
-      <JsonLd
-        data={[
-          serviceJsonLd(),
-          breadcrumbJsonLd([
-            { name: 'Accueil', path: '/' },
-            { name: 'Location de salle de sport à l’heure', path: CHEMIN },
-          ]),
-        ]}
-      />
+      <JsonLd data={[serviceJsonLd(), pageWebJsonLd(CHEMIN, { surLeService: true })]} />
     </>
   )
 }

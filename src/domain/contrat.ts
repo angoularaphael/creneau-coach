@@ -107,7 +107,7 @@ export const MESSAGES_ERREUR: Record<CodeErreur, string> = {
   SUSPENDED: 'Votre compte est suspendu. Contactez Boxing Center.',
   NOT_FOUND: 'Introuvable.',
   SLOT_FULL: 'Ce créneau est complet (2 coachs).',
-  SLOT_BLOCKED: 'Ce créneau est réservé à la boxe éducative.',
+  SLOT_BLOCKED: 'Cette heure est réservée à un cours du club.',
   ACTIVE_LIMIT: 'Vous avez déjà 3 réservations en cours.',
   HOLD_EXPIRED: 'Le délai de 10 minutes est écoulé, le créneau a été libéré.',
   PAYMENT_REQUIRED: 'Le paiement doit être réglé avant cette étape.',

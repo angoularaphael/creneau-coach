@@ -1,19 +1,24 @@
 import Link from 'next/link'
 
 import { Faq } from '@/components/aeo/Faq'
+import { FilAriane } from '@/components/aeo/FilAriane'
+import { Fondement } from '@/components/aeo/Fondement'
+import { MisAJour } from '@/components/aeo/MisAJour'
 import { Sources } from '@/components/aeo/Sources'
 import { CLUB_PAGES, metadataDeRoute } from '@/lib/seo'
 import { JsonLd } from '@/lib/seo/json-ld'
-import { breadcrumbJsonLd, serviceJsonLd, type QuestionReponse } from '@/lib/seo/jsonld'
+import { pageWebJsonLd, serviceJsonLd, type QuestionReponse } from '@/lib/seo/jsonld'
 import {
   CLUBS_VERITE,
   REGISTRE_VERIFIE_LE,
+  REGLES,
   RESEAU,
   TOTAL_RINGS,
   adresseEnLigne,
   type Source,
 } from '@/lib/seo/verite'
-import { REGLAGES_DEFAUT, prixCourt, type ClubId } from '@/domain/contrat'
+import { ESPACES_PAR_CLUB, REGLAGES_DEFAUT, prixCourt, type ClubId } from '@/domain/contrat'
+import '@/styles/contenu.css'
 
 const CHEMIN = '/location-ring-de-boxe-toulouse'
 export const metadata = metadataDeRoute(CHEMIN)
@@ -33,10 +38,28 @@ export const metadata = metadataDeRoute(CHEMIN)
  *
  * L'ANGLE : LES RINGS EUX-MÊMES — où, combien, de quel type. Le tableau est
  * construit depuis le registre ; le total est calculé.
+ *
+ * ── CORRIGÉ LE 02/10/2026 ─────────────────────────────────────────────
+ *
+ * · « Les cordes sont tendues, le tapis est propre » : une promesse que
+ *   personne ne contrôle. Le contrat dit ce qui est vrai — des équipements
+ *   entretenus par le club (CG art. 12.1) — et le règlement ce que le coach
+ *   doit en retour : remettre le matériel en place (RI art. 4.4).
+ * · « Pour le travail aux gants et les rounds chronométrés » était un avis sans
+ *   fait. À sa place, la comparaison que la requête appelle — « ring ou sacs ? »
+ *   — et la règle que tout coach de boxe demande : les mises de gants sont
+ *   permises, à intensité maîtrisée, avec protections (RI art. 4.3).
+ * · « Aurai-je le ring pour moi seul ? » oubliait les adhérents (CG art. 3.3).
+ * · « Peut-on réserver le ring un dimanche ? Non » ouvrait sur une absence ; la
+ *   question dit maintenant ce qui existe, heures de cours du club comprises.
  */
 
-const MIS_A_JOUR = '2026-09-27'
 const slugDe = (id: ClubId) => CLUB_PAGES.find((c) => c.clubId === id)?.slug
+
+/** Les clubs où l'espace réservé est la salle entière, ring compris. */
+const CLUBS_A_UNE_SALLE = (Object.keys(ESPACES_PAR_CLUB) as ClubId[])
+  .filter((id) => ESPACES_PAR_CLUB[id].length === 1)
+  .map((id) => CLUBS_VERITE[id].nom.replace(/^Boxing Center (Toulouse )?/, ''))
 
 /** Le type de ring, UNIQUEMENT quand la page officielle le précise. */
 const TYPE_RING: Partial<Record<ClubId, string>> = {
@@ -52,12 +75,11 @@ const QUESTIONS: readonly QuestionReponse[] = [
   },
   {
     question: 'Peut-on louer un ring pour un gala ou un événement ?',
-    reponse: `Ce service loue des heures d’entraînement dans les clubs, pas un ring livré sur un autre lieu. Pour un événement, le réseau Boxing Center se contacte directement au ${RESEAU.telephone.affiche}.`,
+    reponse: `Les rings se louent à l’heure, dans les clubs, pour l’entraînement de vos clients. Pour un gala ou un événement, le réseau Boxing Center étudie la demande directement au ${RESEAU.telephone.affiche}.`,
   },
   {
     question: 'Aurai-je le ring pour moi seul ?',
-    reponse:
-      'L’heure se réserve par espace, et un espace accueille au plus deux coachs à la même heure. Aux Minimes, les trois rings laissent de la place aux deux coachs.',
+    reponse: `Pas forcément : l’heure se réserve par espace, pas par ring. ${REGLES.partage.texte} Aux Minimes, les trois rings laissent de la place à chacun.`,
   },
   {
     question: 'Quels clubs ont un ring olympique ?',
@@ -65,34 +87,43 @@ const QUESTIONS: readonly QuestionReponse[] = [
       'Ramonville et Portet-sur-Garonne annoncent chacun un ring olympique. Le club des États-Unis dispose de deux rings de compétition.',
   },
   {
-    question: 'Peut-on réserver le ring un dimanche ?',
-    reponse:
-      'Non : les créneaux sont ouverts du lundi au samedi, de 10 h à 19 h.',
+    question: 'Quels jours et à quelles heures le ring se réserve-t-il ?',
+    reponse: `${REGLES.grille.texte} ${REGLES.coursDuClub.texte}`,
+  },
+  {
+    question: 'Peut-on faire des mises de gants sur le ring ?',
+    reponse: `Oui, à intensité maîtrisée. ${REGLES.opposition.texte}`,
   },
 ]
 
 export default function Page() {
   const clubs = Object.values(CLUBS_VERITE)
-  const dateMaj = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date(MIS_A_JOUR))
-  const SOURCES: Source[] = [RESEAU.telephone.source, ...clubs.flatMap((c) => c.sources)]
+  const SOURCES: Source[] = [
+    RESEAU.telephone.source,
+    ...clubs.flatMap((c) => c.sources),
+    REGLES.opposition.source,
+    REGLES.partage.source,
+    REGLES.coursDuClub.source,
+  ]
   const creuse = prixCourt(REGLAGES_DEFAUT.offpeak_cents)
   const pleine = prixCourt(REGLAGES_DEFAUT.peak_cents)
 
   return (
     <>
       <header className="page-hero page-hero--visuel" data-visuel="ring-de-boxe">
-        <p className="sur mono">
-          <Link href="/">Accueil</Link> / Location de ring de boxe
-        </p>
+        <FilAriane
+          items={[
+            { name: 'Accueil', path: '/' },
+            { name: 'Location de ring de boxe', path: CHEMIN },
+          ]}
+        />
         <h1>Louer un ring de boxe à Toulouse, à l’heure</h1>
         <p className="reponse">
           Boxing Center met {TOTAL_RINGS} rings à la disposition des coachs dans cinq
           clubs de Toulouse et de son agglomération, à réserver à l’heure. Une heure
           coûte {creuse} en heure creuse et {pleine} en heure pleine, sans abonnement.
         </p>
-        <p className="maj">
-          Mis à jour le <time dateTime={MIS_A_JOUR}>{dateMaj}</time>
-        </p>
+        <MisAJour chemin={CHEMIN} />
       </header>
 
       <section className="section">
@@ -135,10 +166,12 @@ export default function Page() {
         <div className="enveloppe">
           <h2>Ce que vous louez : l’espace et son ring, pour une heure</h2>
           <p>
-            Vous réservez une heure dans un espace du club, et le ring fait partie
-            de cet espace. Vous arrivez avec votre client, les cordes sont tendues,
-            le tapis est propre : il n’y a rien à monter ni à démonter, et rien à
-            transporter.
+            Vous réservez une heure dans un espace du club, et le ring fait partie de cet
+            espace. Il est en place et entretenu par le club : vous arrivez avec votre client
+            et vos gants, il n’y a rien à monter ni à transporter, et vous remettez le
+            matériel à sa place en partant. Dans les clubs à une seule salle —{' '}
+            {CLUBS_A_UNE_SALLE.join(', ').replace(/, ([^,]*)$/, ' et $1')} —, l’espace réservé
+            est la salle entière, ring compris.
           </p>
         </div>
       </section>
@@ -172,13 +205,48 @@ export default function Page() {
 
       <section className="section">
         <div className="enveloppe">
-          <h2>Pour le travail aux gants et les rounds chronométrés</h2>
-          <p>
-            Un ring change la séance : vos clients apprennent à se déplacer entre les
-            cordes, à sortir d’un coin, à gérer une distance que le sac ne donne
-            pas. C’est ce qui sépare une séance de cardio-boxe d’un vrai travail de
-            boxeur.
-          </p>
+          <h2>Ring ou sacs de frappe : quel espace pour quelle séance</h2>
+          <div className="comparatif">
+            <table>
+              <caption>Ce que chaque équipement apporte à une séance, et où le trouver.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Critère</th>
+                  <th scope="col">Ring</th>
+                  <th scope="col">Sacs de frappe</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Ce qu’on y travaille</th>
+                  <td>Déplacements entre les cordes, sortie de coin, gestion de la distance, mises de gants</td>
+                  <td>Enchaînements, puissance, précision de frappe, cardio</td>
+                </tr>
+                <tr>
+                  <th scope="row">Où le trouver</th>
+                  <td>Les cinq clubs, {TOTAL_RINGS} rings au total</td>
+                  <td>Minimes, Saint-Cyprien, États-Unis (16 sacs), Portet-sur-Garonne (24 sacs)</td>
+                </tr>
+                <tr>
+                  <th scope="row">Protections en opposition</th>
+                  <td>Gants et bandes, protège-dents, casque</td>
+                  <td>Gants et bandes</td>
+                </tr>
+                <tr>
+                  <th scope="row">Prix de l’heure</th>
+                  <td colSpan={2}>Le même : {creuse} en heure creuse, {pleine} en heure pleine</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="section section--encre" data-polarite="encre">
+        <div className="enveloppe">
+          <h2>Mises de gants sur le ring : intensité maîtrisée, protections obligatoires</h2>
+          <p>{REGLES.opposition.texte}</p>
+          <Fondement regle={REGLES.opposition} />
         </div>
       </section>
 
@@ -198,17 +266,13 @@ export default function Page() {
         </div>
       </section>
 
-      <Sources items={SOURCES} verifieLe={REGISTRE_VERIFIE_LE} />
-
-      <JsonLd
-        data={[
-          serviceJsonLd(),
-          breadcrumbJsonLd([
-            { name: 'Accueil', path: '/' },
-            { name: 'Location de ring de boxe', path: CHEMIN },
-          ]),
-        ]}
+      <Sources
+        items={SOURCES}
+        verifieLe={REGISTRE_VERIFIE_LE}
+        titre="Les sources : les rings, club par club, et le règlement"
       />
+
+      <JsonLd data={[serviceJsonLd(), pageWebJsonLd(CHEMIN, { surLeService: true })]} />
     </>
   )
 }

@@ -23,10 +23,30 @@
  *     « take out any technical terms and put commercial terms instead ») ;
  *   · aucun `<meta name="keywords">` (−9 % mesuré pour le bourrage, Princeton).
  *
+ * Ajoutés le 02/10/2026 — les contrôles de la skill `aeo-geo` §6 qui
+ * n'étaient écrits nulle part, et les fautes trouvées ce jour-là :
+ *
+ *   · PAGES-RÉPONSES = les routes qui portent une `question` dans la carte (et
+ *     toutes les `/location-…`) : le contrat complet s'y applique ;
+ *   · AUCUN H2 DUPLIQUÉ ENTRE PAGES — échec s'il touche une page-réponse,
+ *     avertissement sinon (les fiches club en ont : voir le rapport du jour) ;
+ *   · LA DATE EST CELLE DE GIT : `lastModified` ≥ dernier commit de la page,
+ *     égale à aujourd'hui si la page est modifiée et pas encore commitée ;
+ *     `datePublished` = premier commit ; le « Mis à jour le » visible et le
+ *     `dateModified` du JSON-LD disent la même date que la carte ;
+ *   · PAS DE VENTE NÉGATIVE : ni le H1 ni le chapeau ne s'ouvrent sur une
+ *     absence (« il n'y a pas », « aucun », « sans »…) ;
+ *   · FAITS FAUX connus, sur toutes les pages servies : la signature « une
+ *     fois pour toutes », l'avoir qui « se déduit » ou couvre « les deux
+ *     tiers », « rien à ranger », et les heures du soir (non annoncées) ;
+ *   · PRIX : tout montant en euros d'un titre ou d'une description est l'un
+ *     des deux tarifs lus dans `src/domain/contrat.ts`.
+ *
  * Code de sortie non nul au moindre échec : branchable en CI.
  */
 
-import { readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -35,7 +55,55 @@ const BASE = (process.argv[2] ?? 'http://localhost:3041').replace(/\/$/, '')
 const carte = JSON.parse(readFileSync(join(RACINE, 'src/lib/seo/routes.data.json'), 'utf8'))
 
 const ROUTES_LIVE = carte.routes.filter((r) => r.status === 'live').map((r) => r.path)
-const INTENTIONS = ROUTES_LIVE.filter((p) => p.startsWith('/location-'))
+const ROUTE = new Map(carte.routes.map((r) => [r.path, r]))
+/** Les pages-réponses : une question déclarée dans la carte, ou une page d'intention. */
+const INTENTIONS = ROUTES_LIVE.filter((p) => p.startsWith('/location-') || ROUTE.get(p)?.question)
+
+/** Les deux tarifs, lus dans le contrat — pas recopiés ici. */
+const CONTRAT = readFileSync(join(RACINE, 'src/domain/contrat.ts'), 'utf8')
+const PRIX_AUTORISES = new Set(
+  ['offpeak_cents', 'peak_cents'].map((cle) => {
+    // `\b` : sans lui, « peak_cents » trouve d'abord « offpeak_cents ».
+    const c = Number(CONTRAT.match(new RegExp(`\\b${cle}:\\s*(\\d+)`))?.[1])
+    return String(c / 100)
+  }),
+)
+
+/**
+ * Les faits faux déjà publiés une fois, et démentis par le contrat. Une faute
+ * trouvée devient un contrôle, pas un souvenir (skill `baffled-bar`, barre de
+ * la vérité). Chaque motif dit pourquoi il est faux.
+ */
+const FAITS_FAUX = [
+  { re: /sign\w*[^.]{0,40}une fois pour toutes|une fois pour toutes[^.]{0,40}sign|\bsigne[rz]? une fois\b|\bsignez une fois\b/i, pourquoi: 'la signature suit chaque paiement (CG art. 9)' },
+  { re: /avoir[^.]{0,60}se d[ée]duit/i, pourquoi: 'un avoir paie une réservation entière, sans paiement mixte (CG art. 10.5)' },
+  { re: /deux tiers d.une heure/i, pourquoi: 'un avoir ne paie pas une fraction d’heure (CG art. 10.5)' },
+  { re: /rien à ranger/i, pourquoi: 'l’équipement se remet en place (RI art. 4.4)' },
+  { re: /\b(19|20)\s?h\s?(à|-|–)\s?2[01]\s?h|jusqu.à 2[01]\s?h/i, pourquoi: 'les heures du soir ne sont pas annoncées (consigne du 27/09/2026)' },
+]
+
+/** Une vente négative : la page s'ouvre sur ce qui manque (barre commerciale). */
+const VENTE_NEGATIVE = /^(il n['’]y a (pas|ni|aucun)|nous ne|on ne|pas de|aucune?\b|sans\b|ce service ne|ce n['’]est pas)/i
+
+/** La date du jour, à l'heure locale : celle qu'aurait un commit fait maintenant. */
+const AUJOURDHUI = (() => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+})()
+
+const git = (...args) => {
+  try {
+    return execFileSync('git', args, { cwd: RACINE, encoding: 'utf8' }).trim()
+  } catch {
+    return null
+  }
+}
+
+/** Le fichier de la page d'une route statique, s'il existe. */
+const fichierDe = (chemin) => {
+  const f = join('src', 'app', ...chemin.split('/').filter(Boolean), 'page.tsx')
+  return existsSync(join(RACINE, f)) ? f.replaceAll('\\', '/') : null
+}
 
 /**
  * Le jargon interdit à l'écran. Des mots de développeur, pas de coach : ils
@@ -71,6 +139,8 @@ const exempte = (chemin, re) => (EXEMPTIONS[chemin] ?? []).some((x) => x.source 
 const echecs = []
 const avertissements = []
 const vus = { titres: new Map(), descriptions: new Map() }
+/** Les H2 de chaque page servie, pour le contrôle croisé. */
+const h2Par = new Map()
 
 const texteVisible = (html) =>
   html
@@ -126,13 +196,32 @@ for (const chemin of ROUTES_LIVE) {
   }
   if (/<meta name="keywords"/i.test(html)) f('<meta name="keywords"> présent (bourrage : −9 % mesuré)')
 
+  // ── Prix : un titre ou une description ne publie que la grille réelle ────
+  for (const [quoi, val] of [['titre', titre], ['description', desc]]) {
+    for (const m of val.matchAll(/(\d+(?:,\d+)?)\s?€/g)) {
+      if (!PRIX_AUTORISES.has(m[1].replace(',', '.'))) {
+        f(`${quoi} : « ${m[0]} » n’est pas un tarif du contrat (${[...PRIX_AUTORISES].join(' € ou ')} €)`)
+      }
+    }
+  }
+
+  // ── H2, gardés pour le contrôle croisé entre pages ─────────────────────
+  h2Par.set(
+    chemin,
+    [...main.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)].map((m) => texteVisible(m[1]).trim().toLowerCase()),
+  )
+
   // ── JSON-LD ─────────────────────────────────────────────────────────────
   const blocs = [...html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1])
   const noeuds = []
   for (const b of blocs) {
     try {
       const v = JSON.parse(b)
-      noeuds.push(...(Array.isArray(v) ? v : [v]))
+      for (const n of Array.isArray(v) ? v : [v]) {
+        // Le layout pose un `@graph` : ses nœuds comptent comme les autres.
+        if (Array.isArray(n['@graph'])) noeuds.push(...n['@graph'])
+        else noeuds.push(n)
+      }
     } catch {
       f('JSON-LD illisible')
     }
@@ -151,20 +240,76 @@ for (const chemin of ROUTES_LIVE) {
     const reponse = main.match(/<p class="reponse"[^>]*>([\s\S]*?)<\/p>/)?.[1]
     if (!reponse) f('chapeau .reponse absent')
     else {
-      const phrases = texteVisible(reponse).split(/(?<=[.!?])\s+/).filter((p) => p.trim().length > 3)
+      const lu = texteVisible(reponse).trim()
+      const phrases = lu.split(/(?<=[.!?])\s+/).filter((p) => p.trim().length > 3)
       if (phrases.length > 2) f(`chapeau de ${phrases.length} phrases (≤ 2 : il doit tenir seul)`)
+      if (VENTE_NEGATIVE.test(lu)) f(`vente négative : le chapeau s’ouvre sur une absence — « ${lu.slice(0, 50)}… »`)
     }
-    if (!/Mis à jour le\s*<time dateTime="\d{4}-\d{2}-\d{2}"/i.test(main)) f('« Mis à jour le » sans <time datetime>')
+    const h1Texte = texteVisible(main.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? '').trim()
+    if (VENTE_NEGATIVE.test(h1Texte)) f(`vente négative : le H1 s’ouvre sur une absence — « ${h1Texte} »`)
+    const maj = main.match(/Mis à jour le\s*<time dateTime="(\d{4}-\d{2}-\d{2})"/i)?.[1]
+    if (!maj) f('« Mis à jour le » sans <time datetime>')
+
+    // ── La date est celle de git ─────────────────────────────────────────
+    const route = ROUTE.get(chemin)
+    if (!route?.lastModified) f('« lastModified » absent de la carte : la date affichée ne vient de nulle part')
+    else {
+      if (maj && maj !== route.lastModified) f(`« Mis à jour le » ${maj} ≠ carte ${route.lastModified}`)
+      const page = noeuds.find((n) => n['@type'] === 'WebPage')
+      if (page && page.dateModified !== route.lastModified) {
+        f(`JSON-LD dateModified ${page.dateModified ?? 'absent'} ≠ carte ${route.lastModified}`)
+      }
+      const fichier = fichierDe(chemin)
+      if (fichier) {
+        const sale = git('status', '--porcelain', '--', fichier)
+        const dernier = git('log', '-1', '--format=%cs', '--', fichier)
+        const premier = git('log', '--diff-filter=A', '--format=%cs', '--', fichier)?.split('\n').pop() || null
+        if (sale) {
+          if (route.lastModified !== AUJOURDHUI) {
+            f(`${fichier} est modifié et pas encore commité : « lastModified » doit valoir ${AUJOURDHUI}, la carte dit ${route.lastModified}`)
+          }
+        } else if (dernier && route.lastModified < dernier) {
+          f(`${fichier} a changé le ${dernier} (git) mais la carte dit « mis à jour le ${route.lastModified} »`)
+        }
+        const publie = premier ?? AUJOURDHUI
+        if (route.datePublished && route.datePublished !== publie) {
+          f(`« datePublished » ${route.datePublished} ≠ premier commit de la page (${publie})`)
+        }
+      }
+    }
     const sources = main.match(/<aside class="sources"[\s\S]*?<\/aside>/)?.[0] ?? ''
     if (compter(sources, /href="https?:\/\//g) < 1) f('bloc Sources sans lien sortant')
   }
 
   // ── Jargon à l'écran ────────────────────────────────────────────────────
   const visible = texteVisible(main)
+  for (const { re, pourquoi } of FAITS_FAUX) {
+    const m = visible.match(re)
+    if (m) f(`fait faux : « ${m[0]} » — ${pourquoi}`)
+  }
   for (const re of JARGON) {
     if (exempte(chemin, re)) continue
     const m = visible.match(re)
     if (m) f(`jargon visible : « ${m[0]} » — …${visible.slice(Math.max(0, m.index - 40), m.index + 40)}…`)
+  }
+}
+
+// ── Aucun H2 dupliqué entre pages (skill `aeo-geo` §6) ─────────────────
+// Deux pages qui portent le même H2 se disputent la même réponse, ou trahissent
+// un gabarit recopié — le motif des pages-villes que Google replie en une seule.
+{
+  const premierePage = new Map()
+  for (const [chemin, h2s] of h2Par) {
+    for (const h of new Set(h2s)) {
+      const deja = premierePage.get(h)
+      if (!deja) {
+        premierePage.set(h, chemin)
+        continue
+      }
+      const message = `H2 « ${h} » à la fois sur ${deja} et sur ${chemin}`
+      if (INTENTIONS.includes(chemin) || INTENTIONS.includes(deja)) echecs.push(message)
+      else avertissements.push(message)
+    }
   }
 }
 
@@ -189,6 +334,10 @@ for (const chemin of [...new Set(TOUTES)]) {
   const html = await r.text()
   const main = html.match(/<main[\s\S]*?<\/main>/i)?.[0] ?? html
   const visible = texteVisible(main)
+  for (const { re, pourquoi } of FAITS_FAUX) {
+    const m = visible.match(re)
+    if (m) echecs.push(`${chemin} : fait faux : « ${m[0]} » — ${pourquoi}`)
+  }
   for (const re of JARGON) {
     if (exempte(chemin, re)) continue
     const m = visible.match(re)

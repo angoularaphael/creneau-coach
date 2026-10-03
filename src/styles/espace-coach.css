@@ -1,0 +1,4210 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   L'ESPACE COACH — la feuille propre à `/espace-coach/**`.
+
+   Importée par `src/app/espace-coach/layout.tsx` et nulle part ailleurs. Tout
+   est rangé sous `.espace-clair` et préfixé `ec-` : rien ici ne peut toucher le
+   site public, et rien du site public ne vient écraser ces règles par hasard.
+   Les jetons de base (fond clair, encre, cuivre foncé) restent ceux posés dans
+   `boxing-center.css`, section « L'ESPACE COACH EN CLAIR » — on les complète,
+   on ne les redéfinit pas.
+
+   ── LA THÈSE, APPLIQUÉE AU TABLEAU DE BORD ───────────────────────────────
+   « L'heure est un objet de précision. » Le site public la montre en grille ;
+   ici elle se montre en INSTRUMENT. Le prochain rendez-vous est un cadran à
+   soixante index, la date d'une réservation est un guichet de montre, les
+   chiffres sont en monospace tabulaire et ne dansent jamais, les rayons sont
+   serrés (4 à 6 px : un instrument n'a pas des coins de bonbon).
+
+   ── LA LOI DU CUIVRE, TENUE ──────────────────────────────────────────────
+   Un seul aplat cuivré par écran : le bouton du prochain geste. Le reste de
+   ce qui « se décide » (une réservation à payer, à signer) porte un filet ou
+   un point cuivré, jamais un second aplat. Sur fond blanc, le cuivre de marque
+   (#b8763a, ~3,4:1) ne sert QU'AUX TRAITS ET AUX GRAPHIQUES — la norme demande
+   3:1 pour un graphique, 4,5:1 pour un texte. Le texte cuivré prend `--accent`
+   (#8a5526, ~7,6:1). Sur l'encre, le cuivre clair #c98a4b tient ~6:1.
+
+   ── LE MOUVEMENT ─────────────────────────────────────────────────────────
+   Une seule grammaire, celle du site : le REMPLISSAGE (un masque qui s'ouvre
+   de gauche à droite, comme une aiguille balaie un cadran). Le haut de page
+   entre en cascade au chargement ; le reste se remplit au défilement via
+   `Mouvement.tsx`. Ce qui bouge en continu DIT quelque chose : l'aiguille des
+   secondes (ce chiffre est vivant), le point d'une pastille à décider (ceci
+   vous attend), l'étape en cours qui respire (vous êtes ici). Rien d'autre.
+   En mouvement réduit, tout est posé, rien ne disparaît.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair {
+  --ec-encre: #14162e;
+  --ec-encre-bleue: #1e2044;
+  --ec-encre-haute: #2a2d59;
+  --ec-brume: #a8abc4;
+  --ec-cuivre: #b8763a;
+  --ec-cuivre-clair: #c98a4b;
+  --ec-cuivre-vif: #d99c5f;
+  --ec-cuivre-voile: #fbf4ec;
+  --ec-carte: #ffffff;
+  --ec-filet: rgba(20, 22, 46, 0.1);
+  --ec-filet-fort: rgba(20, 22, 46, 0.2);
+  --ec-ombre: 0 1px 2px rgba(20, 22, 46, 0.05), 0 10px 28px -16px rgba(20, 22, 46, 0.2);
+  --ec-ombre-haute: 0 2px 6px rgba(20, 22, 46, 0.06), 0 24px 48px -22px rgba(20, 22, 46, 0.36);
+  --ec-mono: var(--font-mono, ui-monospace, 'SFMono-Regular', Menlo, monospace);
+  --ec-courbe: cubic-bezier(0.22, 0.61, 0.24, 1);
+  --ec-ressort: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Le fond n'est plus un aplat : un voile d'encre très bas descend de
+     l'en-tête sombre et s'éteint en 14 rem. Sans lui, la bascule noir → blanc
+     sous la barre du site était une coupure franche, comme un écran qui
+     change de page au lieu de s'ouvrir. */
+  background:
+    linear-gradient(180deg, rgba(20, 22, 46, 0.06) 0, rgba(20, 22, 46, 0) 14rem),
+    var(--bg);
+  padding-bottom: clamp(3rem, 8vw, 5rem);
+}
+
+/* ── LES FONDAMENTAUX ───────────────────────────────────────────────── */
+
+.espace-clair .ec-cadre {
+  width: 100%;
+  padding-inline: var(--gouttiere);
+}
+
+.espace-clair .ec-mono {
+  font-family: var(--ec-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.espace-clair .ec-sur {
+  margin: 0 0 0.6rem;
+  font-family: var(--pile-texte);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-titre {
+  margin: 0;
+  font-family: var(--pile-titre);
+  font-weight: 400;
+  font-size: clamp(2.9rem, 9vw, 5.25rem);
+  line-height: 0.88;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.espace-clair .ec-titre-bloc {
+  margin: 0 0 0.35rem;
+  font-family: var(--pile-titre);
+  font-weight: 400;
+  font-size: clamp(2rem, 5vw, 2.85rem);
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.espace-clair .ec-lien {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--ec-filet-fort);
+  text-underline-offset: 0.28em;
+  transition: text-decoration-color 0.2s ease, color 0.2s ease;
+}
+
+.espace-clair .ec-lien:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+.espace-clair .ec-lien svg,
+.espace-clair .ec-prochaine__detail svg,
+.espace-clair .ec-resa__action svg,
+.espace-clair .ec-passee__action svg,
+.espace-clair .ec-club__cta svg {
+  flex: none;
+  transition: transform 0.3s var(--ec-ressort);
+}
+
+.espace-clair .ec-lien:hover svg,
+.espace-clair .ec-prochaine__detail:hover svg,
+.espace-clair .ec-resa__action:hover svg,
+.espace-clair .ec-passee__action:hover svg,
+.espace-clair .ec-club__lien:hover .ec-club__cta svg {
+  transform: translateX(3px);
+}
+
+/* Les boutons de l'espace : l'icône et le mot sur une ligne, à distance fixe. */
+.espace-clair .btn {
+  gap: 0.55rem;
+  border-radius: 3px;
+}
+
+.espace-clair .btn svg {
+  flex: none;
+}
+
+/* L'encre pleine : l'action importante qui n'est pas LA décision de l'écran. */
+.espace-clair .ec-btn-encre {
+  background: var(--ec-encre);
+  border-color: var(--ec-encre);
+  color: #ffffff;
+  box-shadow: 0 10px 24px -14px rgba(20, 22, 46, 0.7);
+}
+
+.espace-clair .ec-btn-encre:hover {
+  background: var(--ec-encre-haute);
+  border-color: var(--ec-encre-haute);
+}
+
+/* Le cuivre plein, réservé à LA décision. Texte d'encre sur cuivre clair :
+   ~6:1, là où du blanc sur ce cuivre plafonnait à 3,4:1. */
+.espace-clair .ec-btn-cuivre {
+  background: var(--ec-cuivre-clair);
+  border-color: var(--ec-cuivre-clair);
+  color: var(--ec-encre);
+  box-shadow: 0 12px 30px -14px rgba(201, 138, 75, 0.85);
+}
+
+.espace-clair .ec-btn-cuivre:hover {
+  background: var(--ec-cuivre-vif);
+  border-color: var(--ec-cuivre-vif);
+}
+
+/* Le bouton qui s'efface : « Se déconnecter », « Libérer ce créneau ». */
+.espace-clair .ec-btn-discret {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-btn-discret:hover {
+  color: var(--ink);
+  border-color: var(--ec-filet-fort);
+}
+
+.espace-clair .btn:disabled,
+.espace-clair .btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.espace-clair .btn:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* Le lien étiré : toute la carte est cliquable, le bouton d'action reste
+   devant (z-index), et le repère de focus se pose sur la carte entière. */
+.espace-clair .ec-etire::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.espace-clair .ec-etire:focus-visible {
+  outline: none;
+}
+
+.espace-clair :is(.ec-resa, .ec-passee):has(.ec-etire:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── LE MOTEUR DE DÉFILEMENT, DANS L'ESPACE ─────────────────────────────
+   `Mouvement.tsx` laisse `clip-path: inset(0)` sur chaque bloc révélé. Sur le
+   site public, les blocs n'ont pas d'ombre : invisible. Ici, les cartes en
+   ont, et le levé au survol dépasse de 3 px — ils étaient TRANCHÉS net au bord
+   du bloc. La fin du remplissage s'ouvre donc au-delà de la boîte. */
+.espace-clair .bloc-scene.arme.vu {
+  clip-path: inset(-3rem -3rem -3rem -3rem);
+}
+
+/* ── L'ENTRÉE DU HAUT DE PAGE ───────────────────────────────────────────
+   Le remplissage du site, joué au CHARGEMENT et en cascade (`--d`), parce que
+   le haut de page est déjà à l'écran : il ne peut pas « arriver au
+   défilement ». `backwards` et pas `both` : une fois joué, il ne laisse
+   AUCUN masque derrière lui — sinon l'ombre des cartes restait coupée. */
+@keyframes ec-entree {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(-3rem -3rem -3rem -3rem);
+  }
+}
+
+.espace-clair .ec-entree {
+  animation: ec-entree 0.85s var(--ec-courbe) backwards;
+  animation-delay: calc(var(--d, 0) * 75ms + 60ms);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LE CADRAN
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair .ec-cadran {
+  --taille: clamp(212px, 64vw, 300px);
+  --piste: rgba(20, 22, 46, 0.08);
+  --arc: var(--ec-encre);
+  --index: rgba(20, 22, 46, 0.9);
+  --index-allume: var(--ec-encre);
+  --aiguille: var(--ec-encre);
+  --faible: var(--ink-muted);
+  --fort: var(--ink);
+
+  position: relative;
+  flex: none;
+  width: var(--taille);
+  aspect-ratio: 1;
+  color: var(--fort);
+}
+
+.espace-clair .ec-cadran[data-taille='moyen'] {
+  --taille: clamp(150px, 40vw, 176px);
+}
+
+.espace-clair .ec-cadran[data-ton='nuit'] {
+  --piste: rgba(168, 171, 196, 0.14);
+  --arc: #f5f5f5;
+  --index: var(--ec-brume);
+  --index-allume: #f5f5f5;
+  --aiguille: #f5f5f5;
+  --faible: var(--ec-brume);
+  --fort: #f5f5f5;
+}
+
+/* Le temps qui reste est celui d'une DÉCISION (payer) : la piste passe au cuivre. */
+.espace-clair .ec-cadran[data-decision] {
+  --arc: var(--ec-cuivre);
+  --index-allume: var(--ec-cuivre);
+  --aiguille: var(--ec-cuivre);
+}
+
+.espace-clair .ec-cadran[data-ton='nuit'][data-decision] {
+  --arc: var(--ec-cuivre-clair);
+  --index-allume: var(--ec-cuivre-clair);
+  --aiguille: var(--ec-cuivre-clair);
+}
+
+.espace-clair .ec-cadran__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.espace-clair .ec-cadran__piste {
+  fill: none;
+  stroke: var(--piste);
+  stroke-width: 6;
+}
+
+.espace-clair .ec-cadran__arc {
+  fill: none;
+  stroke: var(--arc);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear, stroke 0.6s ease;
+  animation: ec-arc 1.5s var(--ec-courbe) 0.35s backwards;
+}
+
+@keyframes ec-arc {
+  from {
+    stroke-dashoffset: var(--c);
+  }
+}
+
+.espace-clair .ec-cadran__index line {
+  stroke: var(--index);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.26;
+  transition: opacity 0.6s ease, stroke 0.6s ease;
+  /* La lunette s'allume en un tour, index après index : le remplissage du site. */
+  animation: ec-index 0.5s var(--ec-courbe) backwards;
+  animation-delay: calc(var(--i) * 13ms + 200ms);
+}
+
+.espace-clair .ec-cadran__index line[data-majeur] {
+  stroke-width: 2.6;
+}
+
+.espace-clair .ec-cadran__index line[data-allume] {
+  stroke: var(--index-allume);
+  opacity: 1;
+}
+
+@keyframes ec-index {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Le battement d'un quartz : un saut par seconde, avec un léger dépassement. */
+.espace-clair .ec-cadran__aiguille {
+  transform-box: view-box;
+  transform-origin: 120px 120px;
+  transition: transform 0.42s var(--ec-ressort);
+}
+
+.espace-clair .ec-cadran__aiguille circle {
+  fill: var(--aiguille);
+  filter: drop-shadow(0 0 6px var(--aiguille));
+}
+
+.espace-clair .ec-cadran__centre {
+  position: absolute;
+  inset: 17%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.espace-clair .ec-cadran__sur,
+.espace-clair .ec-cadran__legende {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faible);
+  line-height: 1.2;
+}
+
+.espace-clair .ec-cadran__chiffres {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-family: var(--ec-mono);
+  color: var(--fort);
+}
+
+.espace-clair .ec-cadran__groupe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.espace-clair .ec-cadran__groupe b {
+  display: block;
+  font-size: clamp(1.7rem, 7.4vw, 2.35rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.espace-clair .ec-cadran[data-taille='moyen'] .ec-cadran__groupe b {
+  font-size: clamp(1.45rem, 6vw, 1.7rem);
+}
+
+.espace-clair .ec-cadran[data-repos] .ec-cadran__groupe b {
+  font-size: clamp(2.6rem, 11vw, 3.4rem);
+}
+
+/* Le dernier chiffre est remonté à chaque changement (clé = valeur) : il
+   tombe en place comme le rouleau d'un compteur mécanique. */
+.espace-clair .ec-cadran__groupe:last-child b {
+  animation: ec-chiffre 0.34s var(--ec-courbe);
+}
+
+@keyframes ec-chiffre {
+  from {
+    opacity: 0.35;
+    transform: translateY(-32%);
+    filter: blur(1px);
+  }
+}
+
+.espace-clair .ec-cadran__groupe small {
+  margin-top: 0.3rem;
+  font-family: var(--pile-texte);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faible);
+}
+
+.espace-clair .ec-cadran__fin {
+  font-family: var(--pile-titre);
+  font-size: 1.65rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--fort);
+  animation: ec-entree 0.6s var(--ec-courbe) backwards;
+}
+
+.espace-clair .ec-cadran[data-fini] .ec-cadran__piste {
+  stroke-dasharray: 2 6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LE TABLEAU DE BORD
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair .ec-accueil {
+  display: grid;
+  gap: clamp(1rem, 2.4vw, 1.4rem);
+  padding-top: clamp(1.75rem, 5vw, 3.25rem);
+}
+
+.espace-clair .ec-accueil__tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+}
+
+.espace-clair .ec-accueil__texte {
+  flex: 1 1 32rem;
+  min-width: 0;
+}
+
+.espace-clair .ec-accueil__brief {
+  margin: 0.9rem 0 0;
+  max-width: 46ch;
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-retour {
+  margin: 0;
+}
+
+/* Les puces « à faire » : chacune est UN geste, avec son décompte. */
+.espace-clair .ec-afaire {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.espace-clair .ec-afaire__puce {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: var(--tap);
+  padding: 0.35rem 0.5rem 0.35rem 0.85rem;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet-fort);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  box-shadow: var(--ec-ombre);
+  transition: border-color 0.25s ease, transform 0.25s var(--ec-courbe), box-shadow 0.25s ease;
+}
+
+.espace-clair .ec-afaire__puce:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--ec-ombre-haute);
+}
+
+.espace-clair .ec-afaire__puce > svg {
+  color: var(--accent);
+}
+
+.espace-clair .ec-afaire__reste {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.85rem;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  background: var(--ec-cuivre-voile);
+  color: var(--accent);
+  font-family: var(--ec-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.espace-clair .ec-accueil__reserver {
+  flex: none;
+}
+
+/* ── LA PROCHAINE SÉANCE, EN ENCRE ──────────────────────────────────────
+   Le fond porte un GUILLOCHÉ : des cercles concentriques d'un pixel, centrés
+   sur le cadran, à 3 % d'opacité. C'est la gravure des cadrans de montre —
+   on ne le remarque pas, on remarque que la surface a de la matière. */
+.espace-clair .ec-prochaine {
+  --guilloche: 78% 50%;
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  padding: clamp(1.4rem, 4.5vw, 2.75rem);
+  border-radius: 6px;
+  color: #f5f5f5;
+  background:
+    radial-gradient(60% 90% at var(--guilloche), rgba(42, 45, 89, 0.85) 0%, rgba(42, 45, 89, 0) 70%),
+    repeating-radial-gradient(circle at var(--guilloche), rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 7px),
+    linear-gradient(155deg, var(--ec-encre-bleue) 0%, var(--ec-encre) 52%, #0c0d1d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    var(--ec-ombre-haute);
+  overflow: hidden;
+}
+
+/* Le filet cuivré du haut : la marque, un trait, rien de plus. */
+.espace-clair .ec-prochaine::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, var(--ec-cuivre) 0%, rgba(184, 118, 58, 0) 70%);
+  transform-origin: left;
+  animation: ec-trait 1.2s var(--ec-courbe) 0.5s backwards;
+}
+
+@keyframes ec-trait {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@media (min-width: 760px) {
+  .espace-clair .ec-prochaine {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: clamp(2rem, 5vw, 4.5rem);
+  }
+}
+
+.espace-clair .ec-prochaine__texte {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.espace-clair .ec-prochaine__sur {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ec-brume);
+}
+
+.espace-clair .ec-prochaine__jour {
+  margin: 0;
+  font-family: var(--pile-titre);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 8vw, 4.4rem);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+}
+
+.espace-clair .ec-prochaine__jour span {
+  display: block;
+  margin-top: 0.5rem;
+  font-family: var(--pile-texte);
+  font-size: 0.98rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ec-brume);
+}
+
+.espace-clair .ec-prochaine__heure {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  margin: 0;
+  font-size: clamp(1.6rem, 4.4vw, 2.3rem);
+  font-weight: 500;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.espace-clair .ec-prochaine__heure > span[aria-hidden] {
+  color: var(--ec-brume);
+  font-weight: 300;
+}
+
+.espace-clair .ec-prochaine__lieu {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ec-brume);
+}
+
+.espace-clair .ec-prochaine__lieu b {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.espace-clair .ec-prochaine__lieu span {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.espace-clair .ec-prochaine .ec-parcours {
+  max-width: 22rem;
+  margin: 0.35rem 0 0.2rem;
+}
+
+.espace-clair .ec-prochaine__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.4rem;
+}
+
+.espace-clair .ec-prochaine__detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--tap);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ec-brume);
+  transition: color 0.2s ease;
+}
+
+.espace-clair .ec-prochaine__detail:hover {
+  color: #ffffff;
+}
+
+.espace-clair .ec-prochaine__cadran {
+  display: grid;
+  place-items: center;
+}
+
+@media (max-width: 479px) {
+  .espace-clair .ec-prochaine__actions .btn {
+    width: 100%;
+  }
+}
+
+/* AU TÉLÉPHONE, LE CADRAN SE POSE À CÔTÉ DU JOUR, comme une complication.
+   En tête de carte, plein écran, il repoussait l'heure, le club et le bouton
+   sous le pli : on voyait une montre, pas son rendez-vous. Ici la carte se
+   lit d'un regard — « Demain » et son décompte côte à côte, puis l'heure, le
+   lieu, le parcours, le geste. La grille aplatit le bloc de texte
+   (`display: contents`) pour placer le cadran entre ses lignes. */
+@media (max-width: 759px) {
+  .espace-clair .ec-prochaine {
+    --guilloche: 86% 26%;
+
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'sur sur'
+      'jour cadran'
+      'heure heure'
+      'lieu lieu'
+      'parcours parcours'
+      'actions actions';
+    gap: 0.85rem 0.75rem;
+  }
+
+  .espace-clair .ec-prochaine__texte {
+    display: contents;
+  }
+
+  .espace-clair .ec-prochaine__sur { grid-area: sur; }
+  .espace-clair .ec-prochaine__jour { grid-area: jour; align-self: center; }
+  .espace-clair .ec-prochaine__heure { grid-area: heure; }
+  .espace-clair .ec-prochaine__lieu { grid-area: lieu; }
+  .espace-clair .ec-prochaine .ec-parcours { grid-area: parcours; }
+  .espace-clair .ec-prochaine__actions { grid-area: actions; }
+  .espace-clair .ec-prochaine .ec-trois { grid-area: trois; }
+
+  /* L'invitation n'a ni heure, ni lieu, ni parcours : sa propre grille,
+     sinon trois rangées vides ajoutaient trois écarts au milieu de la carte. */
+  .espace-clair .ec-prochaine--invitation {
+    grid-template-areas:
+      'sur sur'
+      'jour cadran'
+      'trois trois'
+      'actions actions';
+  }
+
+  .espace-clair .ec-prochaine__cadran {
+    grid-area: cadran;
+    align-self: center;
+  }
+
+  .espace-clair .ec-prochaine .ec-cadran {
+    --taille: 132px;
+  }
+
+  .espace-clair .ec-prochaine .ec-cadran__centre {
+    inset: 15%;
+    gap: 0.2rem;
+  }
+
+  .espace-clair .ec-prochaine .ec-cadran__sur,
+  .espace-clair .ec-prochaine .ec-cadran__legende {
+    display: none;
+  }
+
+  .espace-clair .ec-prochaine .ec-cadran__chiffres {
+    gap: 0.28rem;
+  }
+
+  .espace-clair .ec-prochaine .ec-cadran__groupe b {
+    font-size: 1.12rem;
+  }
+
+  .espace-clair .ec-prochaine .ec-cadran[data-repos] .ec-cadran__groupe b {
+    font-size: 1.7rem;
+  }
+
+  .espace-clair .ec-prochaine .ec-cadran__groupe small {
+    margin-top: 0.15rem;
+    font-size: 0.5rem;
+  }
+
+  .espace-clair .ec-prochaine .ec-cadran__fin {
+    font-size: 1.05rem;
+  }
+
+  .espace-clair .ec-prochaine .ec-cadran__aiguille circle {
+    r: 6;
+  }
+
+}
+
+/* L'invitation : la même carte, trois gestes au lieu d'une date. */
+.espace-clair .ec-trois {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0.4rem 0 0.25rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: geste;
+}
+
+.espace-clair .ec-trois li {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  gap: 0.1rem 0.85rem;
+  counter-increment: geste;
+}
+
+.espace-clair .ec-trois li::before {
+  content: '0' counter(geste);
+  grid-row: span 2;
+  padding-top: 0.15rem;
+  font-family: var(--ec-mono);
+  font-size: 0.85rem;
+  color: var(--ec-cuivre-clair);
+  border-top: 1px solid rgba(201, 138, 75, 0.6);
+}
+
+.espace-clair .ec-trois b {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.espace-clair .ec-trois span {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ec-brume);
+}
+
+/* ── LA PASTILLE DE STATUT ──────────────────────────────────────────── */
+.espace-clair .ec-pastille {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--pile-texte);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.espace-clair .ec-pastille__point {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.espace-clair .ec-pastille[data-ton='decision'] {
+  color: var(--accent);
+  background: var(--ec-cuivre-voile);
+  border-color: rgba(138, 85, 38, 0.26);
+}
+
+/* Le point d'une décision en attente bat doucement : « ceci vous attend ». */
+.espace-clair .ec-pastille[data-ton='decision'] .ec-pastille__point {
+  animation: ec-pouls 2.2s ease-out infinite;
+}
+
+@keyframes ec-pouls {
+  0% {
+    box-shadow: 0 0 0 0 rgba(184, 118, 58, 0.55);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px rgba(184, 118, 58, 0);
+  }
+}
+
+.espace-clair .ec-pastille[data-ton='pret'] {
+  color: #ffffff;
+  background: var(--ec-encre);
+}
+
+.espace-clair .ec-pastille[data-ton='passe'] {
+  color: var(--ink);
+  background: var(--bg-soft);
+}
+
+.espace-clair .ec-pastille[data-ton='eteint'] {
+  color: var(--ink-muted);
+  border-color: var(--ec-filet-fort);
+}
+
+.espace-clair .ec-pastille[data-ton='alerte'] {
+  color: #8a1c1c;
+  background: #fdf2f2;
+  border-color: rgba(155, 28, 28, 0.3);
+}
+
+/* Sur l'encre, les mêmes tons, retournés. */
+.espace-clair .ec-prochaine .ec-pastille[data-ton='pret'] {
+  color: var(--ec-encre);
+  background: #f5f5f5;
+}
+
+.espace-clair .ec-prochaine .ec-pastille[data-ton='decision'] {
+  color: var(--ec-cuivre-clair);
+  background: rgba(201, 138, 75, 0.12);
+  border-color: rgba(201, 138, 75, 0.4);
+}
+
+/* ── LE PARCOURS EN TROIS GESTES ────────────────────────────────────── */
+.espace-clair .ec-parcours {
+  --puce: 18px;
+  --piste: var(--ec-filet-fort);
+  --plein: var(--ec-encre);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 17rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Le filet : de la première puce à la dernière, puis rempli jusqu'à l'étape en cours. */
+.espace-clair .ec-parcours::before,
+.espace-clair .ec-parcours::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--puce) / 2 - 1px);
+  left: calc(100% / 6);
+  right: calc(100% / 6);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--piste);
+}
+
+.espace-clair .ec-parcours::after {
+  background: var(--plein);
+  transform: scaleX(var(--rempli, 0));
+  transform-origin: left;
+  animation: ec-parcours 1.1s var(--ec-courbe) 0.45s backwards;
+}
+
+@keyframes ec-parcours {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.espace-clair .ec-parcours__etape {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.espace-clair .ec-parcours__puce {
+  display: grid;
+  place-items: center;
+  width: var(--puce);
+  height: var(--puce);
+  border-radius: 50%;
+  border: 1.5px solid var(--piste);
+  background: var(--ec-carte);
+  color: var(--ink-muted);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+.espace-clair .ec-parcours__n {
+  font-family: var(--ec-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.espace-clair .ec-parcours__nom {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.espace-clair .ec-parcours__detail {
+  max-width: 14ch;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-parcours__etape[data-etat='fait'] .ec-parcours__puce {
+  background: var(--plein);
+  border-color: var(--plein);
+  color: #ffffff;
+}
+
+.espace-clair .ec-parcours__etape[data-etat='courant'] .ec-parcours__puce {
+  border-color: var(--plein);
+  color: var(--plein);
+  animation: ec-respire 2.6s ease-in-out infinite;
+}
+
+/* « Vous êtes ici » : un halo qui s'ouvre et se referme, lentement. */
+@keyframes ec-respire {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(20, 22, 46, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(20, 22, 46, 0.03);
+  }
+}
+
+.espace-clair .ec-parcours__etape:is([data-etat='fait'], [data-etat='courant']) .ec-parcours__nom {
+  color: var(--ink);
+}
+
+.espace-clair .ec-parcours__etape[data-etat='rompu'] .ec-parcours__puce {
+  border-style: dashed;
+}
+
+.espace-clair .ec-parcours__etape[data-etat='rompu'] .ec-parcours__nom {
+  text-decoration: line-through;
+  text-decoration-color: var(--ec-filet-fort);
+}
+
+/* Sur l'encre de la carte « prochaine séance ». */
+.espace-clair .ec-prochaine .ec-parcours {
+  --piste: rgba(168, 171, 196, 0.3);
+  --plein: #f5f5f5;
+}
+
+.espace-clair .ec-prochaine .ec-parcours__puce {
+  background: var(--ec-encre);
+  color: var(--ec-brume);
+}
+
+.espace-clair .ec-prochaine .ec-parcours__etape[data-etat='fait'] .ec-parcours__puce {
+  color: var(--ec-encre);
+}
+
+.espace-clair .ec-prochaine .ec-parcours__nom {
+  color: var(--ec-brume);
+}
+
+.espace-clair .ec-prochaine .ec-parcours__etape:is([data-etat='fait'], [data-etat='courant']) .ec-parcours__nom {
+  color: #ffffff;
+}
+
+.espace-clair .ec-prochaine .ec-parcours__etape[data-etat='courant'] .ec-parcours__puce {
+  animation-name: ec-respire-nuit;
+}
+
+@keyframes ec-respire-nuit {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(245, 245, 245, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(245, 245, 245, 0.03);
+  }
+}
+
+/* ── LES TROIS TUILES ───────────────────────────────────────────────── */
+.espace-clair .ec-tuiles {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 720px) {
+  .espace-clair .ec-tuiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+.espace-clair .ec-tuile {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
+  padding: 1.15rem 1.2rem 1.1rem;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+}
+
+.espace-clair .ec-tuile__titre {
+  margin: 0;
+  font-family: var(--pile-texte);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-tuile__valeur {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0;
+  font-family: var(--ec-mono);
+  font-size: clamp(2.3rem, 6vw, 2.9rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.espace-clair .ec-tuile__sur {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-tuile__note {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-tuile__note b {
+  color: var(--ink);
+}
+
+/* La jauge des places : trois cases qui se REMPLISSENT d'encre, une par une. */
+.espace-clair .ec-jauge {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.espace-clair .ec-jauge li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.1rem;
+  padding: 0 0.4rem;
+  border: 1px dashed var(--ec-filet-fort);
+  border-radius: 3px;
+  overflow: hidden;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-jauge li span {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.espace-clair .ec-jauge li[data-plein] {
+  border: 1px solid var(--ec-encre);
+  color: #ffffff;
+}
+
+.espace-clair .ec-jauge li[data-plein]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--ec-encre);
+  transform-origin: left;
+  animation: ec-remplir 0.7s var(--ec-courbe) backwards;
+  animation-delay: calc(var(--i) * 140ms + 750ms);
+}
+
+@keyframes ec-remplir {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Les jetons d'avoir : une pièce par heure creuse couverte. */
+.espace-clair .ec-jetons {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.1rem;
+  color: var(--ec-encre);
+  perspective: 300px;
+}
+
+.espace-clair .ec-jeton {
+  display: grid;
+  place-items: center;
+  animation: ec-jeton 0.7s var(--ec-ressort) backwards;
+  animation-delay: calc(var(--i, 0) * 110ms + 800ms);
+}
+
+.espace-clair .ec-jeton[data-vide] {
+  color: var(--ec-filet-fort);
+}
+
+@keyframes ec-jeton {
+  from {
+    opacity: 0;
+    transform: rotateY(90deg) scale(0.6);
+  }
+}
+
+.espace-clair .ec-jetons__plus {
+  font-family: var(--ec-mono);
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+/* La frise des semaines : une case par semaine, plus dense quand on a plus travaillé. */
+.espace-clair .ec-frise {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.25rem;
+  min-height: 2.1rem;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.espace-clair .ec-frise li {
+  height: 0.7rem;
+  border-radius: 2px;
+  background: rgba(20, 22, 46, 0.07);
+  transform-origin: bottom;
+  animation: ec-frise 0.6s var(--ec-courbe) backwards;
+  animation-delay: calc(var(--i) * 60ms + 750ms);
+}
+
+.espace-clair .ec-frise li[data-n='1'] {
+  height: 1.1rem;
+  background: rgba(20, 22, 46, 0.55);
+}
+
+.espace-clair .ec-frise li[data-n='2'] {
+  height: 1.5rem;
+  background: rgba(20, 22, 46, 0.78);
+}
+
+.espace-clair .ec-frise li[data-n='3'] {
+  height: 2rem;
+  background: var(--ec-encre);
+}
+
+@keyframes ec-frise {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.espace-clair .ec-frise__legende {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  opacity: 0.8;
+}
+
+/* ── LES BLOCS DE LA PAGE ───────────────────────────────────────────── */
+.espace-clair .ec-bloc {
+  padding-top: clamp(2.75rem, 7vw, 4.75rem);
+}
+
+.espace-clair .ec-bloc__tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 2rem;
+  margin-bottom: 1.35rem;
+}
+
+.espace-clair .ec-bloc__tete p {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+/* ── LES CINQ CLUBS ─────────────────────────────────────────────────────
+   Au téléphone, un rail qui défile au pouce et qui déborde jusqu'au bord de
+   l'écran (la carte suivante dépasse : on comprend qu'il y en a d'autres).
+   Au bureau, les cinq côte à côte. Même carte, même image, même geste. */
+.espace-clair .ec-clubs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15.5rem, 74%);
+  gap: 0.85rem;
+  margin: 0 calc(var(--space) * -1);
+  padding: 0.4rem var(--space) 1.4rem;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--space);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ec-filet-fort) transparent;
+}
+
+@media (min-width: 640px) {
+  .espace-clair .ec-clubs {
+    grid-auto-columns: minmax(15.5rem, 42%);
+  }
+}
+
+@media (min-width: 1000px) {
+  .espace-clair .ec-clubs {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin: 0;
+    padding: 0.4rem 0 0.6rem;
+    overflow: visible;
+  }
+}
+
+.espace-clair .ec-club {
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+.espace-clair .ec-club__lien {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+  transition:
+    transform 0.4s var(--ec-courbe),
+    box-shadow 0.4s var(--ec-courbe),
+    border-color 0.4s ease;
+}
+
+.espace-clair .ec-club__lien:hover {
+  transform: translateY(-4px);
+  border-color: var(--ec-filet-fort);
+  box-shadow: var(--ec-ombre-haute);
+}
+
+.espace-clair .ec-club__image {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--ec-encre);
+}
+
+.espace-clair .ec-club__image img {
+  object-fit: cover;
+  filter: saturate(0.82) contrast(1.02);
+  transition: transform 0.9s var(--ec-courbe), filter 0.9s ease;
+}
+
+/* Le bas de la photo s'assombrit vers l'encre : la carte commence dans l'image. */
+.espace-clair .ec-club__image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 22, 46, 0) 45%, rgba(20, 22, 46, 0.55) 100%);
+}
+
+.espace-clair .ec-club__lien:hover .ec-club__image img {
+  transform: scale(1.06);
+  filter: saturate(1) contrast(1.04);
+}
+
+.espace-clair .ec-club__texte {
+  display: grid;
+  gap: 0.2rem;
+  flex: 1;
+  align-content: start;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.espace-clair .ec-club__marque {
+  position: absolute;
+  z-index: 1;
+  top: 0.6rem;
+  left: 0.6rem;
+  padding: 0.22rem 0.55rem;
+  box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.6);
+  border-radius: 999px;
+  background: var(--ec-encre);
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.espace-clair .ec-club__nom {
+  font-family: var(--pile-titre);
+  font-size: 1.65rem;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.espace-clair .ec-club__ville {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-club__equipement {
+  display: -webkit-box;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-club__equipement::first-letter {
+  text-transform: uppercase;
+}
+
+.espace-clair .ec-club__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: auto;
+  padding-top: 0.7rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--ink);
+  transition: color 0.25s ease;
+}
+
+.espace-clair .ec-club__lien:hover .ec-club__cta {
+  color: var(--accent);
+}
+
+/* ── LES RÉSERVATIONS ───────────────────────────────────────────────── */
+.espace-clair .ec-resas {
+  display: grid;
+  gap: 2.25rem;
+}
+
+@media (min-width: 1000px) {
+  .espace-clair .ec-resas {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    gap: 2.75rem;
+    align-items: start;
+  }
+}
+
+.espace-clair .ec-resas__titre {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1.1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--ec-filet);
+  font-family: var(--pile-texte);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-nombre {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.55rem;
+  height: 1.35rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--ec-encre);
+  color: #ffffff;
+  font-family: var(--ec-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0;
+}
+
+/* La ligne de temps : un rail gradué, un cran par jour. */
+.espace-clair .ec-jours {
+  display: grid;
+  gap: 1.6rem;
+}
+
+.espace-clair .ec-jour {
+  position: relative;
+  display: grid;
+  gap: 0.7rem;
+  padding-left: 1.35rem;
+}
+
+.espace-clair .ec-jour::before {
+  content: '';
+  position: absolute;
+  top: 0.75rem;
+  bottom: -1.6rem;
+  left: 0.3rem;
+  width: 1px;
+  background: repeating-linear-gradient(180deg, var(--ec-filet-fort) 0 3px, transparent 3px 7px);
+}
+
+.espace-clair .ec-jour:last-child::before {
+  bottom: 0;
+}
+
+.espace-clair .ec-jour__nom {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--ink);
+}
+
+.espace-clair .ec-jour__nom::before {
+  content: '';
+  position: absolute;
+  top: 0.42em;
+  left: calc(-1.35rem + 0.3rem - 4px);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ec-encre);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+
+.espace-clair .ec-jour__nom span {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+/* La carte d'une réservation à venir. */
+.espace-clair .ec-resa {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem 1rem;
+  padding: 1rem;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+  transition:
+    transform 0.35s var(--ec-courbe),
+    box-shadow 0.35s var(--ec-courbe),
+    border-color 0.35s ease;
+}
+
+.espace-clair .ec-resa:hover {
+  transform: translateY(-2px);
+  border-color: var(--ec-filet-fort);
+  box-shadow: var(--ec-ombre-haute);
+}
+
+/* Une réservation qui attend une décision porte un filet cuivré — un trait, pas un aplat. */
+.espace-clair .ec-resa[data-ton='decision'] {
+  box-shadow: inset 3px 0 0 var(--ec-cuivre), var(--ec-ombre);
+}
+
+.espace-clair .ec-resa[data-ton='decision']:hover {
+  box-shadow: inset 3px 0 0 var(--ec-cuivre), var(--ec-ombre-haute);
+}
+
+/* Le guichet de date : le quantième d'une montre. */
+.espace-clair .ec-resa__guichet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  width: 3.6rem;
+  padding: 0.55rem 0 0.5rem;
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0)),
+    var(--ec-encre);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  text-transform: uppercase;
+}
+
+.espace-clair .ec-resa__guichet span {
+  font-family: var(--ec-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--ec-brume);
+}
+
+.espace-clair .ec-resa__guichet b {
+  font-family: var(--pile-titre);
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 0.9;
+}
+
+.espace-clair .ec-resa__corps {
+  display: grid;
+  gap: 0.45rem;
+  align-content: center;
+  min-width: 0;
+}
+
+.espace-clair .ec-resa__club {
+  margin: 0;
+  font-family: var(--pile-titre);
+  font-size: 1.55rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.espace-clair .ec-resa__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.85rem;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-resa__meta .ec-mono:first-child {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.espace-clair .ec-resa .ec-parcours {
+  margin-top: 0.35rem;
+}
+
+.espace-clair .ec-resa__droite {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--ec-filet);
+}
+
+@media (min-width: 600px) {
+  .espace-clair .ec-resa {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 1.1rem 1.15rem;
+  }
+
+  .espace-clair .ec-resa__droite {
+    grid-column: auto;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+
+.espace-clair .ec-resa__garde {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-resa__garde .ec-decompte {
+  font-family: var(--ec-mono);
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.espace-clair .ec-resa__action {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 0.95rem;
+  border: 1px solid var(--ec-encre);
+  border-radius: 3px;
+  background: var(--ec-encre);
+  color: #ffffff;
+  font-family: var(--pile-titre);
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.espace-clair .ec-resa__action:hover {
+  background: var(--ec-encre-haute);
+}
+
+.espace-clair .ec-resa__action:active {
+  transform: scale(0.97);
+}
+
+.espace-clair .ec-resa__action[data-ton='neutre'] {
+  background: var(--ec-carte);
+  color: var(--ink);
+  border-color: var(--ec-filet-fort);
+}
+
+.espace-clair .ec-resa__action[data-ton='neutre']:hover {
+  border-color: var(--ink);
+}
+
+/* L'historique : une liste serrée, pas des cartes — on ne la lit qu'en cherchant. */
+.espace-clair .ec-passees {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.espace-clair .ec-passee {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    'date corps corps'
+    'date pastille action';
+  align-items: center;
+  gap: 0.3rem 0.85rem;
+  padding: 0.8rem 0.4rem;
+  border-bottom: 1px solid var(--ec-filet);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.espace-clair .ec-passee:hover {
+  background: rgba(20, 22, 46, 0.03);
+}
+
+.espace-clair .ec-passee__date {
+  grid-area: date;
+  align-self: start;
+  padding-top: 0.15rem;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-passee__corps {
+  grid-area: corps;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.espace-clair .ec-passee__club {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.espace-clair .ec-passee__meta {
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-passee .ec-pastille {
+  grid-area: pastille;
+  justify-self: start;
+}
+
+.espace-clair .ec-passee__action {
+  grid-area: action;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 44px;
+  padding: 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--ec-filet-fort);
+  text-underline-offset: 0.25em;
+}
+
+.espace-clair .ec-passee__action:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+/* Les états vides : ils disent quoi faire, jamais seulement qu'il n'y a rien. */
+.espace-clair .ec-vide {
+  display: grid;
+  gap: 0.9rem;
+  justify-items: start;
+  padding: 1.25rem;
+  border: 1px dashed var(--ec-filet-fort);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.espace-clair .ec-vide p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-vide b {
+  color: var(--ink);
+}
+
+.espace-clair .ec-vide--discret {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+}
+
+/* ── LE RELEVÉ DES PAIEMENTS ────────────────────────────────────────── */
+.espace-clair .ec-total {
+  display: grid;
+  justify-items: end;
+  gap: 0.15rem;
+  margin: 0;
+}
+
+.espace-clair .ec-total span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-total b {
+  font-size: 1.65rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.espace-clair .ec-releve {
+  overflow: hidden;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+}
+
+.espace-clair .ec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.espace-clair .ec-table th {
+  padding: 0.8rem 1.1rem;
+  background: #fafafb;
+  border-bottom: 1px solid var(--ec-filet);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-table td {
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--ec-filet);
+  vertical-align: middle;
+  color: var(--ink);
+}
+
+.espace-clair .ec-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.espace-clair .ec-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.espace-clair .ec-table tbody tr:hover {
+  background: #fafafb;
+}
+
+.espace-clair .ec-table__num {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.espace-clair .ec-table td.ec-table__num {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.espace-clair .ec-table tr[data-avoir] td.ec-table__num {
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-table small {
+  display: block;
+  margin-top: 0.1rem;
+  font-family: var(--pile-texte);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-table__seance b {
+  font-weight: 700;
+}
+
+.espace-clair .ec-table__moyen {
+  white-space: nowrap;
+}
+
+.espace-clair .ec-table__moyen svg {
+  margin-right: 0.45rem;
+  vertical-align: -0.28em;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-table__doc {
+  text-align: right;
+}
+
+.espace-clair .ec-table__doc .ec-lien {
+  font-size: 0.82rem;
+}
+
+.espace-clair .ec-table__attente {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Au téléphone, la ligne devient une fiche : séance et montant en haut, date et moyen dessous. */
+@media (max-width: 719px) {
+  .espace-clair .ec-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .espace-clair .ec-table,
+  .espace-clair .ec-table tbody,
+  .espace-clair .ec-table tr,
+  .espace-clair .ec-table td {
+    display: block;
+  }
+
+  .espace-clair .ec-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'seance montant'
+      'date moyen'
+      'doc doc';
+    gap: 0.3rem 1rem;
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid var(--ec-filet);
+  }
+
+  .espace-clair .ec-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .espace-clair .ec-table td {
+    padding: 0;
+    border: 0;
+  }
+
+  .espace-clair .ec-table__seance { grid-area: seance; }
+  .espace-clair .ec-table td.ec-table__num { grid-area: montant; }
+  .espace-clair .ec-table__date { grid-area: date; font-size: 0.78rem; color: var(--ink-muted) !important; }
+  .espace-clair .ec-table__date small { display: inline; margin-left: 0.35rem; }
+  .espace-clair .ec-table__moyen { grid-area: moyen; justify-self: end; font-size: 0.8rem; color: var(--ink-muted) !important; }
+  .espace-clair .ec-table__doc { grid-area: doc; text-align: left; }
+  .espace-clair .ec-table__doc:empty,
+  .espace-clair .ec-table__doc:has(.ec-table__attente:empty) { display: none; }
+}
+
+/* ── LE COMPTE, EN PIED ─────────────────────────────────────────────── */
+.espace-clair .ec-compte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+}
+
+.espace-clair .ec-compte__qui {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+/* Le monogramme : l'encre, avec un filet cuivré comme la lunette d'une montre. */
+.espace-clair .ec-monogramme {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, var(--ec-encre-haute), var(--ec-encre) 70%);
+  color: #ffffff;
+  font-family: var(--pile-titre);
+  font-size: 1.45rem;
+  letter-spacing: 0.04em;
+  box-shadow:
+    inset 0 0 0 3px var(--ec-encre),
+    inset 0 0 0 4px rgba(201, 138, 75, 0.75);
+}
+
+.espace-clair .ec-compte__nom {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.espace-clair .ec-compte__mail {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  overflow-wrap: anywhere;
+}
+
+.espace-clair .ec-compte__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.espace-clair .ec-compte__actions form {
+  margin: 0;
+}
+
+/* ── LE BANDEAU DU MODE STUDIO ──────────────────────────────────────── */
+.espace-clair .ec-studio {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0.6rem var(--gouttiere);
+  background: var(--ec-encre);
+  border-bottom: 1px solid rgba(201, 138, 75, 0.45);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--ec-brume);
+}
+
+.espace-clair .ec-studio b {
+  color: var(--ec-cuivre-clair);
+  letter-spacing: 0.04em;
+}
+
+.espace-clair .ec-studio__point {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ec-cuivre-clair);
+  animation: ec-pouls 2.2s ease-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LA FICHE D'UNE RÉSERVATION
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair .ec-fiche__tete {
+  padding-top: clamp(1rem, 3.5vw, 2.25rem);
+}
+
+/* Le retour : en haut à gauche, là où le pouce et l'œil le cherchent. */
+.espace-clair .ec-fil {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  margin-bottom: 0.6rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  transition: color 0.2s ease;
+}
+
+.espace-clair .ec-fil svg {
+  transition: transform 0.3s var(--ec-ressort);
+}
+
+.espace-clair .ec-fil:hover {
+  color: var(--ink);
+}
+
+.espace-clair .ec-fil:hover svg {
+  transform: translateX(-3px);
+}
+
+.espace-clair .ec-fiche__titre {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 1.75rem);
+}
+
+.espace-clair .ec-fiche__titre > div:last-child {
+  min-width: 0;
+}
+
+.espace-clair .ec-fiche__titre .ec-sur {
+  margin-bottom: 0.35rem;
+}
+
+/* Le même guichet que la carte de la liste, en grand : on reconnaît ce qu'on a touché. */
+.espace-clair .ec-guichet--grand {
+  flex: none;
+  width: clamp(4.4rem, 15vw, 6rem);
+  padding: 0.8rem 0 0.7rem;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 16px 32px -18px rgba(20, 22, 46, 0.7);
+}
+
+.espace-clair .ec-guichet--grand b {
+  font-size: clamp(2.5rem, 8vw, 3.6rem);
+}
+
+.espace-clair .ec-guichet--grand span {
+  font-size: 0.68rem;
+}
+
+.espace-clair .ec-fiche__quand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.9rem;
+  margin: 0.55rem 0 0;
+  font-size: 1rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-fiche__quand .ec-mono {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.espace-clair .ec-fiche__corps {
+  padding-top: clamp(1.25rem, 3.5vw, 2.25rem);
+}
+
+.espace-clair .ec-fiche__grille {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 1000px) {
+  .espace-clair .ec-fiche__grille {
+    grid-template-columns: minmax(0, 1fr) 23rem;
+    gap: 2.25rem;
+  }
+
+  /* Le récapitulatif reste sous les yeux pendant qu'on lit les conditions. */
+  .espace-clair .ec-recap {
+    position: sticky;
+    top: 6rem;
+  }
+}
+
+.espace-clair .ec-fiche__principal {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.espace-clair .ec-actions {
+  display: grid;
+  gap: 1rem;
+}
+
+.espace-clair .ec-erreur {
+  margin: 0;
+}
+
+/* Le parcours en grand : trois puces de 42 px, le nom de l'étape en capitales. */
+.espace-clair .ec-parcours[data-taille='grand'] {
+  --puce: 2.65rem;
+
+  max-width: none;
+  padding: 1.2rem 0 1.05rem;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+}
+
+.espace-clair .ec-parcours[data-taille='grand']::before,
+.espace-clair .ec-parcours[data-taille='grand']::after {
+  top: calc(1.2rem + var(--puce) / 2 - 1px);
+}
+
+.espace-clair .ec-parcours[data-taille='grand'] .ec-parcours__etape {
+  gap: 0.45rem;
+  padding-inline: 0.35rem;
+}
+
+.espace-clair .ec-parcours[data-taille='grand'] .ec-parcours__nom {
+  margin-top: 0.15rem;
+  font-family: var(--pile-titre);
+  font-size: 1.12rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Le panneau du geste. */
+.espace-clair .ec-panneau {
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(1.15rem, 3.5vw, 1.75rem);
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+  animation: ec-entree 0.6s var(--ec-courbe) backwards;
+}
+
+.espace-clair .ec-panneau__titre {
+  margin: 0;
+  font-family: var(--pile-titre);
+  font-size: clamp(1.85rem, 5vw, 2.45rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.espace-clair .ec-panneau p {
+  margin: 0;
+  max-width: 58ch;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-panneau p b {
+  color: var(--ink);
+}
+
+.espace-clair .ec-panneau .ec-panneau__ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.espace-clair .ec-panneau__ok svg {
+  box-sizing: content-box;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--ec-encre);
+  color: #ffffff;
+}
+
+.espace-clair .ec-panneau__geste {
+  justify-self: start;
+  min-height: 3.5rem;
+  padding-inline: 1.6rem;
+  font-size: 1.05rem;
+}
+
+.espace-clair .ec-panneau__geste--qr {
+  min-height: 4rem;
+  padding-inline: 2rem;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 559px) {
+  .espace-clair .ec-panneau__geste {
+    justify-self: stretch;
+  }
+}
+
+.espace-clair .ec-panneau--fin {
+  background:
+    repeating-linear-gradient(135deg, rgba(20, 22, 46, 0.018) 0 8px, transparent 8px 16px),
+    var(--ec-carte);
+}
+
+.espace-clair .ec-panneau__icone {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  color: var(--ink);
+}
+
+.espace-clair .ec-panneau__boutons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.25rem;
+  margin-top: 0.25rem;
+}
+
+/* La place gardée : le cadran du délai, et ce qu'il veut dire. */
+.espace-clair .ec-garde {
+  display: flex;
+  align-items: center;
+  gap: 1.35rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid var(--ec-filet);
+}
+
+.espace-clair .ec-garde__texte {
+  display: grid;
+  gap: 0.55rem;
+}
+
+/* AU TÉLÉPHONE, LE BOUTON « PAYER » DOIT ÊTRE DANS LE PREMIER ÉCRAN.
+   Le cadran empilé au-dessus du texte le repoussait sous le pli : il fallait
+   défiler pour payer une place qui expire. Le cadran passe donc à côté du
+   texte, plus petit, et le parcours se resserre. */
+@media (max-width: 559px) {
+  .espace-clair .ec-garde {
+    gap: 0.9rem;
+    padding-bottom: 0.95rem;
+  }
+
+  .espace-clair .ec-garde .ec-cadran {
+    --taille: 7.25rem;
+  }
+
+  .espace-clair .ec-garde .ec-cadran__sur {
+    display: none;
+  }
+
+  .espace-clair .ec-garde .ec-cadran__centre {
+    inset: 15%;
+  }
+
+  .espace-clair .ec-garde .ec-cadran__groupe b {
+    font-size: 1.3rem;
+  }
+
+  .espace-clair .ec-garde .ec-cadran__groupe small {
+    margin-top: 0.15rem;
+    font-size: 0.52rem;
+  }
+
+  .espace-clair .ec-garde .ec-panneau__titre {
+    font-size: 1.6rem;
+  }
+
+  .espace-clair .ec-garde__texte p {
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  .espace-clair .ec-parcours[data-taille='grand'] {
+    --puce: 2.2rem;
+
+    padding: 0.85rem 0 0.75rem;
+  }
+
+  .espace-clair .ec-parcours[data-taille='grand']::before,
+  .espace-clair .ec-parcours[data-taille='grand']::after {
+    top: calc(0.85rem + var(--puce) / 2 - 1px);
+  }
+
+  .espace-clair .ec-parcours[data-taille='grand'] .ec-parcours__nom {
+    font-size: 1rem;
+  }
+
+  .espace-clair .ec-parcours[data-taille='grand'] .ec-parcours__detail {
+    font-size: 0.72rem;
+  }
+
+  .espace-clair .ec-parcours[data-taille='grand'] .ec-parcours__puce svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .espace-clair .ec-fil {
+    margin-bottom: 0.25rem;
+  }
+
+  .espace-clair .ec-fiche__corps {
+    padding-top: 1rem;
+  }
+
+  .espace-clair .ec-fiche__quand {
+    margin-top: 0.35rem;
+    font-size: 0.92rem;
+  }
+}
+
+.espace-clair .ec-payer {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.espace-clair .ec-payer__principal {
+  width: 100%;
+  min-height: 3.75rem;
+  font-size: 1.12rem;
+}
+
+.espace-clair .ec-payer__test {
+  margin-left: 0.2rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(20, 22, 46, 0.14);
+  font-family: var(--pile-texte);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.espace-clair .ec-panneau .ec-payer__note,
+.espace-clair .ec-panneau .ec-payer__solde {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  max-width: none;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.espace-clair .ec-payer__note svg {
+  flex: none;
+}
+
+.espace-clair .ec-panneau .ec-payer__ou {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: none;
+  margin: 0.3rem 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.espace-clair .ec-payer__ou::before,
+.espace-clair .ec-payer__ou::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--ec-filet);
+}
+
+.espace-clair .ec-payer__autres {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.6rem;
+}
+
+.espace-clair .ec-payer__autres .btn {
+  width: 100%;
+  min-height: 3.25rem;
+}
+
+/* Quitter : un lien, centré, en bas. Jamais au niveau de « payer ». */
+.espace-clair .ec-quitter {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--ec-filet);
+}
+
+.espace-clair .ec-quitter__lien {
+  min-height: 44px;
+  padding: 0 0.6rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  text-decoration-color: var(--ec-filet-fort);
+  text-underline-offset: 0.25em;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.espace-clair .ec-quitter__lien:hover:not(:disabled) {
+  color: #8a1c1c;
+  text-decoration-color: currentColor;
+}
+
+.espace-clair .ec-confirmer {
+  display: grid;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--ec-filet-fort);
+  border-radius: 4px;
+  background: #fafafb;
+  animation: ec-entree 0.45s var(--ec-courbe) backwards;
+}
+
+.espace-clair .ec-confirmer__boutons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 479px) {
+  .espace-clair .ec-confirmer__boutons .btn {
+    flex: 1 1 100%;
+  }
+}
+
+.espace-clair .ec-annulation {
+  display: grid;
+  justify-items: start;
+  gap: 0.55rem;
+  margin-top: 0.4rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--ec-filet);
+}
+
+.espace-clair .ec-annulation h3 {
+  margin: 0;
+  font-family: var(--pile-texte);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-annulation .ec-quitter__lien {
+  padding-left: 0;
+}
+
+/* Le récapitulatif : un billet. */
+.espace-clair .ec-recap {
+  overflow: hidden;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+}
+
+.espace-clair .ec-recap__image {
+  position: relative;
+  aspect-ratio: 16 / 8;
+  overflow: hidden;
+  background: var(--ec-encre);
+}
+
+.espace-clair .ec-recap__image img {
+  object-fit: cover;
+  filter: saturate(0.85);
+}
+
+.espace-clair .ec-recap__image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 22, 46, 0.05) 30%, rgba(20, 22, 46, 0.82) 100%);
+}
+
+.espace-clair .ec-recap__club {
+  position: absolute;
+  z-index: 1;
+  left: 1.1rem;
+  bottom: 0.8rem;
+  font-family: var(--pile-titre);
+  font-size: 2.1rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.espace-clair .ec-recap__liste {
+  margin: 0;
+  padding: 0.3rem 1.15rem;
+}
+
+.espace-clair .ec-recap__liste > div {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--ec-filet);
+}
+
+.espace-clair .ec-recap__liste > div:last-child {
+  border-bottom: 0;
+}
+
+.espace-clair .ec-recap__liste dt {
+  padding-top: 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-recap__liste dd {
+  display: grid;
+  justify-items: start;
+  gap: 0.1rem;
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.espace-clair .ec-recap__liste dd small {
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-recap__liste .ec-lien {
+  min-height: 40px;
+  font-size: 0.84rem;
+}
+
+.espace-clair .ec-recap__prix {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.espace-clair .ec-recap__liste .ec-recap__paiement {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.espace-clair .ec-recap__paiement svg {
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-recap__pied {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.25rem;
+  padding: 0.35rem 1.15rem;
+  border-top: 1px solid var(--ec-filet);
+  background: #fafafb;
+}
+
+.espace-clair .ec-agenda {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SIGNER — calme, lisible, rien qui presse.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair .ec-signature__sous {
+  margin: 0.8rem 0 0;
+  max-width: 60ch;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-signature__sous b {
+  color: var(--ink);
+}
+
+.espace-clair .ec-signature__grille {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+  margin-top: 1.25rem;
+}
+
+@media (min-width: 1000px) {
+  .espace-clair .ec-signature__grille {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 2rem;
+  }
+}
+
+.espace-clair .ec-signature__etape {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.85rem;
+  font-family: var(--pile-titre);
+  font-size: 1.7rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.espace-clair .ec-signature__etape .ec-mono {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--ec-encre);
+  color: #ffffff;
+  font-size: 0.8rem;
+  letter-spacing: 0;
+}
+
+.espace-clair .ec-signature__aide {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+/* Les documents : numérotés comme des pièces d'un dossier. */
+.espace-clair .ec-docs {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.espace-clair .ec-doc {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem 0.9rem;
+  padding: 0.85rem 0.9rem 0.85rem 1rem;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.espace-clair .ec-doc[data-ouvert] {
+  border-color: rgba(20, 22, 46, 0.32);
+}
+
+.espace-clair .ec-doc:not([data-publie]) {
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.espace-clair .ec-doc__n {
+  align-self: start;
+  width: 1.9rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--ec-filet-fort);
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-doc[data-ouvert] .ec-doc__n {
+  border-top-color: var(--ec-encre);
+  color: var(--ink);
+}
+
+.espace-clair .ec-doc__corps {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.espace-clair .ec-doc__titre {
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.espace-clair .ec-doc__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.7rem;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-doc__ouvert {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  animation: ec-entree 0.45s var(--ec-courbe) backwards;
+}
+
+.espace-clair .ec-doc__liens {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.espace-clair .ec-doc__lire {
+  min-height: 44px;
+  padding-inline: 0.85rem;
+}
+
+.espace-clair .ec-doc__pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 44px;
+  padding: 0 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  text-decoration-color: var(--ec-filet-fort);
+  text-underline-offset: 0.22em;
+}
+
+.espace-clair .ec-doc__pdf:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 559px) {
+  .espace-clair .ec-doc {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .espace-clair .ec-doc__liens {
+    grid-column: 2;
+  }
+}
+
+/* La carte où l'on signe. */
+.espace-clair .ec-signer {
+  display: grid;
+  gap: 0.85rem;
+  padding: clamp(1.1rem, 3.5vw, 1.6rem);
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre-haute);
+}
+
+.espace-clair .ec-signer__tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.espace-clair .ec-signer__tete .ec-signature__etape {
+  margin: 0;
+}
+
+/* La bascule « Dessiner / Écrire mon nom » : deux vrais boutons radio, un curseur qui glisse. */
+.espace-clair .ec-bascule {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-width: 0;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid var(--ec-filet-fort);
+  border-radius: 999px;
+  background: #f3f4f7;
+}
+
+.espace-clair .ec-bascule::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 999px;
+  background: var(--ec-encre);
+  box-shadow: 0 6px 14px -8px rgba(20, 22, 46, 0.8);
+  transition: transform 0.45s var(--ec-ressort);
+}
+
+.espace-clair .ec-bascule[data-mode='saisie']::before {
+  transform: translateX(100%);
+}
+
+.espace-clair .ec-bascule__choix {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.espace-clair .ec-bascule__choix:has(input:checked) {
+  color: #ffffff;
+}
+
+.espace-clair .ec-bascule__choix input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.espace-clair .ec-bascule__choix:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+@media (max-width: 479px) {
+  .espace-clair .ec-bascule {
+    width: 100%;
+  }
+}
+
+.espace-clair .ec-signer__nom {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-signer__nom input {
+  min-height: var(--tap);
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--ec-filet-fort);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 1rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+/* Le cadre : du blanc, une ligne de signature, une croix — le geste du papier. */
+.espace-clair .ec-pad {
+  position: relative;
+  overflow: hidden;
+  border: 1.5px dashed var(--ec-filet-fort);
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(20, 22, 46, 0.07) 1px, transparent 1.5px) 0 0 / 18px 18px,
+    #ffffff;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.espace-clair .ec-pad:not([data-vide]) {
+  border-style: solid;
+  border-color: rgba(20, 22, 46, 0.4);
+  box-shadow: 0 0 0 4px rgba(20, 22, 46, 0.05);
+}
+
+.espace-clair .ec-pad .ec-pad__toile {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.espace-clair .ec-pad__invite {
+  position: absolute;
+  inset: 0 0 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-family: var(--pile-titre);
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  color: rgba(20, 22, 46, 0.32);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.espace-clair .ec-pad:not([data-vide]) .ec-pad__invite {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.espace-clair .ec-pad__ligne {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 72%;
+  height: 1px;
+  background: rgba(20, 22, 46, 0.28);
+  pointer-events: none;
+}
+
+.espace-clair .ec-pad__ligne span {
+  position: absolute;
+  left: 0;
+  bottom: 0.25rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: rgba(20, 22, 46, 0.45);
+}
+
+.espace-clair .ec-pad__effacer {
+  position: absolute;
+  z-index: 2;
+  top: 0.35rem;
+  right: 0.35rem;
+  min-height: 44px;
+  padding: 0 0.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.espace-clair .ec-pad[data-vide] .ec-pad__effacer {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.espace-clair .ec-pad__effacer:hover {
+  color: var(--ink);
+  background: #f3f4f7;
+}
+
+/* Le succès : une coche qui se trace, avant d'ouvrir l'accès. */
+.espace-clair .ec-pad__succes {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.95);
+  animation: ec-fondu 0.35s ease backwards;
+}
+
+.espace-clair .ec-pad__succes circle {
+  fill: none;
+  stroke: var(--ec-encre);
+  stroke-width: 2;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: ec-trace 0.6s var(--ec-courbe) 0.1s forwards;
+}
+
+.espace-clair .ec-pad__succes path {
+  fill: none;
+  stroke: var(--ec-cuivre);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: ec-trace 0.45s var(--ec-courbe) 0.6s forwards;
+}
+
+@keyframes ec-trace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ec-fondu {
+  from {
+    opacity: 0;
+  }
+}
+
+.espace-clair .ec-pad__succes p {
+  display: grid;
+  margin: 0;
+  text-align: center;
+}
+
+.espace-clair .ec-pad__succes b {
+  font-family: var(--pile-titre);
+  font-size: 2.1rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.espace-clair .ec-pad__succes span {
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-signer__aide {
+  margin: -0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+/* La case d'accord : grande, cochée d'encre, le texte se lit comme une phrase. */
+.espace-clair .ec-accord {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+  min-height: var(--tap);
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  background: #fafafb;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.espace-clair .ec-accord:has(input:checked) {
+  border-color: rgba(20, 22, 46, 0.35);
+  background: #ffffff;
+}
+
+.espace-clair .ec-accord input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.espace-clair .ec-accord__case {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.05rem;
+  border: 1.5px solid rgba(20, 22, 46, 0.45);
+  border-radius: 4px;
+  background: #ffffff;
+  color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.espace-clair .ec-accord__case svg {
+  transform: scale(0.4);
+  transition: transform 0.35s var(--ec-ressort);
+}
+
+.espace-clair .ec-accord:has(input:checked) .ec-accord__case {
+  background: var(--ec-encre);
+  border-color: var(--ec-encre);
+  color: #ffffff;
+}
+
+.espace-clair .ec-accord:has(input:checked) .ec-accord__case svg {
+  transform: scale(1);
+}
+
+.espace-clair .ec-accord:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.espace-clair .ec-signer__rappel {
+  margin: 0;
+  padding-left: 0.8rem;
+  border-left: 2px solid var(--ec-filet-fort);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-signer__bouton {
+  width: 100%;
+  min-height: 3.75rem;
+  font-size: 1.1rem;
+}
+
+.espace-clair .ec-signer__manque {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 1.4rem;
+  margin: -0.35rem 0 0;
+  font-size: 0.82rem;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-signer__legal {
+  margin: 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--ec-filet);
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   L'ACCÈS — l'écran qu'on montre à la porte.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair .ec-fiche__quand b {
+  color: var(--ink);
+}
+
+.espace-clair .ec-acces__grille {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .espace-clair .ec-acces__grille {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 2rem;
+  }
+}
+
+.espace-clair .ec-qr {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre-haute);
+  text-align: center;
+}
+
+.espace-clair .ec-qr__titre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-family: var(--pile-titre);
+  font-size: clamp(1.6rem, 5vw, 2.1rem);
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.espace-clair .ec-qr__titre .ec-mono {
+  font-family: var(--ec-mono);
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.espace-clair .ec-qr__texte {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-qr__texte b {
+  color: var(--ink);
+}
+
+/* Avant l'heure : le code fantôme, sous le cadran. */
+.espace-clair .ec-qr__verrou {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, 22rem);
+  aspect-ratio: 1;
+}
+
+.espace-clair .ec-qr__fantome {
+  position: absolute;
+  inset: 12%;
+  opacity: 0.1;
+  filter: blur(2.5px);
+}
+
+.espace-clair .ec-qr__fantome svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--ec-encre);
+}
+
+.espace-clair .ec-qr__cadran {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.espace-clair .ec-qr__cadran .ec-cadran {
+  --taille: min(78vw, 19rem);
+}
+
+/* Pendant : le code, en grand, sur blanc pur. */
+.espace-clair .ec-qr__statut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: var(--ec-encre);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.espace-clair .ec-qr__point {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ec-cuivre-clair);
+  animation: ec-pouls 2.2s ease-out infinite;
+}
+
+.espace-clair .ec-qr__code {
+  position: relative;
+  display: block;
+  width: min(100%, 24rem);
+  padding: 1.1rem;
+  border: 0;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: zoom-in;
+}
+
+.espace-clair .ec-qr__code img {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  /* Le code se « développe » : le remplissage du site, joué une fois. */
+  animation: ec-developpe 0.9s var(--ec-courbe) 0.2s backwards;
+}
+
+@keyframes ec-developpe {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Les quatre coins du viseur : là où l'on vise le lecteur. */
+.espace-clair .ec-qr__viseur,
+.espace-clair .ec-qr__viseur::before,
+.espace-clair .ec-qr__viseur::after {
+  position: absolute;
+  pointer-events: none;
+}
+
+.espace-clair .ec-qr__viseur {
+  inset: 0;
+  background:
+    linear-gradient(var(--ec-encre), var(--ec-encre)) top left / 28px 3px no-repeat,
+    linear-gradient(var(--ec-encre), var(--ec-encre)) top left / 3px 28px no-repeat,
+    linear-gradient(var(--ec-encre), var(--ec-encre)) top right / 28px 3px no-repeat,
+    linear-gradient(var(--ec-encre), var(--ec-encre)) top right / 3px 28px no-repeat,
+    linear-gradient(var(--ec-encre), var(--ec-encre)) bottom left / 28px 3px no-repeat,
+    linear-gradient(var(--ec-encre), var(--ec-encre)) bottom left / 3px 28px no-repeat,
+    linear-gradient(var(--ec-encre), var(--ec-encre)) bottom right / 28px 3px no-repeat,
+    linear-gradient(var(--ec-encre), var(--ec-encre)) bottom right / 3px 28px no-repeat;
+  animation: ec-viseur 0.8s var(--ec-ressort) backwards;
+}
+
+@keyframes ec-viseur {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+.espace-clair .ec-qr__jauge {
+  width: min(100%, 24rem);
+  height: 4px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(20, 22, 46, 0.1);
+}
+
+.espace-clair .ec-qr__jauge span {
+  display: block;
+  height: 100%;
+  background: var(--ec-encre);
+  transform-origin: left;
+  transition: transform 1s linear;
+}
+
+.espace-clair .ec-qr__texte--centre {
+  text-align: center;
+}
+
+.espace-clair .ec-qr__eveil {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-qr__eveil[data-actif] {
+  color: var(--ink);
+}
+
+/* Le plein écran : du blanc, le code, rien d'autre. */
+.espace-clair .ec-qr__plein {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  animation: ec-fondu 0.25s ease backwards;
+}
+
+.espace-clair .ec-qr__plein img {
+  width: min(92vw, 70vh);
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.espace-clair .ec-qr__plein p {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Le code se prépare : un anneau qui tourne — le seul cas où l'attente est réelle. */
+.espace-clair .ec-qr__prepa {
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 3px solid rgba(20, 22, 46, 0.12);
+  border-top-color: var(--ec-encre);
+  border-radius: 50%;
+  animation: ec-tourne 1s linear infinite;
+}
+
+@keyframes ec-tourne {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* La colonne d'à côté : où, et comment. */
+.espace-clair .ec-acces__infos {
+  display: grid;
+  gap: 1rem;
+}
+
+.espace-clair .ec-acces__adresse {
+  display: grid;
+  justify-items: start;
+  gap: 0.4rem;
+  padding: 1.15rem 1.2rem;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+}
+
+.espace-clair .ec-acces__label {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-acces__rue {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.espace-clair .ec-conseils {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0.25rem 1.2rem;
+  list-style: none;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+}
+
+.espace-clair .ec-conseils li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.8rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--ec-filet);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-conseils li:last-child {
+  border-bottom: 0;
+}
+
+.espace-clair .ec-conseils svg {
+  color: var(--ink);
+  margin-top: 0.05rem;
+}
+
+.espace-clair .ec-conseils b {
+  color: var(--ink);
+}
+
+.espace-clair .ec-acces__pied {
+  padding-left: 0.2rem;
+}
+
+@media (max-width: 479px) {
+  .espace-clair .ec-qr {
+    padding: 1rem 0.85rem 1.15rem;
+  }
+
+  .espace-clair .ec-qr__code {
+    padding: 0.7rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LE PROFIL
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair .ec-profil__grille {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 1000px) {
+  .espace-clair .ec-profil__grille {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    gap: 2rem;
+  }
+}
+
+.espace-clair .ec-formulaire {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+}
+
+.espace-clair .ec-groupe {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  margin: 0;
+  padding: 1.3rem clamp(1.1rem, 3vw, 1.6rem) 1.4rem;
+  border: 0;
+  border-bottom: 1px solid var(--ec-filet);
+}
+
+.espace-clair .ec-groupe legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 0.9rem;
+  padding: 0;
+  font-family: var(--pile-titre);
+  font-size: 1.45rem;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.espace-clair .ec-champs {
+  display: grid;
+  gap: 0.9rem;
+  clear: both;
+}
+
+@media (min-width: 640px) {
+  .espace-clair .ec-champs {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.espace-clair .ec-champ {
+  display: grid;
+  gap: 0.35rem;
+  clear: both;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-champ input {
+  min-height: var(--tap);
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--ec-filet-fort);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.espace-clair .ec-champ input:hover {
+  border-color: rgba(20, 22, 46, 0.4);
+}
+
+.espace-clair .ec-champ input:focus {
+  border-color: var(--ec-encre);
+  box-shadow: 0 0 0 4px rgba(20, 22, 46, 0.08);
+}
+
+.espace-clair .ec-champ input::placeholder {
+  color: rgba(86, 90, 115, 0.6);
+}
+
+.espace-clair .ec-champ small {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-formulaire__pied {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding: 1rem clamp(1.1rem, 3vw, 1.6rem);
+  background: #fafafb;
+}
+
+.espace-clair .ec-formulaire__etat {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.espace-clair .ec-formulaire__etat > p {
+  margin: 0;
+}
+
+.espace-clair .ec-formulaire__modifie {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.espace-clair .ec-ok {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  animation: ec-entree 0.45s var(--ec-courbe) backwards;
+}
+
+.espace-clair .ec-ok svg {
+  box-sizing: content-box;
+  flex: none;
+  padding: 2px;
+  border-radius: 50%;
+  background: var(--ec-encre);
+  color: #ffffff;
+}
+
+@media (max-width: 479px) {
+  .espace-clair .ec-formulaire__pied .btn {
+    width: 100%;
+  }
+}
+
+.espace-clair .ec-profil__cote {
+  display: grid;
+  gap: 1rem;
+}
+
+.espace-clair .ec-carte-cote {
+  display: grid;
+  justify-items: start;
+  gap: 0.6rem;
+  padding: 1.15rem 1.2rem;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre);
+}
+
+.espace-clair .ec-carte-cote > div:last-child {
+  width: 100%;
+}
+
+.espace-clair .ec-carte-cote__titre {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-carte-cote__valeur {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.espace-clair .ec-carte-cote__texte {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-carte-cote .ec-lien {
+  display: inline;
+  min-height: 0;
+  font-size: inherit;
+}
+
+.espace-clair .ec-profil__photo {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.espace-clair .ec-monogramme--grand {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.8rem;
+}
+
+.espace-clair .ec-monogramme__ok {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: var(--ec-cuivre-clair);
+  color: var(--ec-encre);
+}
+
+/* Le champ fichier, habillé en bouton : l'input reste dessous, focalisable. */
+.espace-clair .ec-fichier {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.espace-clair .ec-fichier input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.espace-clair .ec-fichier:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.espace-clair .ec-fichier[data-envoi] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LES PAGES SEUIL — compte suspendu, e-mail à confirmer.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair .ec-seuil {
+  display: grid;
+  place-items: center;
+  min-height: 62vh;
+  padding: clamp(2rem, 7vw, 4.5rem) var(--space);
+}
+
+.espace-clair .ec-seuil__carte {
+  display: grid;
+  justify-items: center;
+  gap: 0.85rem;
+  width: min(100%, 34rem);
+  padding: clamp(1.6rem, 5vw, 2.6rem);
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+  box-shadow: var(--ec-ombre-haute);
+  text-align: center;
+  animation: ec-entree 0.8s var(--ec-courbe) backwards;
+}
+
+.espace-clair .ec-seuil__icone {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 0.25rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, var(--ec-encre-haute), var(--ec-encre) 70%);
+  color: #ffffff;
+  box-shadow:
+    inset 0 0 0 3px var(--ec-encre),
+    inset 0 0 0 4px rgba(201, 138, 75, 0.75),
+    0 18px 36px -18px rgba(20, 22, 46, 0.8);
+}
+
+.espace-clair .ec-seuil__carte .ec-sur {
+  margin: 0;
+}
+
+.espace-clair .ec-seuil__carte h1 {
+  margin: 0;
+  font-family: var(--pile-titre);
+  font-size: clamp(2.3rem, 7vw, 3.2rem);
+  font-weight: 400;
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.espace-clair .ec-seuil__carte p {
+  margin: 0;
+  max-width: 44ch;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.espace-clair .ec-seuil__carte strong {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.espace-clair .ec-seuil__aide {
+  font-size: 0.85rem;
+}
+
+.espace-clair .ec-seuil__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 479px) {
+  .espace-clair .ec-seuil__actions .btn {
+    width: 100%;
+  }
+}
+
+.espace-clair .ec-seuil__sortie {
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LES SILHOUETTES D'ATTENTE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.espace-clair .ec-sq {
+  display: grid;
+  gap: 1.2rem;
+  padding-top: clamp(1.75rem, 5vw, 3.25rem);
+}
+
+.espace-clair .ec-sq__tete {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.espace-clair .ec-sq__ligne {
+  display: block;
+  max-width: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(20, 22, 46, 0.06) 0%, rgba(20, 22, 46, 0.11) 50%, rgba(20, 22, 46, 0.06) 100%);
+  background-size: 200% 100%;
+  animation: ec-reflet 1.4s ease-in-out infinite;
+}
+
+@keyframes ec-reflet {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.espace-clair .ec-sq__encre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(1.4rem, 4.5vw, 2.75rem);
+  border-radius: 6px;
+  background: linear-gradient(155deg, var(--ec-encre-bleue) 0%, var(--ec-encre) 60%);
+}
+
+.espace-clair .ec-sq__encre-texte {
+  display: grid;
+  flex: 1;
+  gap: 0.8rem;
+}
+
+.espace-clair .ec-sq__encre .ec-sq__ligne {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.13) 50%, rgba(255, 255, 255, 0.06) 100%);
+  background-size: 200% 100%;
+}
+
+/* Le cadran d'attente : une lunette dont un seul quart s'éclaire, et qui tourne. */
+.espace-clair .ec-sq__cadran {
+  flex: none;
+  width: clamp(120px, 28vw, 260px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--ec-encre) 60%, transparent 61%),
+    conic-gradient(from 0deg, rgba(245, 245, 245, 0.75), rgba(245, 245, 245, 0) 25%, rgba(168, 171, 196, 0.12) 25%);
+  animation: ec-tourne 1.6s linear infinite;
+}
+
+.espace-clair .ec-sq__tuiles {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 720px) {
+  .espace-clair .ec-sq__tuiles {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.espace-clair .ec-sq__tuile {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.2rem;
+  background: var(--ec-carte);
+  border: 1px solid var(--ec-filet);
+  border-radius: 6px;
+}
+
+.espace-clair .ec-sq__titre {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.espace-clair .ec-sq__titre > div {
+  display: grid;
+  flex: 1;
+  gap: 0.6rem;
+}
+
+.espace-clair .ec-sq__guichet {
+  flex: none;
+  width: clamp(4.4rem, 15vw, 6rem);
+  aspect-ratio: 3 / 4;
+  border-radius: 4px;
+  background: var(--ec-encre);
+}
+
+.espace-clair .ec-sq__fiche {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1000px) {
+  .espace-clair .ec-sq__fiche {
+    grid-template-columns: minmax(0, 1fr) 23rem;
+    gap: 2.25rem;
+  }
+}
+
+.espace-clair .ec-sq__col {
+  display: grid;
+  gap: 1rem;
+}
+
+.espace-clair .ec-sq__parcours {
+  display: flex;
+  justify-content: space-around;
+}
+
+.espace-clair .ec-sq__parcours span {
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--ec-filet-fort);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOINS DE MOUVEMENT
+
+   Le visiteur l'a demandé à son système : tout se pose, rien ne disparaît.
+   Les entrées sont jouées en un instant (donc l'état final s'affiche), les
+   pulsations et les rotations s'arrêtent, les décomptes continuent de changer
+   de chiffre — c'est de l'information, pas du mouvement.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .espace-clair *,
+  .espace-clair *::before,
+  .espace-clair *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0s !important;
+  }
+
+  .espace-clair .ec-sq__cadran,
+  .espace-clair .ec-qr__prepa {
+    animation: none !important;
+  }
+}
+
+.espace-clair .ec-carte-cote .ec-quitter__lien {
+  padding-left: 0;
+  text-align: left;
+}
+
+/* Le cadenas suit la phrase quand elle passe à la ligne, au lieu de rester seul à gauche. */
+.espace-clair .ec-panneau .ec-payer__note {
+  display: block;
+}
+
+.espace-clair .ec-payer__note svg {
+  display: inline;
+  margin-right: 0.3rem;
+  vertical-align: -0.15em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LE REMPLISSAGE AU DÉFILEMENT — en CSS pur, lié à la position de scroll.
+
+   Le moteur du site (`Mouvement.tsx`) pose ses classes sur les blocs dès son
+   propre montage. Dans l'espace coach, la page arrive APRÈS, dans la limite
+   d'attente (`loading.tsx`) : le moteur modifiait des blocs que React n'avait
+   pas encore hydratés, et React signalait une divergence serveur / client.
+   Les sections de l'espace sont donc exclues du moteur (`data-sans-scene`) et
+   leurs blocs se remplissent par une animation liée au défilement : aucun
+   script, aucune classe posée à la main, rien à hydrater — et le rejeu en
+   remontant est natif, puisque l'animation EST la position de la page.
+
+   Même geste que le site : le masque s'ouvre de gauche à droite. Là où le
+   navigateur ne connaît pas encore les animations de défilement, les blocs
+   sont simplement là — visibles, jamais retenus.
+   ═══════════════════════════════════════════════════════════════════════ */
+@keyframes ec-defile {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(-3rem -3rem -3rem -3rem);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .espace-clair .ec-defile {
+      animation: ec-defile linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 85%;
+    }
+
+    /* Les cinq clubs d'une même rangée : décalés d'un cran chacun. */
+    .espace-clair .ec-club.ec-defile {
+      animation-range: entry calc(5% + var(--i, 0) * 6%) entry calc(70% + var(--i, 0) * 6%);
+    }
+
+    /* Au téléphone, les clubs vivent dans un rail qui défile EN LARGEUR : leur
+       conteneur de défilement le plus proche n'avance pas verticalement, donc
+       c'est le rail entier qui se remplit, d'un bloc. */
+    @media (max-width: 999px) {
+      .espace-clair .ec-clubs {
+        animation: ec-defile linear both;
+        animation-timeline: view();
+        animation-range: entry 5% entry 80%;
+      }
+    }
+  }
+}
+
+/* L'historique au téléphone : la pastille et le geste ne tiennent pas sur une
+   ligne de 230 px (« Annulée · avoir émis » chevauchait « Utiliser l'avoir »).
+   Le geste passe dessous, aligné sur le texte. */
+.espace-clair .ec-passee .ec-pastille {
+  max-width: 100%;
+  white-space: normal;
+}
+
+@media (max-width: 479px) {
+  .espace-clair .ec-passee {
+    grid-template-columns: 3rem minmax(0, 1fr);
+    grid-template-areas:
+      'date corps'
+      'date pastille'
+      'date action';
+  }
+
+  .espace-clair .ec-passee__action {
+    justify-self: start;
+    margin-left: -0.35rem;
+  }
+}
+
+/* ── Squelettes : un seul signe de chargement, et rien qui déborde ─────────
+   Sur téléphone, la carte d'encre du squelette posait côte à côte des lignes
+   de largeur fixe (jusqu'à 14 rem) et un cadran de 120 px : 420 px dans un
+   écran de 375, toute la page s'élargissait le temps du chargement. Les
+   lignes se plient désormais à leur colonne, et le cadran disparaît sur
+   téléphone.
+   Le cadran ne tourne plus : le logo dans son anneau (ChargeurLogo), posé
+   par-dessus, est LE signe de chargement — deux roues qui tournent
+   ensemble, c'est du bruit. */
+.espace-clair .ec-sq__encre-texte { min-width: 0; }
+.espace-clair .ec-sq__ligne { max-width: 100%; }
+.espace-clair .ec-sq__cadran { animation: none; opacity: 0.55; }
+
+@media (max-width: 40rem) {
+  .espace-clair .ec-sq__cadran { display: none; }
+}

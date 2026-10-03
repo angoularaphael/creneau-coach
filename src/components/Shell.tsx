@@ -55,8 +55,12 @@ export async function SiteHeader() {
           <span className="menu__mot">Menu</span>
         </summary>
         <nav className="nav" aria-label="Principale">
+          {/* `prefetch` : les pages du menu sont rendues à chaque visite, Next
+              ne les préchargerait donc pas. Préchargées en entier dès que le
+              menu est visible, un clic les affiche sans attendre le serveur —
+              et ce va-et-vient garde le serveur éveillé. */}
           {links.map((l) => (
-            <Link key={l.href} href={l.href}>
+            <Link key={l.href} href={l.href} prefetch={true}>
               {l.label}
             </Link>
           ))}
@@ -94,10 +98,13 @@ export function SiteFooter() {
         <Link href="/location-salle-de-sport-a-l-heure-toulouse">Salle de sport à l’heure</Link>
         <Link href="/location-salle-de-boxe-toulouse">Location de salle de boxe</Link>
         <Link href="/location-ring-de-boxe-toulouse">Location de ring de boxe</Link>
+        <Link href="/faq">Questions fréquentes</Link>
+        <Link href="/devenir-coach-partenaire">Devenir coach partenaire</Link>
       </nav>
       <nav aria-label="Légal">
         <Link href="/conditions-generales">Conditions générales</Link>
         <Link href="/reglement-interieur">Règlement intérieur</Link>
+        <Link href="/decharge-de-responsabilite">Décharge de responsabilité</Link>
         <Link href="/mentions-legales">Mentions légales</Link>
         <Link href="/confidentialite">Confidentialité</Link>
         <Link href="/contact">Contact</Link>

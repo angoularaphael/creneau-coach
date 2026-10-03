@@ -53,6 +53,13 @@ function Sommaire({ articles }: { articles: readonly Bloc[] }) {
  * Un sommaire en tête : les conditions générales comptent vingt articles, et
  * un coach cherche « annulation » ou « avoir », pas l'article 10.
  */
+/** Le titre de la section finale, propre à chaque document (un H2 par page). */
+const AVEC: Record<TypeDocument, string> = {
+  cgv: 'Avec les conditions générales',
+  reglement: 'Avec le règlement intérieur',
+  decharge: 'Avec la décharge de responsabilité',
+}
+
 export async function DocumentJuridique({ type, visuel }: { type: TypeDocument; visuel: string }) {
   const doc = await documentEtTexte(type)
   const publie = doc !== null && estPublie(doc)
@@ -154,7 +161,7 @@ export async function DocumentJuridique({ type, visuel }: { type: TypeDocument; 
 
       <section className="section section--encre" data-polarite="encre">
         <div className="enveloppe">
-          <h2>Les autres documents signés à chaque réservation</h2>
+          <h2>{AVEC[type]} : les deux autres documents signés</h2>
           <ul className="regles">
             {autres.map((t) => (
               <li key={t}>

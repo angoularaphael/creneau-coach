@@ -10,13 +10,17 @@ import { breadcrumbJsonLd } from '@/lib/seo'
  * permettent aux nœuds de se référencer entre eux. Un moteur lit alors UNE entité
  * Boxing Center, pas cinq copies qui se contredisent.
  *
- * Ce qu'on ne fera pas, et c'est délibéré (`.research/decisions.md` D5) :
- * aucune adresse, aucun horaire d'ouverture, aucun `LocalBusiness`, aucune note,
- * aucun avis. Aucun de ces faits n'est confirmé pour les cinq clubs. Un
- * `LocalBusiness` avec une adresse inventée est une donnée fausse publiée sous
- * une forme que les moteurs citent mot pour mot — c'est pire que l'absence.
- * `docs/SEO-SOCLE.md` dit exactement où les brancher quand la direction les
- * fournira.
+ * Ce que CE composant pose, sur toutes les pages via le layout : l'entité
+ * Boxing Center (`Organization`) et le site (`WebSite`), rien d'autre. Les
+ * nœuds propres à une page — le lieu d'un club (`SportsActivityLocation`, avec
+ * l'adresse VÉRIFIÉE du registre `src/lib/seo/verite.ts`), le service et ses
+ * prix, la page datée (`WebPage`), la FAQ, le fil d'Ariane — sont posés par la
+ * page elle-même, depuis `@/lib/seo/jsonld`.
+ *
+ * Ce commentaire disait jusqu'au 02/10/2026 « aucune adresse, aucun
+ * LocalBusiness » : c'était vrai avant que le registre ne vérifie les cinq
+ * adresses (27/09/2026). Ce qui reste interdit, faute de fait vérifié :
+ * horaires d'ouverture, coordonnées, notes, avis (voir le bas de `jsonld.ts`).
  */
 export function JsonLd({
   fil,

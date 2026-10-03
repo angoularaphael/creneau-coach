@@ -24,6 +24,7 @@
  * Référence : .research/spec-05-seo.md §11.
  */
 
+import { getRoute } from './routes'
 import { LANGUE_BALISEE, SITE_NAME, SITE_URL, absoluteUrl } from './site'
 import { CLUBS_VERITE, RESEAU, type ClubVerite } from './verite'
 import { REGLAGES_DEFAUT, type ClubId } from '@/domain/contrat'
@@ -34,6 +35,13 @@ type Contexte = typeof CONTEXTE
 /** Identifiants stables, pour que les nœuds se référencent entre eux. */
 export const ORG_ID = `${SITE_URL}/#organization`
 export const SITE_ID = `${SITE_URL}/#website`
+/**
+ * Le service a SON identifiant depuis le 02/10/2026. Il était émis sans `@id`
+ * sur six pages : six nœuds anonymes, donc six services distincts aux yeux d'un
+ * moteur. Il est désormais le même partout, au caractère près (une seule
+ * fonction le fabrique), et chaque page qui en parle le désigne par `about`.
+ */
+export const SERVICE_ID = `${SITE_URL}/#service`
 
 type Reference = { '@id': string }
 
@@ -63,14 +71,14 @@ export type OrganisationJsonLd = {
   sameAs: readonly string[]
 
   // ---------------------------------------------------------------------------
-  // À AJOUTER AU TYPE **ET** À LA FONCTION quand la direction fournit les faits,
-  // un champ à la fois, chacun contre une confirmation écrite :
+  // `telephone` et `sameAs` sont posés depuis le 27/09/2026 (registre de
+  // vérité). RESTENT À AJOUTER AU TYPE **ET** À LA FONCTION quand la direction
+  // fournit les faits, un champ à la fois, chacun contre une confirmation :
   //
-  //   sameAs?: string[]      // comptes officiels (Instagram, Facebook…)
-  //   email?: string         // adresse de contact publique
-  //   telephone?: string     // format E.164, « +33… »
-  //   vatID?: string         // « FR… »
-  //   address?: AdressePostale
+  //   sameAs (suite)            // comptes officiels (Instagram, Facebook…)
+  //   vatID?: string            // « FR… » — le régime de TVA est une question ouverte
+  //   address?: AdressePostale  // le siège est connu (EDITEUR.siege), mais le
+  //                             // publier sur l'Organization est une décision
   //
   // Tant qu'un champ n'est pas dans ce type, l'écrire ne compile pas. C'est le
   // but. Voir .research/spec-05-seo.md §15.3.
@@ -129,68 +137,153 @@ export function webSiteJsonLd(): SiteWebJsonLd {
 /**
  * La location de créneaux elle-même.
  *
- * `offers` est volontairement absent du type : les tarifs viennent du serveur et
- * dépendent du créneau (heures creuses / heures pleines, CAHIER-API.md §3.4).
- * Figer un prix dans le balisage publierait une grille que le produit ne
- * respecte pas. À rouvrir seulement si la direction fige une grille publique.
+ * ── DEUX PROPRIÉTÉS HORS DE LEUR TYPE, CORRIGÉES LE 02/10/2026 ───────────
+ *
+ * `unitText` était posé sur `Offer` : schema.org ne le connaît que sur
+ * `UnitPriceSpecification`, `QuantitativeValue` et quelques autres. Le prix
+ * « à l'heure » se dit donc dans un `priceSpecification` (unité UN/CEFACT
+ * `HUR` = heure), pas à côté.
+ *
+ * `availableAtOrFrom` était posé sur `Service` : son domaine est `Offer` et
+ * `Demand`. Les cinq lieux passent donc dans chaque offre — c'est d'ailleurs
+ * plus juste : c'est l'heure à 10 € qui est disponible aux Minimes.
+ *
+ * Un validateur tolérant ne dit rien de ces deux fautes ; un moteur qui lit le
+ * vocabulaire à la lettre ignore la propriété, et le prix à l'heure disparaît
+ * de ce qu'il sait.
  */
+type PrixUnitaireJsonLd = {
+  '@type': 'UnitPriceSpecification'
+  price: string
+  priceCurrency: 'EUR'
+  /** Code UN/CEFACT de l'heure. */
+  unitCode: 'HUR'
+  unitText: string
+  /** Les prix des CG sont « toutes taxes comprises » (art. 7.1). */
+  valueAddedTaxIncluded: true
+}
+
 type OffreJsonLd = {
   '@type': 'Offer'
   name: string
   price: string
   priceCurrency: 'EUR'
-  unitText: string
+  priceSpecification: PrixUnitaireJsonLd
   url: string
+  /** Les lieux où l'offre se consomme — chacun défini une seule fois, sur sa page. */
+  availableAtOrFrom: readonly Reference[]
 }
 
 export type ServiceJsonLd = {
   '@context': Contexte
   '@type': 'Service'
+  '@id': string
   name: string
   serviceType: string
   provider: Reference
   url: string
   areaServed: { '@type': 'AdministrativeArea'; name: string }
+  /** À qui le service s'adresse : des professionnels, pas des adhérents. */
+  audience: { '@type': 'BusinessAudience'; audienceType: string }
   /**
    * Les deux prix publics. L'ancienne version les écartait « tant que la
    * direction n'a pas figé une grille publique ». La grille est publique : le
-   * cahier §8 la fixe et `/tarifs` l'affiche. La taire dans le balisage privait
-   * les moteurs de réponse du fait qu'on leur demande le plus : combien.
+   * cahier §8 la fixe, les CG art. 7.1 l'écrivent et `/tarifs` l'affiche. La
+   * taire dans le balisage privait les moteurs de réponse du fait qu'on leur
+   * demande le plus : combien.
    */
   offers: readonly OffreJsonLd[]
-  /** Les cinq lieux où le service se consomme — chacun défini une seule fois, sur sa page. */
-  availableAtOrFrom: readonly Reference[]
 }
 
 export function serviceJsonLd(): ServiceJsonLd {
   const euros = (cents: number) => (cents / 100).toFixed(2)
+  const lieux = (Object.keys(CLUBS_VERITE) as ClubId[]).map((id) => ({ '@id': lieuId(id) }))
+  const offre = (name: string, cents: number): OffreJsonLd => ({
+    '@type': 'Offer',
+    name,
+    price: euros(cents),
+    priceCurrency: 'EUR',
+    priceSpecification: {
+      '@type': 'UnitPriceSpecification',
+      price: euros(cents),
+      priceCurrency: 'EUR',
+      unitCode: 'HUR',
+      unitText: 'heure',
+      valueAddedTaxIncluded: true,
+    },
+    url: absoluteUrl('/tarifs'),
+    availableAtOrFrom: lieux,
+  })
   return {
     '@context': CONTEXTE,
     '@type': 'Service',
+    '@id': SERVICE_ID,
     name: 'Location de créneaux pour coachs indépendants',
     serviceType: 'Location de salle de sport à l’heure pour coach sportif',
     provider: { '@id': ORG_ID },
     url: absoluteUrl('/'),
     areaServed: { '@type': 'AdministrativeArea', name: 'Toulouse et agglomération' },
+    audience: { '@type': 'BusinessAudience', audienceType: 'Coachs sportifs indépendants' },
     offers: [
-      {
-        '@type': 'Offer',
-        name: 'Créneau d’une heure — heure creuse',
-        price: euros(REGLAGES_DEFAUT.offpeak_cents),
-        priceCurrency: 'EUR',
-        unitText: 'heure',
-        url: absoluteUrl('/tarifs'),
-      },
-      {
-        '@type': 'Offer',
-        name: 'Créneau d’une heure — heure pleine',
-        price: euros(REGLAGES_DEFAUT.peak_cents),
-        priceCurrency: 'EUR',
-        unitText: 'heure',
-        url: absoluteUrl('/tarifs'),
-      },
+      offre('Créneau d’une heure — heure creuse', REGLAGES_DEFAUT.offpeak_cents),
+      offre('Créneau d’une heure — heure pleine', REGLAGES_DEFAUT.peak_cents),
     ],
-    availableAtOrFrom: (Object.keys(CLUBS_VERITE) as ClubId[]).map((id) => ({ '@id': lieuId(id) })),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// WebPage — la page-réponse, datée
+// ---------------------------------------------------------------------------
+
+/**
+ * Le nœud qui porte la FRAÎCHEUR de la page. `dateModified` et `datePublished`
+ * viennent de `routes.data.json`, où ils sont les dates réelles des commits —
+ * la même valeur que le « Mis à jour le » visible et le `lastmod` du sitemap.
+ * Une date de build vendue comme date de mise à jour est, pour la skill
+ * `aeo-geo` §4, pire qu'une date absente : les champs ne sortent donc que
+ * s'ils sont posés à la main.
+ *
+ * `breadcrumb` désigne le fil d'Ariane de la page par son `@id` ; le composant
+ * `FilAriane` le rend à l'écran et en JSON-LD depuis la même liste.
+ */
+export type PageWebJsonLd = {
+  '@context': Contexte
+  '@type': 'WebPage'
+  '@id': string
+  url: string
+  name: string
+  description: string
+  inLanguage: string
+  isPartOf: Reference
+  breadcrumb?: Reference
+  about?: Reference
+  datePublished?: string
+  dateModified?: string
+}
+
+/**
+ * `sansFil` : l'accueil n'a pas de fil d'Ariane (il en est la racine) ; y
+ * désigner `#fil-ariane` pointerait vers un nœud qui n'existe pas.
+ */
+export function pageWebJsonLd(
+  chemin: string,
+  opts: { surLeService?: boolean; sansFil?: boolean } = {},
+): PageWebJsonLd {
+  const route = getRoute(chemin)
+  const url = absoluteUrl(route.path)
+  return {
+    '@context': CONTEXTE,
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    url,
+    name: route.titreAbsolu ?? route.title,
+    description: route.description,
+    inLanguage: LANGUE_BALISEE,
+    isPartOf: { '@id': SITE_ID },
+    ...(opts.sansFil ? {} : { breadcrumb: { '@id': `${url}#fil-ariane` } }),
+    ...(opts.surLeService ? { about: { '@id': SERVICE_ID } } : {}),
+    ...(route.datePublished ? { datePublished: route.datePublished } : {}),
+    ...(route.lastModified ? { dateModified: route.lastModified } : {}),
   }
 }
 
@@ -290,6 +383,39 @@ export function faqJsonLd(items: readonly QuestionReponse[]): FaqJsonLd {
 }
 
 // ---------------------------------------------------------------------------
+// HowTo — le déroulé d'une réservation, miroir des étapes VISIBLES
+// ---------------------------------------------------------------------------
+
+export type EtapeVisible = { readonly titre: string; readonly texte: string }
+
+export type DerouleJsonLd = {
+  '@context': Contexte
+  '@type': 'HowTo'
+  name: string
+  inLanguage: string
+  step: Array<{ '@type': 'HowToStep'; position: number; name: string; text: string }>
+}
+
+/**
+ * Google a retiré le résultat enrichi « HowTo » en 2023 ; le TYPE, lui, reste
+ * du schema.org valide, et il décrit exactement ce que la page montre : quatre
+ * étapes numérotées. Les moteurs de réponse qui lisent le balisage (Bing,
+ * Perplexity) y trouvent la séquence sans avoir à la reconstituer depuis la
+ * mise en page. Comme la FAQ, il ne se construit QUE depuis la liste affichée :
+ * la page passe la même constante à l'écran et à cette fonction.
+ */
+export function derouleJsonLd(nom: string, etapes: readonly EtapeVisible[]): DerouleJsonLd {
+  if (etapes.length === 0) throw new Error('[seo/jsonld] Déroulé vide : rien à baliser.')
+  return {
+    '@context': CONTEXTE,
+    '@type': 'HowTo',
+    name: nom,
+    inLanguage: LANGUE_BALISEE,
+    step: etapes.map((e, i) => ({ '@type': 'HowToStep', position: i + 1, name: e.titre, text: e.texte })),
+  }
+}
+
+// ---------------------------------------------------------------------------
 // BreadcrumbList
 // ---------------------------------------------------------------------------
 
@@ -298,6 +424,8 @@ export type ElementFilAriane = { name: string; path: string }
 export type FilArianeJsonLd = {
   '@context': Contexte
   '@type': 'BreadcrumbList'
+  /** `<url de la page>#fil-ariane` — la page est le dernier maillon. */
+  '@id': string
   itemListElement: Array<{
     '@type': 'ListItem'
     position: number
@@ -319,9 +447,11 @@ export function breadcrumbJsonLd(
   if (items.length === 0) {
     throw new Error('[seo/jsonld] Un fil d’Ariane vide ne doit pas être balisé.')
   }
+  const page = items[items.length - 1] as ElementFilAriane
   return {
     '@context': CONTEXTE,
     '@type': 'BreadcrumbList',
+    '@id': `${absoluteUrl(page.path)}#fil-ariane`,
     itemListElement: items.map((item, index) => ({
       '@type': 'ListItem',
       position: index + 1,
@@ -332,37 +462,26 @@ export function breadcrumbJsonLd(
 }
 
 // ---------------------------------------------------------------------------
-// Ce qu'on n'écrit PAS, et où le brancher le jour venu
+// Ce qu'on n'écrit PAS, et pourquoi
 // ---------------------------------------------------------------------------
 
 /*
- * LocalBusiness / SportsActivityLocation — le balisage le plus rentable pour
- * cinq salles physiques dans une agglomération. Il ne vaut que par `address`,
- * `geo`, `telephone` et `openingHoursSpecification` : aucun de ces quatre faits
- * n'est confirmé (D5, MASTER-PROJECT-SPEC.md §18). Écrit aujourd'hui, il serait
- * faux ; écrit à moitié, il ne produirait aucun résultat enrichi.
+ * Ce bloc annonçait jusqu'au 02/10/2026 que `SportsActivityLocation` et
+ * `FAQPage` restaient « à écrire ». Les deux sont en service (`lieuJsonLd`,
+ * `faqJsonLd`) ; un commentaire qui décrit un état périmé envoie le lecteur
+ * suivant réparer ce qui marche.
  *
- * À AJOUTER ICI le jour où les faits arrivent, un club à la fois :
+ * Ce qui reste VOLONTAIREMENT absent des lieux, faute de fait vérifié :
  *
- *   export type ClubJsonLd = {
- *     '@context': Contexte
- *     '@type': 'SportsActivityLocation'
- *     '@id': string                      // `${absoluteUrl(cheminClub(slug))}#club`
- *     name: string                       // « Boxing Center Minimes »
- *     parentOrganization: Reference      // { '@id': ORG_ID }
- *     url: string
- *     image: string                      // photo dont les droits sont confirmés
- *     address: AdressePostale            // <- fait confirmé requis
- *     geo: Coordonnees                   // <- fait confirmé requis
- *     telephone: string                  // <- fait confirmé requis
- *     openingHoursSpecification: […]     // <- fait confirmé requis
- *   }
- *
- * FAQPage — autorisé « uniquement pour une FAQ visible » et approuvée
- * (SEO-INFORMATION-ARCHITECTURE.md §5 et §6). Les questions ne sont pas écrites.
- * Le code est trivial ; ce n'est pas lui qui manque.
+ *   geo                        // coordonnées : non relevées sur une source
+ *   openingHoursSpecification  // horaires d'ouverture des clubs : non vérifiés.
+ *                              // Les heures de RÉSERVATION (lun-sam, 10 h-19 h)
+ *                              // ne sont pas les heures d'ouverture du club :
+ *                              // les écrire ici ferait dire « fermé à 19 h »
+ *                              // à un moteur, ce qui est faux.
+ *   image                      // photo dont les droits sont confirmés
  *
  * `aggregateRating`, `review`, `ratingValue`, `reviewCount` — JAMAIS, même sur
  * demande. Ce sont des chiffres fabriqués, pas mesurés, et c'est la catégorie de
- * balisage que Google sanctionne.
+ * balisage que Google sanctionne. `scripts/check-seo.mjs` refuse ces clés.
  */

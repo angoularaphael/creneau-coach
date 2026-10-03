@@ -1,86 +1,145 @@
-import { metadataDeRoute } from '@/lib/seo';
-import type { Metadata } from 'next';
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from 'next/image'
+import Link from 'next/link'
 
-export const metadata = metadataDeRoute('/comment-ca-marche');
+import { Faq } from '@/components/aeo/Faq'
+import { FilAriane } from '@/components/aeo/FilAriane'
+import { Fondement } from '@/components/aeo/Fondement'
+import { MisAJour } from '@/components/aeo/MisAJour'
+import { Sources } from '@/components/aeo/Sources'
+import { metadataDeRoute } from '@/lib/seo'
+import { JsonLd } from '@/lib/seo/json-ld'
+import {
+  derouleJsonLd,
+  pageWebJsonLd,
+  serviceJsonLd,
+  type EtapeVisible,
+  type QuestionReponse,
+} from '@/lib/seo/jsonld'
+import { REGISTRE_VERIFIE_LE, REGLES, RESEAU, type Source } from '@/lib/seo/verite'
+import { DERNIERE_HEURE_DEBUT, PREMIERE_HEURE, REGLAGES_DEFAUT, prixCourt } from '@/domain/contrat'
+import '@/styles/contenu.css'
+
+const CHEMIN = '/comment-ca-marche'
+export const metadata = metadataDeRoute(CHEMIN)
 
 /**
- * Comment ça marche.
+ * COMMENT ÇA MARCHE — le déroulé d'une réservation, de la grille à la porte.
  *
- * La page tenait en trois encadrés minuscules disant « Hold 10 minutes » et
- * « Paiement 1× ». Deux problèmes : c'était du vocabulaire d'ingénieur, et
- * c'était vide — un visiteur qui hésite n'y trouvait aucune raison de continuer.
+ * ── TROIS PHRASES FAUSSES, RETIRÉES LE 02/10/2026 ──────────────────────
  *
- * Elle répond maintenant, dans l'ordre, aux vraies questions : combien ça coûte,
- * qui peut réserver, ce qui se passe si j'annule, comment j'entre dans le club.
- * Et chaque réponse ouvre sur la page qui la détaille.
+ * 1. « Vous signez une fois pour toutes. » Le contrat dit l'inverse : les
+ *    documents en vigueur se signent après CHAQUE paiement (CG art. 9.1) et la
+ *    réservation reste « à signer » tant que ce n'est pas fait
+ *    (`src/lib/dal/paiements.ts`). Un coach qui l'aurait cru se serait
+ *    retrouvé devant la porte sans QR.
+ * 2. « Rien à installer et rien à ranger. » Le règlement demande de remettre
+ *    l'équipement du club en place (RI art. 4.4). On vend ce qui est vrai :
+ *    rien à installer.
+ * 3. « Il reste des heures cette semaine. » Personne ne le vérifiait : une
+ *    semaine pleine aurait affiché une promesse fausse au-dessus du bouton.
+ *
+ * ── CE QUI MANQUAIT À LA PAGE ──────────────────────────────────────────
+ *
+ * Un H1 qui porte la question (« De la recherche d'une salle à la porte du
+ * club » ne contenait ni « réserver » ni « Toulouse »), un chapeau de deux
+ * phrases, une FAQ BALISÉE (elle était visible en `<dl>`, sans `FAQPage` :
+ * la forme la plus citée, perdue), un fil d'Ariane, une date, des sources.
+ *
+ * Le geste « rebond » (`data-geste`) est celui qu'Eddy a demandé pour cette
+ * page : le texte rebondit deux fois puis se pose. Conservé tel quel.
  */
 
-const ETAPES = [
+const creuse = prixCourt(REGLAGES_DEFAUT.offpeak_cents)
+const pleine = prixCourt(REGLAGES_DEFAUT.peak_cents)
+
+/** Les étapes : la même liste nourrit l'écran ET le nœud `HowTo`. */
+const ETAPES: readonly (EtapeVisible & { n: string; aside: string })[] = [
   {
     n: '01',
-    titre: 'Vous choisissez votre heure',
-    texte:
-      'Sur la page d’un club, vous voyez ce qui est libre, jour par jour et espace par espace. Un créneau dure une heure. Le prix s’affiche avant que vous ne cliquiez : 10 € en heure creuse, 15 € en heure pleine.',
-    aside: 'Du lundi au samedi, de 10 h à 19 h.',
+    titre: 'Choisir une heure libre sur le planning du club',
+    texte: `Sur la page d’un club, le planning montre ce qui est libre, jour par jour et espace par espace, avec le nombre de places restantes. Un créneau dure une heure et son prix s’affiche avant tout clic : ${creuse} en heure creuse, ${pleine} en heure pleine. Les heures marquées « Cours du club » suivent le planning de la salle et ne se réservent pas.`,
+    aside: `Du lundi au samedi, de ${PREMIERE_HEURE} h à ${DERNIERE_HEURE_DEBUT + 1} h.`,
   },
   {
     n: '02',
-    titre: 'Vous payez en une fois',
-    texte:
-      'La place vous est gardée dix minutes, le temps de régler par carte. Il n’y a pas de paiement en plusieurs fois, pas d’abonnement et pas de caution : vous payez cette heure-là, et rien d’autre.',
-    aside: 'Carte bancaire ou avoir existant.',
+    titre: 'Payer l’heure en ligne, en une fois',
+    texte: `${REGLES.option.texte.replace(/^Pendant le paiement, l/, 'L')} Vous réglez par carte bancaire, ou avec un avoir s’il couvre tout le prix. La réservation est faite dès que le paiement est accepté.`,
+    aside: 'Carte bancaire ou avoir.',
   },
   {
     n: '03',
-    titre: 'Vous signez une fois pour toutes',
+    titre: 'Signer les trois documents à l’écran',
     texte:
-      'Avant votre première séance, vous signez en ligne les conditions, le règlement du club et la décharge. C’est fait en deux minutes, depuis votre téléphone, et vous les retrouvez ensuite dans votre espace.',
-    aside: 'Signature directement à l’écran.',
+      'Juste après le paiement, vous lisez puis signez les conditions générales, le règlement intérieur et la décharge de responsabilité : une case à cocher, puis votre signature tracée à l’écran ou votre nom saisi. L’attestation de signature reste téléchargeable dans votre espace.',
+    aside: 'À chaque réservation, depuis votre téléphone.',
   },
   {
     n: '04',
-    titre: 'Vous entrez avec votre QR',
-    texte:
-      'Votre code d’accès apparaît dans votre espace. Il s’active cinq minutes avant votre créneau et s’éteint à la fin. Il n’ouvre que le club que vous avez réservé — pas les autres.',
+    titre: 'Entrer au club avec votre QR code',
+    texte: `Dès la signature, votre QR code apparaît dans votre espace coach. Il est à votre nom, s’active ${REGLAGES_DEFAUT.qr_early_minutes} minutes avant le créneau, s’éteint à la fin, et n’ouvre que le club réservé. Vous entrez avec votre client.`,
     aside: 'Rien à imprimer, rien à retirer à l’accueil.',
   },
-] as const;
+]
 
-const QUESTIONS = [
+const QUESTIONS: readonly QuestionReponse[] = [
   {
-    q: 'Faut-il être coach diplômé ?',
-    r: 'Oui. Ces créneaux sont réservés aux professionnels qui encadrent leur propre clientèle. Vos justificatifs sont demandés une seule fois, à l’inscription.',
+    question: 'Faut-il un compte pour voir les heures libres ?',
+    reponse:
+      'Non : le planning des cinq clubs est ouvert à tous, sans inscription. Le compte coach, gratuit, ne sert qu’au moment de réserver et de payer.',
   },
   {
-    q: 'Puis-je venir avec plusieurs clients ?',
-    r: 'Non : une réservation, c’est un cours privé — vous et un client. Pour un deuxième client, réservez une autre heure. Votre client n’a pas besoin d’être adhérent du club, et vous en restez responsable pendant toute la séance.',
+    question: 'Mon client doit-il s’inscrire ou être adhérent ?',
+    reponse:
+      'Non. Seul le coach a un compte et un QR code ; votre client entre avec vous, pour une séance privée, sans abonnement au club. Il doit être majeur, sauf accord écrit préalable de Boxing Center pour un mineur.',
   },
   {
-    q: 'Et si j’annule ?',
-    r: 'Jusqu’à 24 heures avant, vous recevez un avoir réutilisable sur n’importe quel autre créneau. En dessous de 24 heures, le créneau reste dû — la place n’est plus relouable à temps.',
+    question: 'Puis-je venir avec plusieurs clients ?',
+    reponse:
+      'Une réservation couvre un seul client, en cours privé. Pour un deuxième client, réservez une autre heure ou un autre espace.',
   },
   {
-    q: 'Serai-je seul dans la salle ?',
-    r: 'Pas forcément. Deux coachs au maximum partagent le même espace à la même heure, jamais plus. Vous voyez combien de places restent avant de réserver.',
+    question: 'Mon QR code ouvre-t-il les autres clubs ?',
+    reponse:
+      'Non : il n’ouvre que le club de la réservation, et seulement pendant le créneau. Pour coacher dans un autre club, vous réservez une heure dans ce club, et un nouveau QR code vous est délivré.',
   },
   {
-    q: 'Puis-je réserver plusieurs créneaux d’avance ?',
-    r: 'Oui, jusqu’à trois réservations en cours en même temps. Dès qu’une séance est passée, une place se libère.',
+    question: 'Que se passe-t-il si je n’ai pas signé avant le créneau ?',
+    reponse: `${REGLES.sansSignature.texte} La signature se fait juste après le paiement, en une seule fois pour les trois documents.`,
   },
-] as const;
+]
+
+const SOURCES: readonly Source[] = [
+  REGLES.grille.source,
+  REGLES.option.source,
+  REGLES.paiement.source,
+  REGLES.qr.source,
+  REGLES.signature.source,
+  REGLES.annulation.source,
+  REGLES.inscription.source,
+  REGLES.equipement.source,
+  REGLES.partage.source,
+  RESEAU.siteOfficiel,
+]
 
 export default function HowItWorksPage() {
   return (
     <div data-geste="rebond">
       <header className="page-hero page-hero--visuel" data-visuel="comment-ca-marche">
-        <p className="sur mono">En quatre étapes</p>
-        <h1>De la recherche d’une salle à la porte du club</h1>
-        <p className="page-hero__sous">
-          Vous réservez une heure, vous payez, vous signez une fois, vous entrez.
-          Voilà ce qui se passe entre les deux.
+        <FilAriane
+          items={[
+            { name: 'Accueil', path: '/' },
+            { name: 'Comment ça marche', path: CHEMIN },
+          ]}
+        />
+        <h1>Comment réserver une salle à l’heure pour coacher à Toulouse</h1>
+        <p className="reponse">
+          Vous choisissez une heure libre sur le planning d’un des cinq clubs Boxing Center,
+          vous la payez en ligne — {creuse} en heure creuse, {pleine} en heure pleine —, puis
+          vous signez à l’écran les trois documents du club. Votre QR code d’accès apparaît
+          aussitôt dans votre espace coach et ouvre le club{' '}
+          {REGLAGES_DEFAUT.qr_early_minutes} minutes avant votre heure.
         </p>
+        <MisAJour chemin={CHEMIN} />
       </header>
 
       <section className="section">
@@ -104,11 +163,13 @@ export default function HowItWorksPage() {
         <div className="enveloppe bande">
           <div className="bande__texte">
             <p className="sur mono">Sur place</p>
-            <h2>Vous arrivez, la salle est prête.</h2>
+            <h2>Sur place, la salle est prête : vous n’installez rien</h2>
             <p>
-              Ring monté, sacs accrochés, tapis dégagé. Vous n’avez rien à installer
-              et rien à ranger : vous entrez à l’heure, vous travaillez, vous repartez.
+              Le ring est monté, les sacs sont accrochés, les tapis sont en place. Vous arrivez
+              avec l’équipement individuel — gants, bandes, protège-dents —, vous travaillez
+              votre heure, et vous remettez le matériel du club à sa place en partant.
             </p>
+            <p>{REGLES.partage.texte}</p>
             <Link className="lien-fleche" href="/clubs">
               Voir les clubs et leurs espaces
             </Link>
@@ -127,22 +188,46 @@ export default function HowItWorksPage() {
 
       <section className="section">
         <div className="enveloppe">
-          <p className="sur mono">Les questions qu’on nous pose</p>
-          <h2>Ce que les coachs demandent avant de réserver.</h2>
-          <dl className="faq">
-            {QUESTIONS.map((x) => (
-              <div className="faq__item" key={x.q}>
-                <dt>{x.q}</dt>
-                <dd>{x.r}</dd>
-              </div>
-            ))}
-          </dl>
+          <h2>Avant la première heure : un compte coach gratuit</h2>
+          <p>
+            {REGLES.inscription.texte} Vous y renseignez votre profil professionnel, dont votre
+            diplôme ; le contrat vous demande d’être déclaré, assuré et titulaire d’une carte
+            professionnelle valide.
+          </p>
+          <p>
+            <Link href="/devenir-coach-partenaire">Les conditions pour coacher dans les clubs, en détail</Link>
+          </p>
         </div>
       </section>
 
+      <section className="section section--encre" data-polarite="encre">
+        <div className="enveloppe">
+          <h2>Retard, empêchement, porte fermée : ce qui est prévu</h2>
+          <ul className="regles">
+            <li>
+              <b>Un empêchement ?</b> {REGLES.annulation.texte}
+            </li>
+            <li>
+              <b>Un retard ?</b> {REGLES.retard.texte}
+            </li>
+            <li>
+              <b>La porte ne s’ouvre pas ?</b> {REGLES.accesImpossible.texte} Le réseau répond
+              au {RESEAU.telephone.affiche}.
+            </li>
+          </ul>
+          <Fondement regle={REGLES.accesImpossible} />
+        </div>
+      </section>
+
+      <Faq items={QUESTIONS} titre="Ce que les coachs demandent avant de réserver" />
+
       <section className="section section--final">
         <div className="enveloppe">
-          <h2 className="final__titre">Il reste des heures cette semaine.</h2>
+          <h2 className="final__titre">Choisissez votre club, puis votre heure</h2>
+          <p>
+            Une question précise — accès libre, avoir, client mineur ?{' '}
+            <Link href="/faq">Les réponses, article par article du contrat</Link>.
+          </p>
           <div className="hero-actions">
             <Link className="btn btn-primary" href="/clubs">
               Voir les créneaux libres
@@ -153,6 +238,16 @@ export default function HowItWorksPage() {
           </div>
         </div>
       </section>
+
+      <Sources items={SOURCES} verifieLe={REGISTRE_VERIFIE_LE} titre="Les sources du déroulé d’une réservation" />
+
+      <JsonLd
+        data={[
+          serviceJsonLd(),
+          pageWebJsonLd(CHEMIN, { surLeService: true }),
+          derouleJsonLd('Réserver une salle Boxing Center à l’heure pour coacher', ETAPES),
+        ]}
+      />
     </div>
-  );
+  )
 }

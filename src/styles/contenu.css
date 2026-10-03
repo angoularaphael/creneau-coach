@@ -1,0 +1,140 @@
+/*
+  CONTENU — les formes que les moteurs de réponse savent citer.
+
+  Ce fichier ne porte que ce que les pages-réponses ajoutent au système de
+  `boxing-center.css` (que d'autres éditent en parallèle : on n'y touche pas).
+  Trois formes, choisies parce que ce sont celles que la mesure désigne
+  (HubSpot, State of AEO 2026 ; skill `aeo-geo` §6 bis) :
+
+    · la DÉFINITION — « qu'est-ce qu'une heure creuse ? » : le format le plus
+      cité. Un `<dl>` : le terme et sa définition sont liés dans le HTML, pas
+      seulement à l'œil ;
+    · les CHIFFRES — un fait par case, le nombre d'abord : c'est ce qu'un
+      moteur reprend (+33 % de visibilité pour les chiffres sourcés,
+      Aggarwal et al., KDD 2024) ;
+    · le SOMMAIRE d'une page longue (`/faq`) : des ancres, pas du JavaScript.
+
+  Jetons uniquement (`--ink`, `--ink-muted`, `--line`, `--accent`,
+  `--accent-hot`) : la loi des quatre couleurs (`jetons.css`) s'applique ici
+  comme ailleurs. Le brun ne marque que le chiffre — la chose qu'on décide.
+*/
+
+/* ── Les définitions ────────────────────────────────────────────────── */
+.definitions {
+  margin: 1.5rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 48rem) {
+  .definitions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.definitions > div {
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+}
+
+.definitions dt {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.definitions dd {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+/* ── Les chiffres ───────────────────────────────────────────────────── */
+.chiffres {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+@media (min-width: 48rem) {
+  .chiffres {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.chiffres li {
+  padding: 1rem 1.125rem 1.125rem;
+  background: var(--bg, #080808);
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+}
+
+.chiffres b {
+  font-family: var(--pile-titre);
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  line-height: 1;
+  color: var(--accent-hot);
+  font-variant-numeric: tabular-nums;
+}
+
+.chiffres span {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+/* ── Le sommaire d'une page longue ──────────────────────────────────── */
+.sommaire-themes {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sommaire-themes a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; /* cible tactile : le pouce, pas la souris */
+  padding: 0 0.9rem;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.sommaire-themes a:hover,
+.sommaire-themes a:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-hot);
+}
+
+/* Une ancre ne doit pas glisser sous l'en-tête collant. */
+.section[id] {
+  scroll-margin-top: 5rem;
+}
+
+/* ── Une règle et son article ───────────────────────────────────────── */
+.regle-source {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.regle-source a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.regle-source a:hover {
+  color: var(--accent-hot);
+}

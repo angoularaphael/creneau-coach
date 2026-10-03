@@ -43,25 +43,50 @@ export default function ContactPage() {
         </p>
       </header>
 
+      {/* Le formulaire et, à côté, ce qui évite souvent d'écrire : le
+          téléphone du réseau et les pages qui répondent déjà. Trois bandes
+          à moitié vides deviennent une seule section lisible d'un coup d'œil. */}
       <section className="section">
         <div className="enveloppe">
-          <h2>Écrire à l’équipe</h2>
-          <ContactForm />
-        </div>
-      </section>
+          <div className="acces">
+            <div className="acces__carte">
+              <h2>Écrire à l’équipe</h2>
+              <ContactForm />
+            </div>
 
-      <section className="section section--encre" data-polarite="encre">
-        <div className="enveloppe">
-          <h2>Joindre le réseau Boxing Center</h2>
-          <p>
-            Téléphone :{' '}
-            <a href={`tel:${RESEAU.telephone.e164}`}>{RESEAU.telephone.affiche}</a>
-            <br />
-            Site officiel :{' '}
-            <a href={RESEAU.siteOfficiel.url} rel="noopener">
-              boxingcenter.fr
-            </a>
-          </p>
+            <div className="acces__a-cote">
+              <div className="contact-bloc">
+                <h2>Joindre le réseau Boxing Center</h2>
+                <a className="contact-bloc__tel" href={`tel:${RESEAU.telephone.e164}`}>
+                  {RESEAU.telephone.affiche}
+                </a>
+                <p>
+                  Site officiel :{' '}
+                  <a href={RESEAU.siteOfficiel.url} rel="noopener">
+                    boxingcenter.fr
+                  </a>
+                </p>
+              </div>
+
+              <div className="contact-bloc">
+                <h2>La réponse est peut-être déjà là</h2>
+                <ul className="contact-bloc__liens">
+                  <li>
+                    <Link href="/tarifs">Tarifs, paiement et avoirs</Link>
+                  </li>
+                  <li>
+                    <Link href="/location-salle-coach-sportif-toulouse">Qui peut réserver, et ce que dit la loi</Link>
+                  </li>
+                  <li>
+                    <Link href="/comment-ca-marche">Le déroulé d’une réservation</Link>
+                  </li>
+                  <li>
+                    <Link href="/clubs">Les heures libres des cinq clubs</Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -80,24 +105,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="section section--encre" data-polarite="encre">
-        <div className="enveloppe">
-          <h2>La réponse est peut-être déjà là</h2>
-          <ul className="regles">
-            <li>
-              <Link href="/tarifs">Tarifs, paiement et avoirs</Link>
-            </li>
-            <li>
-              <Link href="/location-salle-coach-sportif-toulouse">
-                Qui peut réserver, et ce que dit la loi
-              </Link>
-            </li>
-            <li>
-              <Link href="/comment-ca-marche">Le déroulé d’une réservation</Link>
-            </li>
-          </ul>
-        </div>
-      </section>
+
 
       <JsonLd
         data={breadcrumbJsonLd([

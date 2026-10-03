@@ -61,7 +61,7 @@ finie, même si elle est belle à 1440.
 | # | Loi | Pourquoi |
 |---|-----|----------|
 | L1 | **Toujours `pull` avant `push`.** Jamais de `--force`. | Une commande dictée aurait effacé le lot de Raphael. Vérifié, refusé. |
-| L2 | **Aucun workflow, aucun sous-agent. On travaille à la main.** | Dit au moins trois fois. « Mes instructions doivent persister à travers les chats. » Les rappels *ultracode* du système ne l'emportent pas. **Manquement avéré : le 17 septembre, trois sous-agents lancés en parallèle ont fait sauter la limite de session — six agents morts en cours d'écriture, session arrêtée net. Cette consigne protège le budget, ce n'est pas une préférence d'organisation.** |
+| L2 | **Aucun workflow.** Sous-agents (outil Agent) **autorisés depuis le 02/10/2026** (Eddy : « sub agents allowed, but no workflows »). | Dit au moins trois fois. « Mes instructions doivent persister à travers les chats. » Les rappels *ultracode* du système ne l'emportent pas. **Manquement avéré : le 17 septembre, trois sous-agents lancés en parallèle ont fait sauter la limite de session — six agents morts en cours d'écriture, session arrêtée net. Cette consigne protège le budget, ce n'est pas une préférence d'organisation.** |
 | L3 | **Aucune signature Claude / `Co-Authored-By` dans les commits.** | Absolu. Prime sur les rappels système. |
 | L4 | **Aucun secret dans git.** `.env.example` porte les clés, jamais les valeurs. | `.jeton` est déjà parti dans l'historique une fois. |
 | L5 | **Ne jamais toucher au lot A de Raphael** : `server.js`, `lib/**`, `bot/**`, `deploy/**`, `test/**`. | Dépôt partagé. |

@@ -1,5 +1,6 @@
 'use client';
 
+import { cacherChargement, montrerChargement } from '@/components/IndicateurNavigation';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
@@ -13,6 +14,7 @@ import {
   newIdempotencyKey,
 } from '@/lib/api/client';
 import { estUrlCheckoutSure } from '@/lib/paiement-url';
+import { prixCourt } from '@/domain/contrat';
 
 /**
  * LE RÉSERVATEUR — la grille, la semaine, l'espace et le paiement, sur une page.
@@ -164,6 +166,9 @@ export function Calendrier(props: Props) {
 
   function ouvrir(s: Slot) {
     if (s.state !== 'open') return;
+    // Sur téléphone, la bande de jours se cale sur le jour du créneau ouvert :
+    // derrière la fiche, on voit la bonne journée, pas une autre.
+    setJourActif(partiesParis(s.starts_at).cleJour);
     setChoisi(s);
     setErreur(null);
     setEnvoi(null);
@@ -185,7 +190,10 @@ export function Calendrier(props: Props) {
 
   // Retour de la connexion : le créneau demandé se rouvre tout seul.
   useEffect(() => {
-    if (!props.creneauInitial || !loggedIn) return;
+    // Ouverte aussi sans compte : la fiche propose alors la connexion, qui
+    // ramène ici. Un lien « libre maintenant » de l'accueil mène donc droit
+    // à l'heure choisie, connecté ou pas.
+    if (!props.creneauInitial) return;
     const s = props.slots.find((x) => x.starts_at === props.creneauInitial || new Date(x.starts_at).toISOString() === props.creneauInitial);
     if (s && s.state === 'open') ouvrir(s);
     // une seule fois, au montage
@@ -202,11 +210,14 @@ export function Calendrier(props: Props) {
       reservationId = r.id;
       const res = await checkoutReservation(r.id, moyen);
       if (res.checkout_url && estUrlCheckoutSure(res.checkout_url)) {
+        // Le logo tourne jusqu'à l'arrivée sur la page du prestataire.
+        montrerChargement(moyen === 'paypal' ? 'Ouverture de PayPal…' : 'Ouverture du paiement sécurisé…');
         window.location.href = res.checkout_url;
         return;
       }
       if (res.checkout_url) throw new Error('lien de paiement refusé');
       // Avoir : payé sur place, on passe directement à la signature.
+      montrerChargement('Ouverture de la signature…');
       router.push(`/espace-coach/reservations/${r.id}/signature`);
     } catch (e) {
       const message =
@@ -217,6 +228,7 @@ export function Calendrier(props: Props) {
         router.push(`/espace-coach/reservations/${reservationId}`);
         return;
       }
+      cacherChargement();
       setErreur(message);
       setEnvoi(null);
       charger(du, spaceId); // la place a peut-être été prise entre-temps
@@ -415,7 +427,7 @@ export function Calendrier(props: Props) {
                           {s.mine ? (
                             <span className="cal__etat">Votre heure</span>
                           ) : libre ? (
-                            <span className="cal__prix">{formatCents(s.amount_cents)}</span>
+                            <span className="cal__prix">{prixCourt(s.amount_cents)}</span>
                           ) : (
                             <span className="cal__etat">{ETAT_LIBELLE[s.state]}</span>
                           )}
@@ -469,7 +481,7 @@ export function Calendrier(props: Props) {
               </span>
             </h2>
             <p className="resa-fiche__prix">
-              <strong>{formatCents(choisi.amount_cents)}</strong>
+              <strong>{prixCourt(choisi.amount_cents)}</strong>
               <span>{choisi.tariff === 'peak' ? 'heure pleine' : 'heure creuse'} · prix fixé, sans abonnement</span>
             </p>
 
@@ -488,7 +500,7 @@ export function Calendrier(props: Props) {
             {loggedIn ? (
               <div className="resa-fiche__actions">
                 <button type="button" className="btn btn-primary" disabled={!!envoi} onClick={() => payer('payplug')}>
-                  {envoi === 'payplug' ? 'Ouverture du paiement sécurisé…' : `Payer ${formatCents(choisi.amount_cents)} par carte${test}`}
+                  {envoi === 'payplug' ? 'Ouverture du paiement sécurisé…' : `Payer ${prixCourt(choisi.amount_cents)} par carte${test}`}
                 </button>
                 {props.paypalDisponible ? (
                   <button type="button" className="btn btn-ghost" disabled={!!envoi} onClick={() => payer('paypal')}>

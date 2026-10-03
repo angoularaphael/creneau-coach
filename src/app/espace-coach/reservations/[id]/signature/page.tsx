@@ -1,16 +1,20 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { FUSEAU_METIER } from '@/domain/contrat';
 import { getSessionMe } from '@/lib/auth/session';
-import { nomClub } from '@/lib/clubs';
 import { lireReservation, listerDocumentsCourants } from '@/lib/dal/reservations';
 import { versReservationPublique } from '@/lib/dal/map';
 import { exigerSession } from '@/lib/dal/acteur';
 import { contextePage } from '@/lib/dal/page';
+import { formatCents } from '@/lib/api/client';
+import { libelleEspace } from '@/lib/libelles-coach';
 import { PAGES, cheminPublic, estTypeDocument } from '@/lib/documents/obligatoires';
 import { RESEAU } from '@/lib/seo/verite';
-import { SignaturePad } from './SignaturePad';
+import { Parcours } from '@/components/espace-coach/ParcoursEtapes';
+import { clubCourt } from '@/components/espace-coach/parcours';
+import { jourLong, plage } from '@/components/espace-coach/temps';
+import { IcoRetour, IcoTelephone } from '@/components/espace-coach/Icones';
+import { ListeDocuments, SignaturePad, type DocASigner } from './SignaturePad';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Signer vos documents' };
@@ -30,6 +34,12 @@ type Props = { params: Promise<{ id: string }> };
  * puis la signature. Si un document n'est pas encore publié, on ne propose pas
  * de signer du vide — on le dit, et on dit que sa place et son paiement sont
  * gardés.
+ *
+ * ── LE CALME, PARCE QUE C'EST UN ENGAGEMENT ──────────────────────────────
+ * Une page qui fait signer doit rassurer, pas presser : aucun décompte ici,
+ * aucun cuivre ailleurs que sur le bouton final. À gauche ce qu'on signe, à
+ * droite où l'on signe. Le parcours en haut dit « avant-dernière minute » :
+ * le paiement est fait, l'accès est juste après.
  */
 export default async function SignaturePage(ctx: Props) {
   const params = await ctx.params;
@@ -57,87 +67,82 @@ export default async function SignaturePage(ctx: Props) {
   const manquants = documents.filter((d) => !d.file_sha256);
   const pret = documents.length >= 3 && manquants.length === 0;
 
-  const jour = new Intl.DateTimeFormat('fr-FR', {
-    timeZone: FUSEAU_METIER,
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(new Date(reservation.starts_at));
-  const heure = (iso: string) =>
-    new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU_METIER, hour: '2-digit', minute: '2-digit' }).format(
-      new Date(iso),
-    );
+  // Ce que la liste montre de chaque document. La version d'un document non
+  // publié n'est pas une version : c'est une ligne d'attente, elle ne s'affiche
+  // qu'une fois le fichier en ligne.
+  const aLire: DocASigner[] = documents.map((d) => ({
+    id: d.id,
+    kind: d.kind,
+    title: d.title,
+    version: d.file_sha256 ? String(d.version) : null,
+    // La page d'abord : au téléphone, un PDF se lit mal. Le PDF reste à côté —
+    // c'est la version qui fait foi.
+    page: d.file_sha256 && estTypeDocument(d.kind) ? PAGES[d.kind] : null,
+    pdf: d.file_sha256 && estTypeDocument(d.kind) ? cheminPublic(d.kind) : null,
+  }));
+
+  const club = clubCourt(reservation.club_id);
+  const nomSuggere = [me.profile?.first_name, me.profile?.last_name].filter(Boolean).join(' ');
 
   return (
-    <>
-      <header className="page-hero">
-        <p className="muted">
-          <Link href={`/espace-coach/reservations/${params.id}`}>Retour à la réservation</Link>
-        </p>
-        <h1>Signer vos documents</h1>
-        <p className="page-hero__sous">
-          Votre paiement est enregistré. Dernière étape avant votre accès :{' '}
-          {nomClub(reservation.club_id)}, {jour}, de {heure(reservation.starts_at)} à{' '}
-          {heure(reservation.ends_at)}.
-        </p>
-      </header>
+    <div className="ec-fiche ec-signature">
+      <section className="ec-fiche__tete" data-sans-scene aria-labelledby="ec-signer-titre">
+        <div className="ec-cadre">
+          <Link className="ec-fil ec-entree" style={{ ['--d' as string]: 0 }} href={`/espace-coach/reservations/${params.id}`}>
+            <IcoRetour taille={17} />
+            Ma réservation
+          </Link>
+          <div className="ec-entree" style={{ ['--d' as string]: 1 }}>
+            <p className="ec-sur">Étape 2 sur 3 · Signature</p>
+            <h1 id="ec-signer-titre" className="ec-titre">
+              Une signature, et c’est prêt
+            </h1>
+            <p className="ec-signature__sous">
+              Votre paiement de <b>{formatCents(reservation.amount_cents)}</b> est enregistré. Il ne reste
+              qu’à signer pour recevoir votre accès : <b>{club}</b>, espace {libelleEspace(reservation.space_id)},{' '}
+              {jourLong(reservation.starts_at)}, <span className="ec-mono">{plage(reservation.starts_at, reservation.ends_at)}</span>.
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <section className="section signature">
-        <div className="enveloppe signature__corps">
-          <h2 id="documents-titre">1. Lisez les documents</h2>
-          <ul className="signature__docs" aria-labelledby="documents-titre">
-            {documents.map((d) => (
-              <li key={d.id} className="signature__doc" data-publie={Boolean(d.file_sha256)}>
-                <span className="signature__doc-titre">{d.title}</span>
-                {/* La version d'un document non publié n'est pas une version : c'est
-                    une ligne d'attente. On ne l'affiche qu'une fois le fichier en ligne. */}
-                {d.file_sha256 ? <span className="signature__doc-version">Version {d.version}</span> : null}
-                {d.file_sha256 && estTypeDocument(d.kind) ? (
-                  <span className="signature__liens">
-                    {/* La page d'abord : au téléphone, un PDF se lit mal. Le PDF
-                        reste à côté — c'est la version qui fait foi. */}
-                    <a
-                      className="btn btn-ghost signature__lire"
-                      href={PAGES[d.kind]}
-                      target="_blank"
-                      rel="noopener"
-                    >
-                      Lire<span className="vh"> : {d.title} (nouvel onglet)</span>
-                    </a>
-                    <a className="signature__pdf" href={cheminPublic(d.kind)} target="_blank" rel="noopener">
-                      PDF<span className="vh"> : {d.title}</span>
-                    </a>
-                  </span>
-                ) : (
-                  <span className="signature__attente">En cours de publication</span>
-                )}
-              </li>
-            ))}
-          </ul>
+      <section className="ec-fiche__corps" data-sans-scene>
+        <div className="ec-cadre">
+          <div className="ec-entree" style={{ ['--d' as string]: 2 }}>
+            <Parcours
+              etats={['fait', 'courant', 'avenir']}
+              details={['Paiement reçu', '3 documents, 2 minutes', 'Juste après']}
+              taille="grand"
+            />
+          </div>
 
           {pret ? (
-            <>
-              <h2>2. Signez</h2>
-              <SignaturePad
-                reservationId={params.id}
-                documents={documents.map((d) => ({ id: d.id, kind: d.kind, title: d.title }))}
-              />
-            </>
+            <SignaturePad
+              reservationId={params.id}
+              documents={aLire}
+              nomSuggere={nomSuggere}
+            />
           ) : (
-            <div className="note" role="status">
-              <p>
-                <b>Boxing Center finalise la publication de ces documents.</b> Vous ne
-                pouvez pas signer un texte que vous ne pouvez pas lire : la signature
-                s’ouvrira dès qu’ils seront en ligne. Votre place et votre paiement
-                sont conservés.
-              </p>
-              <p>
-                Une question : <a href={`tel:${RESEAU.telephone.e164}`}>{RESEAU.telephone.affiche}</a>.
-              </p>
+            <div className="ec-signature__grille">
+              <div className="ec-entree" style={{ ['--d' as string]: 3 }}>
+                <ListeDocuments documents={aLire} />
+              </div>
+              <div className="ec-panneau ec-entree" role="status" style={{ ['--d' as string]: 4 }}>
+                <h2 className="ec-panneau__titre">Les documents arrivent</h2>
+                <p>
+                  <b>Boxing Center finalise leur publication.</b> Vous ne pouvez pas signer un texte que
+                  vous ne pouvez pas lire : la signature s’ouvrira dès qu’ils seront en ligne. Votre place
+                  et votre paiement sont conservés.
+                </p>
+                <a className="btn btn-ghost" href={`tel:${RESEAU.telephone.e164}`}>
+                  <IcoTelephone taille={18} />
+                  Une question : {RESEAU.telephone.affiche}
+                </a>
+              </div>
             </div>
           )}
         </div>
       </section>
-    </>
+    </div>
   );
 }

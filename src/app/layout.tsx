@@ -3,6 +3,8 @@ import { Bebas_Neue, Montserrat } from 'next/font/google';
 import { Shell } from '@/components/Shell';
 import { JsonLd } from '@/components/JsonLd';
 import { Mouvement } from '@/components/Mouvement';
+import { IndicateurNavigation } from '@/components/IndicateurNavigation';
+import { Suspense } from 'react';
 import { ROBOTS_RACINE } from '@/lib/seo';
 import '@/styles/jetons.css';
 import '@/styles/boxing-center.css';
@@ -66,6 +68,11 @@ export default async function RootLayout({
         <JsonLd />
         <Mouvement />
         <Shell>{children}</Shell>
+        {/* Le chargeur au logo entre deux pages. Sous Suspense : il lit
+            l'adresse (useSearchParams) et ne doit jamais retenir la page. */}
+        <Suspense fallback={null}>
+          <IndicateurNavigation />
+        </Suspense>
       </body>
     </html>
   );

@@ -1,21 +1,26 @@
 import Link from 'next/link'
 
 import { Faq } from '@/components/aeo/Faq'
+import { FilAriane } from '@/components/aeo/FilAriane'
+import { Fondement } from '@/components/aeo/Fondement'
+import { MisAJour } from '@/components/aeo/MisAJour'
 import { Sources } from '@/components/aeo/Sources'
 import { CLUB_PAGES, metadataDeRoute } from '@/lib/seo'
 import { JsonLd } from '@/lib/seo/json-ld'
-import { breadcrumbJsonLd, serviceJsonLd, type QuestionReponse } from '@/lib/seo/jsonld'
+import { pageWebJsonLd, serviceJsonLd, type QuestionReponse } from '@/lib/seo/jsonld'
 import {
   CLUBS_VERITE,
   COMPARAISON,
   LOI,
   MARCHE,
   REGISTRE_VERIFIE_LE,
+  REGLES,
   RESEAU,
   adresseEnLigne,
+  plagesHoraires,
   type Source,
 } from '@/lib/seo/verite'
-import { REGLAGES_DEFAUT, prixCourt, type ClubId } from '@/domain/contrat'
+import { HEURES_CREUSES, HEURES_PLEINES, REGLAGES_DEFAUT, prixCourt, type ClubId } from '@/domain/contrat'
 
 const CHEMIN = '/location-salle-coach-sportif-toulouse'
 export const metadata = metadataDeRoute(CHEMIN)
@@ -35,21 +40,41 @@ export const metadata = metadataDeRoute(CHEMIN)
  *
  * Tout fait vient de `src/lib/seo/verite.ts`. Rien n'est écrit ici en dur qui
  * existe là-bas.
+ *
+ * ── CORRIGÉ LE 02/10/2026 ─────────────────────────────────────────────
+ *
+ * · « Vous signez une fois pour toutes » : faux, la signature suit CHAQUE
+ *   paiement (CG art. 9). « Vos justificatifs sont demandés une seule fois » :
+ *   inexact, le contrat permet de les demander à tout moment, sous huit jours
+ *   (CG art. 5.2). « Serai-je seul ? Deux coachs au plus » : incomplet, l'espace
+ *   reste partagé avec les adhérents et le personnel (CG art. 3.3).
+ * · « Chaque année, des milliers de coachs cherchent où exercer » : l'INJEP
+ *   mesure UNE promotion, et ne dit rien de ce que ses diplômés cherchent. Le
+ *   H2 dit maintenant le chiffre, et le texte n'en tire que l'arithmétique
+ *   (26 % + 25 % = un sur deux).
+ * · Le tableau comparatif affirmait qu'une salle classique a « rarement un ring
+ *   ou une cage » et que coacher y est « souvent soumis à autorisation » : deux
+ *   généralités sans source. Il cite maintenant le seul règlement vérifié, et
+ *   dit « selon la salle » pour le reste.
+ * · Les heures de cours du club, absentes de la page, y sont.
+ * · Les plages horaires étaient tapées à la main dans le tableau et la FAQ :
+ *   elles sont lues dans `HEURES_CREUSES` / `HEURES_PLEINES`.
  */
 
-const MIS_A_JOUR = '2026-09-27'
 const creuse = prixCourt(REGLAGES_DEFAUT.offpeak_cents)
 const pleine = prixCourt(REGLAGES_DEFAUT.peak_cents)
 const slugDe = (id: ClubId) => CLUB_PAGES.find((c) => c.clubId === id)?.slug
+const heureParHeure = (heures: readonly number[]) =>
+  heures.map((h) => `${h} h-${h + 1} h`).join(', ')
 
 const QUESTIONS: readonly QuestionReponse[] = [
   {
     question: 'Combien coûte la location d’une salle pour un coach sportif à Toulouse ?',
-    reponse: `Chez Boxing Center, un créneau d’une heure coûte ${creuse} en heure creuse (10 h-12 h et 14 h-17 h) et ${pleine} en heure pleine (12 h-14 h et 17 h-19 h). Il n’y a ni abonnement, ni frais d’inscription, ni caution : vous payez l’heure réservée.`,
+    reponse: `Chez Boxing Center, un créneau d’une heure coûte ${creuse} en heure creuse (${plagesHoraires(HEURES_CREUSES)}) et ${pleine} en heure pleine (${plagesHoraires(HEURES_PLEINES)}), dans les cinq clubs. Vous payez l’heure réservée, et rien d’autre : ni abonnement, ni frais d’inscription, ni caution.`,
   },
   {
     question: 'Faut-il être diplômé pour louer une salle et y coacher ses clients ?',
-    reponse: `Oui. L’article ${LOI.qualification.article} du Code du sport réserve l’encadrement rémunéré d’une activité physique aux titulaires d’un diplôme ou d’une qualification reconnue, et l’article ${LOI.declaration.article} impose de déclarer son activité. Vos justificatifs sont demandés une seule fois, à l’inscription.`,
+    reponse: `Oui. L’article ${LOI.qualification.article} du Code du sport réserve l’encadrement rémunéré d’une activité physique aux titulaires d’un diplôme ou d’une qualification reconnue, et l’article ${LOI.declaration.article} impose de déclarer son activité. ${REGLES.justificatifs.texte}`,
   },
   {
     question: 'Mon client doit-il être adhérent du club ?',
@@ -58,8 +83,7 @@ const QUESTIONS: readonly QuestionReponse[] = [
   },
   {
     question: 'Serai-je seul dans la salle ?',
-    reponse:
-      'Pas forcément. Deux coachs au maximum partagent le même espace à la même heure, jamais davantage. Le nombre de places restantes est affiché avant que vous réserviez.',
+    reponse: `Pas forcément. ${REGLES.partage.texte} Le nombre de places restantes s’affiche avant que vous réserviez.`,
   },
   {
     question: 'Puis-je annuler un créneau réservé ?',
@@ -67,18 +91,20 @@ const QUESTIONS: readonly QuestionReponse[] = [
       'Oui, jusqu’à 24 heures avant son début : vous recevez un avoir du même montant, utilisable sur n’importe quel autre créneau. Moins de 24 heures avant, le créneau reste dû.',
   },
   {
-    question: 'Combien de créneaux puis-je réserver à l’avance ?',
-    reponse:
-      'Jusqu’à trois réservations en cours en même temps. Dès qu’une séance est passée, une place se libère pour la suivante.',
+    question: 'Combien de réservations puis-je tenir en même temps ?',
+    reponse: REGLES.limite.texte,
   },
   {
     question: 'Comment entre-t-on dans le club le jour du créneau ?',
-    reponse:
-      'Avec un QR code personnel, affiché dans votre espace coach. Il s’active cinq minutes avant l’heure réservée, se désactive à la fin, et n’ouvre que le club que vous avez réservé.',
+    reponse: `Avec un QR code personnel, affiché dans votre espace coach dès que vous avez signé les documents de la réservation. ${REGLES.qr.texte}`,
   },
 ]
 
 const SOURCES: readonly Source[] = [
+  REGLES.qualification.source,
+  REGLES.partage.source,
+  REGLES.signature.source,
+  REGLES.coursDuClub.source,
   LOI.qualification.source,
   LOI.registrePublic,
   MARCHE.diplomesBpjeps.source,
@@ -89,25 +115,28 @@ const SOURCES: readonly Source[] = [
 
 export default function Page() {
   const clubs = Object.values(CLUBS_VERITE)
-  const dateMaj = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date(MIS_A_JOUR))
 
   return (
     <>
       <header className="page-hero page-hero--visuel" data-visuel="coach-sportif">
-        <p className="sur mono">
-          <Link href="/">Accueil</Link> / Location de salle pour coach sportif
-        </p>
+        <FilAriane
+          items={[
+            { name: 'Accueil', path: '/' },
+            { name: 'Location de salle pour coach sportif', path: CHEMIN },
+          ]}
+        />
         <h1>Louer une salle pour coacher ses clients à Toulouse</h1>
         {/* LA RÉPONSE. Deux phrases qui tiennent seules : c'est ce qu'un moteur
-            de réponse extrait, et ce qu'un coach pressé lit avant de décider. */}
+            de réponse extrait, et ce qu'un coach pressé lit avant de décider.
+            Elles répondent aux deux moitiés de la question de la route : où,
+            et à quelles conditions. */}
         <p className="reponse">
-          Boxing Center loue ses salles à l’heure aux coachs sportifs indépendants,
-          dans cinq clubs de Toulouse et de son agglomération. Une heure coûte {creuse}{' '}
-          en heure creuse et {pleine} en heure pleine, sans abonnement ni engagement.
+          Boxing Center loue ses salles à l’heure aux coachs sportifs indépendants dans cinq
+          clubs de Toulouse et de son agglomération, à {creuse} l’heure creuse et {pleine}{' '}
+          l’heure pleine, sans abonnement. Il faut être un coach diplômé, déclaré et assuré, et
+          chaque réservation couvre un client en cours privé.
         </p>
-        <p className="maj">
-          Mis à jour le <time dateTime={MIS_A_JOUR}>{dateMaj}</time>
-        </p>
+        <MisAJour chemin={CHEMIN} />
       </header>
 
       <section className="section">
@@ -148,7 +177,7 @@ export default function Page() {
           </p>
           <div className="comparatif">
             <table>
-              <caption>Tarifs appliqués du lundi au samedi, dans les cinq clubs.</caption>
+              <caption>Tarifs appliqués du lundi au samedi, dans les cinq clubs, toutes taxes comprises.</caption>
               <thead>
                 <tr>
                   <th scope="col">Plage horaire</th>
@@ -160,25 +189,26 @@ export default function Page() {
                 <tr>
                   <th scope="row">Heure creuse</th>
                   <td>{creuse}</td>
-                  <td>10 h-11 h, 11 h-12 h, 14 h-15 h, 15 h-16 h, 16 h-17 h</td>
+                  <td>{heureParHeure(HEURES_CREUSES)}</td>
                 </tr>
                 <tr>
                   <th scope="row">Heure pleine</th>
                   <td>{pleine}</td>
-                  <td>12 h-13 h, 13 h-14 h, 17 h-18 h, 18 h-19 h</td>
+                  <td>{heureParHeure(HEURES_PLEINES)}</td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <p>{REGLES.coursDuClub.texte}</p>
         </div>
       </section>
 
       <section className="section">
         <div className="enveloppe">
-          <h2>Pourquoi une salle classique ne suffit pas</h2>
+          <h2>Salle louée, abonnement ou plein air : où coacher ses clients</h2>
           <p>
             Faire travailler un client dans une salle où l’on est simplement abonné
-            n’est pas toujours permis. Le règlement intérieur de {COMPARAISON.basicFit.marque},
+            dépend du règlement de cette salle. Celui de {COMPARAISON.basicFit.marque},
             par exemple, l’écrit en toutes lettres :
           </p>
           <blockquote className="citation" cite={COMPARAISON.basicFit.source.url}>
@@ -207,8 +237,14 @@ export default function Page() {
                 <tr>
                   <th scope="row">Droit d’y coacher un client</th>
                   <td>Oui, c’est l’objet de la location</td>
-                  <td>Selon le règlement, souvent soumis à autorisation</td>
+                  <td>Selon le règlement ; chez {COMPARAISON.basicFit.marque}, autorisation écrite préalable</td>
                   <td>Oui</td>
+                </tr>
+                <tr>
+                  <th scope="row">Ce que coûte une séance</th>
+                  <td>{creuse} ou {pleine}, l’heure réservée</td>
+                  <td>L’abonnement du mois, divisé par vos séances</td>
+                  <td>Rien</td>
                 </tr>
                 <tr>
                   <th scope="row">Coût fixe mensuel</th>
@@ -219,7 +255,7 @@ export default function Page() {
                 <tr>
                   <th scope="row">Ring, sacs, tatamis</th>
                   <td>Oui, selon le club</td>
-                  <td>Rarement un ring ou une cage</td>
+                  <td>Selon la salle</td>
                   <td>À transporter vous-même</td>
                 </tr>
                 <tr>
@@ -272,14 +308,14 @@ export default function Page() {
 
       <section className="section">
         <div className="enveloppe">
-          <h2>Deux coachs au plus par espace, jamais davantage</h2>
+          <h2>Deux coachs au plus par espace, chacun avec un client</h2>
           <p>
-            Chaque espace accueille au maximum deux coachs à la même heure. Vous
-            voyez le nombre de places restantes avant de réserver, et un créneau
-            complet ne s’affiche plus comme disponible. Chaque coach y vient avec
-            un seul client : jamais plus de quatre personnes en séance privée sur
-            le même espace.
+            {REGLES.partage.texte} Vous voyez le nombre de places restantes avant de
+            réserver, et un créneau complet ne s’affiche plus comme disponible. Chaque
+            coach y vient avec un seul client : jamais plus de quatre personnes en séance
+            privée sur le même espace.
           </p>
+          <Fondement regle={REGLES.partage} />
         </div>
       </section>
 
@@ -301,14 +337,14 @@ export default function Page() {
             </li>
             <li>
               <div>
-                <h3>Vous signez une fois pour toutes</h3>
-                <p>Conditions, règlement du club et décharge, depuis votre téléphone.</p>
+                <h3>Vous signez à l’écran</h3>
+                <p>Conditions, règlement du club et décharge, juste après chaque paiement.</p>
               </div>
             </li>
             <li>
               <div>
                 <h3>Vous entrez avec votre QR code</h3>
-                <p>Actif cinq minutes avant l’heure, valable dans le seul club réservé.</p>
+                <p>Actif {REGLAGES_DEFAUT.qr_early_minutes} minutes avant l’heure, valable dans le seul club réservé.</p>
               </div>
             </li>
           </ol>
@@ -322,24 +358,21 @@ export default function Page() {
 
       <section className="section">
         <div className="enveloppe">
-          <h2>Annulation : un avoir jusqu’à 24 heures avant</h2>
+          <h2>Annulation : un avoir jusqu’à {REGLAGES_DEFAUT.cancel_min_hours} heures avant</h2>
           <p>
-            Un empêchement plus de 24 heures avant le créneau ? Vous annulez depuis
-            votre espace et recevez un avoir du même montant, réutilisable sur
-            n’importe quel autre créneau, dans n’importe quel club. En dessous de
-            24 heures, le créneau reste dû : la place ne peut plus être proposée à
-            un autre coach à temps.
+            {REGLES.annulation.texte} L’avoir est valable sans limite de durée, dans
+            n’importe quel club. En dessous de {REGLAGES_DEFAUT.cancel_min_hours} heures,
+            la place ne peut plus être proposée à un autre coach à temps.
           </p>
         </div>
       </section>
 
       <section className="section section--encre" data-polarite="encre">
         <div className="enveloppe">
-          <h2>Chaque année, des milliers de coachs diplômés cherchent où exercer</h2>
+          <h2>BPJEPS : {MARCHE.diplomesBpjeps.valeur} nouveaux éducateurs sportifs en un an</h2>
           <p>
-            {MARCHE.diplomesBpjeps.texte} {MARCHE.mentionsForme.texte} Autrement
-            dit, la moitié des nouveaux diplômés exercent un métier qui a besoin
-            d’une salle — sans forcément en avoir une.
+            {MARCHE.diplomesBpjeps.texte} {MARCHE.mentionsForme.texte} Ensemble, ces
+            deux mentions réunissent un nouveau diplômé sur deux.
           </p>
           <p className="muted">
             Source :{' '}
@@ -351,12 +384,16 @@ export default function Page() {
         </div>
       </section>
 
-      <Faq items={QUESTIONS} />
+      <Faq items={QUESTIONS} titre="Les questions des coachs sur la location de salle" />
 
       <section className="section section--final">
         <div className="enveloppe">
-          <h2 className="final__titre">Regardez les heures libres cette semaine</h2>
-          <p>Aucun compte n’est nécessaire pour consulter les créneaux des cinq clubs.</p>
+          <h2 className="final__titre">Regardez les heures libres des cinq clubs</h2>
+          <p>
+            Aucun compte n’est nécessaire pour consulter les créneaux des cinq clubs. Les
+            conditions pour coacher dans les clubs sont détaillées sur{' '}
+            <Link href="/devenir-coach-partenaire">devenir coach partenaire</Link>.
+          </p>
           <div className="hero-actions">
             <Link className="btn btn-primary" href="/clubs">
               Voir les créneaux libres
@@ -368,17 +405,13 @@ export default function Page() {
         </div>
       </section>
 
-      <Sources items={SOURCES} verifieLe={REGISTRE_VERIFIE_LE} />
-
-      <JsonLd
-        data={[
-          serviceJsonLd(),
-          breadcrumbJsonLd([
-            { name: 'Accueil', path: '/' },
-            { name: 'Location de salle pour coach sportif', path: CHEMIN },
-          ]),
-        ]}
+      <Sources
+        items={SOURCES}
+        verifieLe={REGISTRE_VERIFIE_LE}
+        titre="Les sources : Code du sport, INJEP, contrat et clubs"
       />
+
+      <JsonLd data={[serviceJsonLd(), pageWebJsonLd(CHEMIN, { surLeService: true })]} />
     </>
   )
 }

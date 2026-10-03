@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SignUpForm } from '../AuthForms';
+import { AccesCoach } from '@/components/AccesCoach';
 import { authMode } from '@/lib/auth/config';
 import { cheminInterneSur } from '@/lib/auth/redirect';
 
@@ -42,13 +43,13 @@ export default async function SignUpPage({ searchParams }: Props) {
         <p className="sur mono">Gratuit · une minute</p>
         <h1>Créez votre compte coach</h1>
         <p className="page-hero__sous">
-          Une fois inscrit, vous voyez les créneaux libres des cinq clubs et vous
-          réservez en deux clics. Pas d’abonnement, pas d’engagement : vous ne payez
-          que les heures que vous prenez.
+          Un compte, et les cinq clubs vous sont ouverts : vous choisissez
+          l’heure, vous payez, votre QR ouvre la porte. Pas d’abonnement, pas
+          d’engagement — vous ne payez que les heures que vous prenez.
         </p>
       </header>
 
-      <section className="section section--etroite">
+      <AccesCoach next={next}>
         {mode === 'unset' ? (
           <p className="note">
             La création de compte est momentanément indisponible. Réessayez dans
@@ -63,7 +64,7 @@ export default async function SignUpPage({ searchParams }: Props) {
             </p>
           </>
         )}
-      </section>
+      </AccesCoach>
 
       <section className="section section--encre" data-polarite="encre">
         <div className="enveloppe">

@@ -160,7 +160,7 @@ export default function PrivacyPage() {
         </div>
       </section>
 
-      <Sources items={SOURCES} verifieLe={REGISTRE_VERIFIE_LE} />
+      <Sources items={SOURCES} verifieLe={REGISTRE_VERIFIE_LE} titre="Les textes de référence sur vos données" />
     </>
   )
 }

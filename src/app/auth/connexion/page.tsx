@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { AccesCoach } from '@/components/AccesCoach';
 import { SignInForm } from '../AuthForms';
 import { authMode } from '@/lib/auth/config';
 
@@ -32,7 +33,7 @@ export default async function SignInPage({ searchParams }: Props) {
           Retrouvez vos réservations, vos avoirs et le QR qui vous ouvre la porte.
         </p>
       </header>
-      <section className="section section--etroite">
+      <AccesCoach next={next}>
         {params.error === 'callback' ? (
           <p className="form-error" role="alert">
             Ce lien de confirmation n’est plus valable. Demandez-en un nouveau.
@@ -54,7 +55,7 @@ export default async function SignInPage({ searchParams }: Props) {
             </p>
           </>
         )}
-      </section>
+      </AccesCoach>
     </>
   );
 }

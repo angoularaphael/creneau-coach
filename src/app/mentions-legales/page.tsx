@@ -74,6 +74,7 @@ export default function MentionsPage() {
       <Sources
         items={[...EDITEUR.sources, EDITEUR.hebergeur.source]}
         verifieLe={REGISTRE_VERIFIE_LE}
+        titre="Les sources de l’identité de l’éditeur"
       />
     </>
   )

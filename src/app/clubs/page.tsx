@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
 import { Faq } from '@/components/aeo/Faq'
+import { ProchainesHeures } from '@/components/ProchainesHeures'
+import { PrechargeVisuel } from '@/components/PrechargeVisuel'
 import { Sources } from '@/components/aeo/Sources'
 import { CLUB_PAGES, metadataDeRoute } from '@/lib/seo'
 import { JsonLd } from '@/lib/seo/json-ld'
@@ -56,7 +58,7 @@ const PLUS: Partial<Record<ClubId, string>> = {
 const slugDe = (id: ClubId) => CLUB_PAGES.find((c) => c.clubId === id)?.slug ?? id
 const court = (c: ClubVerite) => c.nom.replace('Boxing Center ', '')
 
-export default function ClubsPage() {
+export default async function ClubsPage() {
   const clubs = Object.values(CLUBS_VERITE)
   const plusDeRings = [...clubs].sort((a, b) => b.equipement.rings - a.equipement.rings)[0]!
   const avecCombatSol = clubs.filter((c) => (ESPACES_PAR_CLUB[c.id] as readonly string[]).includes('mma-sol'))
@@ -92,6 +94,7 @@ export default function ClubsPage() {
 
   return (
     <>
+      <PrechargeVisuel fichier="hero-clubs" />
       <header className="page-hero page-hero--visuel" data-visuel="clubs">
         <p className="sur mono">
           <Link href="/">Accueil</Link> / Nos clubs
@@ -104,6 +107,10 @@ export default function ClubsPage() {
           {prixCourt(REGLAGES_DEFAUT.offpeak_cents)} ou {prixCourt(REGLAGES_DEFAUT.peak_cents)} l’heure.
         </p>
       </header>
+
+      {/* Avant de comparer, ce qui est libre : la question que le coach se pose
+          vraiment en arrivant ici. */}
+      <ProchainesHeures titre="Où réserver dans les trois prochains jours." />
 
       <section className="section">
         <div className="enveloppe">
@@ -160,7 +167,7 @@ export default function ClubsPage() {
 
       <Faq items={QUESTIONS} titre="Choisir son club" />
 
-      <Sources items={clubs.flatMap((c) => c.sources)} verifieLe={REGISTRE_VERIFIE_LE} />
+      <Sources items={clubs.flatMap((c) => c.sources)} verifieLe={REGISTRE_VERIFIE_LE} titre="Les sources de la comparaison des cinq clubs" />
 
       <JsonLd
         data={breadcrumbJsonLd([

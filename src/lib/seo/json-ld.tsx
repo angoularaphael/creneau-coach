@@ -20,10 +20,12 @@
  */
 
 import type {
+  DerouleJsonLd,
   FaqJsonLd,
   FilArianeJsonLd,
   LieuJsonLd,
   OrganisationJsonLd,
+  PageWebJsonLd,
   ServiceJsonLd,
   SiteWebJsonLd,
 } from './jsonld'
@@ -35,6 +37,8 @@ export type NoeudJsonLd =
   | FilArianeJsonLd
   | LieuJsonLd
   | FaqJsonLd
+  | PageWebJsonLd
+  | DerouleJsonLd
 
 export function JsonLd({ data }: { data: NoeudJsonLd | readonly NoeudJsonLd[] }) {
   const noeuds: readonly NoeudJsonLd[] = Array.isArray(data)

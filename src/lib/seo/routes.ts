@@ -42,11 +42,22 @@ export type PublicRoute = {
   /** Présente dans la navigation principale visible. */
   inNav: boolean
   /**
-   * Date ISO de dernière modification RÉELLE du contenu, posée à la main ou par
-   * le CMS. Volontairement optionnelle : on n'émet pas `new Date()`, voir
-   * `sitemap.ts`.
+   * Date ISO (AAAA-MM-JJ) du dernier commit RÉEL de la page. Volontairement
+   * optionnelle : on n'émet pas `new Date()`, voir `sitemap.ts`. Quand elle est
+   * posée, elle sort à trois endroits qui doivent dire la même chose — le
+   * « Mis à jour le » visible, le `lastmod` du sitemap et le `dateModified` du
+   * JSON-LD — et `scripts/verifier-aeo.mjs` la compare à `git log`.
    */
   lastModified?: string
+  /** Date ISO du premier commit de la page (`datePublished` du JSON-LD). */
+  datePublished?: string
+  /**
+   * La question que la page tranche, telle qu'un coach la pose à un moteur de
+   * réponse. Une route qui en porte une est une PAGE-RÉPONSE : chapeau de deux
+   * phrases, date, sources, H2 uniques (skill `aeo-geo` §3 et §6). Elle sert
+   * aussi de `description` au nœud `WebPage` et d'entrée à `llms.txt`.
+   */
+  question?: string
 }
 
 export type ClubPage = {
@@ -191,6 +202,20 @@ export const ALL_PUBLIC_ROUTES: readonly PublicRoute[] = (() => {
       echoue(`route publique interdite : ${path} recouvre une surface privée`)
     }
 
+    // Une date mal formée sortirait telle quelle dans le sitemap et le JSON-LD,
+    // où un robot l'ignorerait sans rien dire ; une date de publication
+    // postérieure à la mise à jour est une contradiction que personne ne voit.
+    const dateIso = /^\d{4}-\d{2}-\d{2}$/
+    for (const cle of ['lastModified', 'datePublished'] as const) {
+      const v = brutRoute[cle]
+      if (v !== undefined && (typeof v !== 'string' || !dateIso.test(v))) {
+        echoue(`route ${path} : « ${cle} » doit être une date AAAA-MM-JJ`)
+      }
+    }
+    if (brutRoute.datePublished && brutRoute.lastModified && brutRoute.datePublished > brutRoute.lastModified) {
+      echoue(`route ${path} : « datePublished » postérieure à « lastModified »`)
+    }
+
     if (vues.has(path)) echoue(`route dupliquée : ${path}`)
     vues.add(path)
 
@@ -212,6 +237,8 @@ export const ALL_PUBLIC_ROUTES: readonly PublicRoute[] = (() => {
       status: status as RouteStatus,
       inNav,
       ...(brutRoute.lastModified ? { lastModified: brutRoute.lastModified } : {}),
+      ...(brutRoute.datePublished ? { datePublished: brutRoute.datePublished } : {}),
+      ...(brutRoute.question ? { question: brutRoute.question } : {}),
     }
   })
 

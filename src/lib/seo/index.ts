@@ -53,9 +53,11 @@ export type { BuildMetadataInput, OgImage } from './metadata'
 
 export {
   ORG_ID,
+  SERVICE_ID,
   SITE_ID,
   breadcrumbJsonLd,
   organizationJsonLd,
+  pageWebJsonLd,
   serviceJsonLd,
   webSiteJsonLd,
 } from './jsonld'
@@ -63,6 +65,7 @@ export type {
   ElementFilAriane,
   FilArianeJsonLd,
   OrganisationJsonLd,
+  PageWebJsonLd,
   ServiceJsonLd,
   SiteWebJsonLd,
 } from './jsonld'
