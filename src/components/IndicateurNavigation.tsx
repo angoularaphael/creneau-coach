@@ -28,7 +28,7 @@ import { ChargeurLogo } from './ChargeurLogo'
  *   — les pages du menu, quand le navigateur n'a plus rien à faire ;
  *   — tout lien interne dès qu'on le survole, le touche ou le cible au clavier
  *     (l'intention précède le clic de 100 à 300 ms : c'est le temps gagné).
- * Pas de préchargement en mode « économie de données » ni en 2G/3G.
+ * Pas de préchargement en mode « économie de données » ni en 2G.
  */
 
 const MENU = ['/', '/clubs', '/comment-ca-marche', '/tarifs', '/contact']
@@ -63,7 +63,10 @@ function cheminDuLien(a: HTMLAnchorElement | null): string | null {
 
 function connexionEconome(): boolean {
   const c = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
-  return Boolean(c?.saveData || (c?.effectiveType && /(^|-)2g|3g/.test(c.effectiveType)))
+  // Seulement l'économie de données demandée, ou la vraie 2G. Pas la « 3G » :
+  // Chrome la déduit de la latence, et classe ainsi des connexions fixes un
+  // peu lentes — celles où le préchargement fait justement gagner le plus.
+  return Boolean(c?.saveData) || c?.effectiveType === '2g' || c?.effectiveType === 'slow-2g'
 }
 
 function estNavigationInterne(e: MouseEvent): boolean {
