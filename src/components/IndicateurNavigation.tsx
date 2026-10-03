@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 import { ChargeurLogo } from './ChargeurLogo'
@@ -17,7 +17,23 @@ import { ChargeurLogo } from './ChargeurLogo'
  * `DELAI_MS` : une navigation rapide ne fait rien clignoter. Il disparaît dès
  * que l'adresse change. Les pages peuvent aussi l'allumer elles-mêmes avant un
  * départ long (le paiement) avec `montrerChargement('…')`.
+ *
+ * ── ET D'ABORD, NE PAS AVOIR À ATTENDRE ──────────────────────────────────
+ * Next ne précharge pas une page rendue à chaque visite (et ses liens du
+ * menu, rangés dans un <details>, ne déclenchent même pas son préchargement
+ * automatique — mesuré en production le 03/10/2026). On le fait ici, en
+ * « complet » : la page entière, réutilisable cinq minutes. Mesuré : un clic
+ * vers une page préchargée s'affiche en 43 ms, sans aucune requête, contre
+ * 300 à 1 000 ms sans.
+ *   — les pages du menu, quand le navigateur n'a plus rien à faire ;
+ *   — tout lien interne dès qu'on le survole, le touche ou le cible au clavier
+ *     (l'intention précède le clic de 100 à 300 ms : c'est le temps gagné).
+ * Pas de préchargement en mode « économie de données » ni en 2G/3G.
  */
+
+const MENU = ['/', '/clubs', '/comment-ca-marche', '/tarifs', '/contact']
+/** Juste sous les cinq minutes de réutilisation de Next : on rafraîchit avant. */
+const FRAICHEUR_MS = 4 * 60_000
 
 const DELAI_MS = 180
 /** Filet de sécurité : jamais plus de 15 s d'écran voilé, même si une navigation échoue en silence. */
@@ -36,6 +52,20 @@ export function cacherChargement() {
   window.dispatchEvent(new CustomEvent<Detail>(EVENEMENT, { detail: { visible: false } }))
 }
 
+/** Le chemin interne d'un lien, s'il mène à une page du site (sinon null). */
+function cheminDuLien(a: HTMLAnchorElement | null): string | null {
+  if (!a || !a.href || (a.target && a.target !== '_self') || a.hasAttribute('download')) return null
+  const cible = new URL(a.href, window.location.href)
+  if (cible.origin !== window.location.origin) return null
+  if (/^\/(api|documents|admin)(\/|$)/.test(cible.pathname)) return null
+  return cible.pathname + cible.search
+}
+
+function connexionEconome(): boolean {
+  const c = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+  return Boolean(c?.saveData || (c?.effectiveType && /(^|-)2g|3g/.test(c.effectiveType)))
+}
+
 function estNavigationInterne(e: MouseEvent): boolean {
   if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return false
   const a = (e.target as Element | null)?.closest?.('a')
@@ -52,6 +82,7 @@ function estNavigationInterne(e: MouseEvent): boolean {
 }
 
 export function IndicateurNavigation() {
+  const routeur = useRouter()
   const chemin = usePathname()
   const recherche = useSearchParams()
   const [etat, setEtat] = useState<{ visible: boolean; texte?: string }>({ visible: false })
@@ -70,6 +101,40 @@ export function IndicateurNavigation() {
     effacerMinuteurs()
     setEtat({ visible: false })
   }, [chemin, recherche])
+
+  // Le préchargement : le menu au repos, puis chaque lien visé.
+  useEffect(() => {
+    if (connexionEconome()) return
+    const faits = new Map<string, number>()
+    const prefetch = (href: string) => {
+      const ici = window.location.pathname + window.location.search
+      if (href === ici) return
+      const avant = faits.get(href)
+      if (avant && Date.now() - avant < FRAICHEUR_MS) return
+      faits.set(href, Date.now())
+      // `kind: 'full'` : la page entière, pas seulement sa coquille.
+      routeur.prefetch(href, { kind: 'full' } as unknown as Parameters<typeof routeur.prefetch>[1])
+    }
+
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
+    const auRepos = (fn: () => void) =>
+      w.requestIdleCallback ? w.requestIdleCallback(fn, { timeout: 4000 }) : window.setTimeout(fn, 1500)
+    auRepos(() => MENU.forEach(prefetch))
+
+    const surIntention = (e: Event) => {
+      const a = (e.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null
+      const href = cheminDuLien(a)
+      if (href) prefetch(href)
+    }
+    document.addEventListener('pointerover', surIntention, { passive: true })
+    document.addEventListener('touchstart', surIntention, { passive: true })
+    document.addEventListener('focusin', surIntention)
+    return () => {
+      document.removeEventListener('pointerover', surIntention)
+      document.removeEventListener('touchstart', surIntention)
+      document.removeEventListener('focusin', surIntention)
+    }
+  }, [routeur])
 
   useEffect(() => {
     const armer = (texte?: string, immediat = false) => {
