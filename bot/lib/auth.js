@@ -73,10 +73,10 @@ async function fillVisible(page, selectors, value) {
   for (const sel of selectors) {
     const el = page.locator(sel).first();
     try {
-      if ((await el.count()) > 0 && (await el.isVisible()) && (await el.isEnabled())) {
-        await el.fill(value, { timeout: 15000 });
-        return true;
-      }
+      if ((await el.count()) === 0) continue;
+      await el.click({ timeout: 4000, force: true }).catch(() => {});
+      await el.fill(value, { timeout: 15000, force: true });
+      return true;
     } catch {
       /* next */
     }
@@ -86,13 +86,28 @@ async function fillVisible(page, selectors, value) {
 
 async function isVerificationScreen(page) {
   const url = page.url();
-  if (/verif|validation|otp|2fa|mfa|authenticate/i.test(url)) return true;
+  if (/verif|validation|otp|2fa|mfa|authenticate|appareil/i.test(url)) return true;
   const bodyText = await page.locator('body').innerText().catch(() => '');
-  if (/V[ée]rifions votre identit|code envoy[ée].*adresse|renseigner.*code/i.test(bodyText)) {
+  if (
+    /V[ée]rifions votre identit|code envoy[ée].*adresse|renseigner.*code|Autoriser votre nouvel appareil|nouvel appareil|code unique/i.test(
+      bodyText,
+    )
+  ) {
     return true;
   }
-  const visible = page.locator('#userValidationCode').first();
-  return (await visible.count()) > 0 && (await visible.isVisible().catch(() => false));
+  const hints = [
+    '#userValidationCode',
+    'input[name="code"]',
+    'input[name="otp"]',
+    'input[name="validationCode"]',
+    'input[autocomplete="one-time-code"]',
+    'input[inputmode="numeric"]',
+  ];
+  for (const sel of hints) {
+    const loc = page.locator(sel).first();
+    if ((await loc.count()) > 0 && (await loc.isVisible().catch(() => false))) return true;
+  }
+  return false;
 }
 
 async function handleEmailVerification(page, opts = {}) {
@@ -124,6 +139,8 @@ async function handleEmailVerification(page, opts = {}) {
       'input[name="code"]',
       'input[name="otp"]',
       'input[autocomplete="one-time-code"]',
+      'input[inputmode="numeric"]',
+      'input[placeholder*="code" i]',
     ], code);
   }
   const hidden = page.locator('input[name="validationCode"], #validationCode').first();
@@ -191,6 +208,8 @@ async function submitLoginForm(page, user, pass) {
   const userOk = await fillVisible(page, [
     'input[name="pseudo"]',
     '#pseudo',
+    'input[placeholder*="utilisateur" i]',
+    'input[placeholder*="Identifiant" i]',
     'input[name="username"]',
     'input[name="login"]',
     'input[type="text"]',
@@ -198,6 +217,7 @@ async function submitLoginForm(page, user, pass) {
   const passOk = await fillVisible(page, [
     'input[name="passwd"]',
     '#passwd',
+    'input[placeholder*="mot de passe" i]',
     'input[name="password"]',
     'input[type="password"]',
   ], pass);
@@ -312,5 +332,7 @@ module.exports = {
   gotoDeciplus,
   getAccessToken,
   isLoggedIn,
+  isVerificationScreen,
+  handleEmailVerification,
   handleChooseZone,
 };
