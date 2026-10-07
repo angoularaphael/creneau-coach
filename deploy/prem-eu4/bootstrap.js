@@ -8,7 +8,7 @@
  * 1) charge .env racine
  * 2) git clone/pull creneau-coach (si le repo n’est pas déjà là)
  * 3) npm install dans bot/
- * 4) lance bot/start.js (JUNIOR + IMAP jeremyfidge@gmail.com)
+ * 4) lance bot/start.js (RAPHAEL + IMAP jeremyfidge@gmail.com)
  *
  * Health : http://prem-eu4.bot-hosting.net:20695/health
  */
@@ -90,8 +90,8 @@ function resolveBotDir() {
 loadRootEnv();
 
 process.env.BOT_ROLE = process.env.BOT_ROLE || 'coach-access';
-process.env.BOT_ID = process.env.BOT_ID || 'junior-coach';
-process.env.DECIPLUS_USER = process.env.DECIPLUS_USER || 'JUNIOR';
+process.env.BOT_ID = process.env.BOT_ID || 'raphael-coach';
+process.env.DECIPLUS_USER = process.env.DECIPLUS_USER || 'RAPHAEL';
 process.env.DECIPLUS_IMAP_USER = process.env.DECIPLUS_IMAP_USER || 'jeremyfidge@gmail.com';
 process.env.ALERT_EMAIL = process.env.ALERT_EMAIL || 'boxingcentertls@gmail.com';
 process.env.BOT_HTTP_PORT =

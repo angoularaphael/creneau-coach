@@ -1,7 +1,7 @@
 'use strict';
 
 const { logInfo, logWarn } = require('./logger');
-const { launchBrowser, saveSession, login, gotoDeciplus, handleChooseZone } = require('./auth');
+const { launchBrowser, saveSession, login, switchToSite } = require('./auth');
 const { gymLabel, slotNote, MARKER } = require('./slot-note');
 const { sharedMemberId, extraireUrlBadge } = require('./badge-window');
 const { bornesVenteBadge } = require('./badge-vente');
@@ -254,7 +254,7 @@ async function runAccessJob(job) {
   try {
     const site = gymLabel(job.club_id || job.gym);
     await login(page, { siteLabel: site });
-    await handleChooseZone(page, site);
+    await switchToSite(page, site);
 
     const ouverte = await openMember(page, memberId);
     if (!ouverte) throw new Error(`Fiche partagée introuvable: ${memberId}`);

@@ -40,7 +40,7 @@ async function tick() {
 
 async function main() {
   logInfo('Worker créneau coachs', {
-    seller: process.env.DECIPLUS_USER || 'JUNIOR',
+    seller: process.env.DECIPLUS_USER || 'RAPHAEL',
     imap: isImapOtpConfigured() ? 'ok' : imapMissingReason(),
   });
   await tick();

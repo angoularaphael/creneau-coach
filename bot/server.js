@@ -45,7 +45,7 @@ function createBotServer() {
       service: 'creneau-coach-bot',
       bot_id: process.env.BOT_ID || 'junior-coach',
       bot_role: process.env.BOT_ROLE || 'coach-access',
-      seller: process.env.DECIPLUS_USER || 'JUNIOR',
+      seller: process.env.DECIPLUS_USER || 'RAPHAEL',
       imap: {
         configured: isImapOtpConfigured(),
         user: cfg.user || null,

@@ -26,7 +26,7 @@ async function main() {
     const result = await testImapConnection();
     console.log('\nIMAP OK');
     console.log(JSON.stringify(result, null, 2));
-    console.log('\nLes codes 2FA Deciplus de JUNIOR doivent arriver sur cette boîte.');
+    console.log('\nLes codes 2FA Deciplus de RAPHAEL doivent arriver sur cette boîte.');
     process.exit(0);
   } catch (err) {
     console.error('\nIMAP ÉCHEC :', err.message);

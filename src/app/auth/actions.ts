@@ -90,7 +90,7 @@ const MESSAGE_ENVOYE =
   'C’est presque fini : ouvrez l’e-mail que nous venons de vous envoyer et cliquez sur « Confirmer mon adresse ». Pensez à regarder dans les indésirables.';
 
 /**
- * Inscription dont l'e-mail part de no-reply (`src/lib/mail/envoi.ts`).
+ * Inscription dont l'e-mail part par Brevo (`src/lib/mail/envoi.ts`).
  *
  * `generateLink` crée le compte SANS rien envoyer et rend un jeton haché ; le
  * lien est bâti sur NOTRE adresse publique et vérifié par `/auth/confirmer`.

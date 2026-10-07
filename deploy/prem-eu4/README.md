@@ -1,6 +1,6 @@
 # Bot créneau coachs — prem-eu4:20695
 
-Vendeur Deciplus **JUNIOR**. IMAP **jeremyfidge@gmail.com**.  
+Vendeur Deciplus **RAPHAEL**. IMAP **jeremyfidge@gmail.com**.  
 App : [creneau-coach](https://github.com/angoularaphael/creneau-coach) → `bootstrap.js` + dossier `bot/`.
 
 ## Panel BotHosting
