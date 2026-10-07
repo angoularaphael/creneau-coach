@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { logInfo, logWarn } = require('./logger');
 const { launchChromiumWithRetry } = require('./playwright-launch');
-const { gymLabel } = require('./slot-note');
+const { sitesCorrespondent } = require('./slot-note');
 
 const SESSION_DIR = process.env.BOT_SESSION_DIR || path.join(__dirname, '..', 'data', 'session');
 const STORAGE_FILE = path.join(SESSION_DIR, 'storage-state.json');
@@ -163,8 +163,23 @@ async function gotoDeciplus(page, pathPart = '') {
   await page.waitForTimeout(Number(process.env.DECIPLUS_NAV_SETTLE_MS || 500));
 }
 
+function deciplusOrigin() {
+  try {
+    return new URL(process.env.DECIPLUS_URL || 'https://boxingcenter.deciplus.pro/').origin;
+  } catch {
+    return 'https://boxingcenter.deciplus.pro';
+  }
+}
+
+function erreurSite(message, code) {
+  const err = new Error(message);
+  err.code = code;
+  return err;
+}
+
 async function handleChooseZone(page, siteLabel) {
-  const label = String(siteLabel || gymLabel() || 'Minimes').trim();
+  const label = String(siteLabel || '').trim();
+  if (!label) return false;
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const onPicker =
       /choose-zone/i.test(page.url()) ||
@@ -175,7 +190,9 @@ async function handleChooseZone(page, siteLabel) {
     if ((await opt.count()) > 0) {
       await opt.click({ timeout: 8000 }).catch(() => {});
       const sell = page
-        .locator('button:has-text("Vendre"), button:has-text("Continuer"), button:has-text("Valider")')
+        .locator(
+          'button:has-text("Vendre sur ce site"), a:has-text("Vendre sur ce site"), button:has-text("Vendre"), button:has-text("Continuer")',
+        )
         .first();
       if ((await sell.count()) > 0) await sell.click().catch(() => {});
       await page.waitForTimeout(800);
@@ -185,6 +202,87 @@ async function handleChooseZone(page, siteLabel) {
   }
   logWarn('Picker site Deciplus non tranché', { site: label, url: page.url() });
   return false;
+}
+
+/**
+ * Force le picker Deciplus et n'enchaîne la vente que si le site choisi
+ * est celui de la réservation. Pas de repli vers la dernière salle de session.
+ */
+async function switchToSite(page, siteLabel) {
+  const label = String(siteLabel || '').trim();
+  if (!label) throw erreurSite('Site Deciplus manquant — vente refusee', 'SITE_MANQUANT');
+
+  const origin = deciplusOrigin();
+  const urls = [`${origin}/nextgen/choose-zone?nextUrl=/vente`, `${origin}/nextgen/choose-zone`];
+  let picker = false;
+  for (const url of urls) {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
+    await page.waitForTimeout(700);
+    picker =
+      /choose-zone/i.test(page.url()) || (await page.locator('text=/Choisissez un site/i').count()) > 0;
+    if (picker) break;
+  }
+  if (!picker) {
+    throw erreurSite(`Picker site Deciplus introuvable (attendu: ${label})`, 'SITE_PICKER_ABSENT');
+  }
+
+  const picked = await page
+    .evaluate((want) => {
+      const norm = (s) =>
+        String(s || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .replace(/\bst\b/g, 'saint')
+          .replace(/[^a-z0-9]+/g, ' ')
+          .replace(/\bboxing center\b/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      const wantN = norm(want);
+      const sel = document.querySelector('.ari-select, .el-select');
+      if (sel) sel.click();
+      const opts = [
+        ...document.querySelectorAll(
+          '.ari-select-dropdown [role="option"], .ari-select-dropdown li, [role="listbox"] [role="option"], .ari-option, select option',
+        ),
+      ];
+      const hit = opts.find((el) => {
+        const t = norm(el.textContent || '');
+        return t && wantN && (t === wantN || t.includes(wantN) || wantN.includes(t));
+      });
+      if (!hit) {
+        return { ok: false, options: opts.map((o) => (o.textContent || '').trim()).slice(0, 16) };
+      }
+      hit.click();
+      return { ok: true, site: (hit.textContent || '').trim() };
+    }, label)
+    .catch(() => ({ ok: false, options: [] }));
+
+  if (!picked?.ok) {
+    const opt = page.getByText(label, { exact: false }).first();
+    if ((await opt.count()) === 0) {
+      throw erreurSite(`Site Deciplus introuvable dans le picker: ${label}`, 'SITE_INTROUVABLE');
+    }
+    await opt.click({ timeout: 8000 }).catch(() => {});
+  } else if (!sitesCorrespondent(picked.site, label)) {
+    throw erreurSite(`Site picker ${picked.site} != ${label}`, 'SITE_MAUVAIS');
+  }
+
+  const sell = page
+    .locator(
+      'button:has-text("Vendre sur ce site"), a:has-text("Vendre sur ce site"), button:has-text("Vendre"), button:has-text("Continuer")',
+    )
+    .first();
+  if ((await sell.count()) > 0) {
+    await sell.click({ force: true }).catch(() => {});
+    await page.waitForTimeout(900);
+  }
+
+  if (/choose-zone/i.test(page.url())) {
+    throw erreurSite(`Toujours sur le picker apres selection (${label})`, 'SITE_NON_CONFIRME');
+  }
+  logInfo('Site Deciplus actif', { site: label, url: page.url() });
+  return label;
 }
 
 async function submitLoginForm(page, user, pass) {
@@ -227,7 +325,7 @@ async function performLogin(page, options = {}) {
   const url = process.env.DECIPLUS_URL;
   const user = process.env.DECIPLUS_USER;
   const pass = process.env.DECIPLUS_PASSWORD;
-  const siteLabel = options.siteLabel || process.env.DECIPLUS_DEFAULT_SITE || 'Minimes';
+  const siteLabel = String(options.siteLabel || '').trim();
   if (!url || !user || !pass) {
     throw new Error('DECIPLUS_URL, DECIPLUS_USER et DECIPLUS_PASSWORD requis');
   }
@@ -238,7 +336,7 @@ async function performLogin(page, options = {}) {
   }
   if ((await isLoggedIn(page)) && !options.force) {
     logInfo('Déjà connecté Deciplus (session persistée)');
-    await handleChooseZone(page, siteLabel);
+    if (siteLabel) await handleChooseZone(page, siteLabel);
     return;
   }
 
@@ -266,7 +364,7 @@ async function performLogin(page, options = {}) {
     );
   }
   logInfo('Connexion Deciplus réussie');
-  await handleChooseZone(page, siteLabel);
+  if (siteLabel) await handleChooseZone(page, siteLabel);
 }
 
 async function login(page, options = {}) {
@@ -313,4 +411,5 @@ module.exports = {
   getAccessToken,
   isLoggedIn,
   handleChooseZone,
+  switchToSite,
 };
