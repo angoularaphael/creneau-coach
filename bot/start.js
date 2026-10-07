@@ -12,7 +12,7 @@ const { logInfo, logWarn } = require('./lib/logger');
 async function start() {
   const cfg = imapConfig();
   logInfo('Démarrage bot créneaux', {
-    seller: process.env.DECIPLUS_USER || 'RAPHAEL',
+    seller: process.env.DECIPLUS_USER || 'JUNIOR',
     port: process.env.BOT_HTTP_PORT || process.env.PORT || '20695',
     imap_user: cfg.user || '(vide)',
     imap: isImapOtpConfigured() ? 'prêt' : 'à faire',

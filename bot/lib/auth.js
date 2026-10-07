@@ -73,10 +73,10 @@ async function fillVisible(page, selectors, value) {
   for (const sel of selectors) {
     const el = page.locator(sel).first();
     try {
-      if ((await el.count()) === 0) continue;
-      await el.click({ timeout: 4000, force: true }).catch(() => {});
-      await el.fill(value, { timeout: 15000, force: true });
-      return true;
+      if ((await el.count()) > 0 && (await el.isVisible()) && (await el.isEnabled())) {
+        await el.fill(value, { timeout: 15000 });
+        return true;
+      }
     } catch {
       /* next */
     }
@@ -163,14 +163,6 @@ async function gotoDeciplus(page, pathPart = '') {
   await page.waitForTimeout(Number(process.env.DECIPLUS_NAV_SETTLE_MS || 500));
 }
 
-function deciplusOrigin() {
-  try {
-    return new URL(process.env.DECIPLUS_URL || 'https://boxingcenter.deciplus.pro/').origin;
-  } catch {
-    return 'https://boxingcenter.deciplus.pro';
-  }
-}
-
 async function handleChooseZone(page, siteLabel) {
   const label = String(siteLabel || gymLabel() || 'Minimes').trim();
   for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -183,9 +175,7 @@ async function handleChooseZone(page, siteLabel) {
     if ((await opt.count()) > 0) {
       await opt.click({ timeout: 8000 }).catch(() => {});
       const sell = page
-        .locator(
-          'button:has-text("Vendre sur ce site"), a:has-text("Vendre sur ce site"), button:has-text("Vendre"), button:has-text("Continuer")',
-        )
+        .locator('button:has-text("Vendre"), button:has-text("Continuer"), button:has-text("Valider")')
         .first();
       if ((await sell.count()) > 0) await sell.click().catch(() => {});
       await page.waitForTimeout(800);
@@ -197,53 +187,14 @@ async function handleChooseZone(page, siteLabel) {
   return false;
 }
 
-/** Ouvre le picker et n'enchaîne que si le site de la réservation est choisi. */
-async function switchToSite(page, siteLabel) {
-  const label = String(siteLabel || '').trim();
-  if (!label) {
-    const err = new Error('Site Deciplus manquant — vente refusee');
-    err.code = 'SITE_MANQUANT';
-    throw err;
-  }
-  const origin = deciplusOrigin();
-  await page
-    .goto(`${origin}/nextgen/choose-zone?nextUrl=/vente`, { waitUntil: 'domcontentloaded', timeout: 60000 })
-    .catch(() => {});
-  await page.waitForTimeout(700);
-  const ok = await handleChooseZone(page, label);
-  if (!ok || /choose-zone/i.test(page.url())) {
-    const err = new Error(`Site Deciplus non confirme: ${label}`);
-    err.code = 'SITE_NON_CONFIRME';
-    throw err;
-  }
-  logInfo('Site Deciplus actif', { site: label, url: page.url() });
-  return label;
-}
-
 async function submitLoginForm(page, user, pass) {
-  const vigilant = page.getByText(/je reste vigilant/i).first();
-  if ((await vigilant.count()) > 0) {
-    await vigilant.click({ timeout: 5000 }).catch(() => {});
-    await page.waitForTimeout(400);
-  }
-  let userOk = await fillVisible(page, [
+  const userOk = await fillVisible(page, [
     'input[name="pseudo"]',
     '#pseudo',
     'input[name="username"]',
     'input[name="login"]',
-    'input[placeholder*="utilisateur" i]',
-    'input[placeholder*="identifiant" i]',
-    'input[aria-label*="utilisateur" i]',
     'input[type="text"]',
   ], user);
-  if (!userOk) {
-    const ph = page.getByPlaceholder(/utilisateur|identifiant|pseudo|login/i).first();
-    if ((await ph.count()) > 0) {
-      await ph.click({ force: true }).catch(() => {});
-      await ph.fill(user, { force: true });
-      userOk = true;
-    }
-  }
   const passOk = await fillVisible(page, [
     'input[name="passwd"]',
     '#passwd',
@@ -291,7 +242,7 @@ async function performLogin(page, options = {}) {
     return;
   }
 
-  logInfo('Session inactive — login Deciplus', { user });
+  logInfo('Session inactive — login Deciplus JUNIOR');
   const loginStartedAt = Date.now();
   await submitLoginForm(page, user, pass);
 
@@ -311,7 +262,7 @@ async function performLogin(page, options = {}) {
     throw new Error(
       sawOtp
         ? 'Code e-mail Deciplus non validé — IMAP jeremyfidge'
-        : `Échec connexion Deciplus — identifiants ${user}`,
+        : 'Échec connexion Deciplus — identifiants JUNIOR',
     );
   }
   logInfo('Connexion Deciplus réussie');
@@ -362,5 +313,4 @@ module.exports = {
   getAccessToken,
   isLoggedIn,
   handleChooseZone,
-  switchToSite,
 };

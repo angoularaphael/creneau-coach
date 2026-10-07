@@ -2,7 +2,6 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { contexteRequete } from '@/lib/security'
 import { verifyInternalRequest, reponseRefusInterne } from '@/lib/security/internal-auth'
 import { reponseJson } from '@/lib/http/erreurs'
-import { prevenirBadgeSalle } from '@/lib/mail/transactionnel'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -54,7 +53,7 @@ export async function POST(req: Request) {
 
   const { data: resa } = await sb
     .from('coach_reservations')
-    .select('id, coach_id, club_id, starts_at, ends_at')
+    .select('id, coach_id')
     .eq('id', reservationId)
     .maybeSingle()
 
@@ -90,19 +89,6 @@ export async function POST(req: Request) {
 
   if (memberId && resa.coach_id && !fichePartagee) {
     await sb.from('coach_profiles').update({ deciplus_member_id: memberId }).eq('id', resa.coach_id)
-  }
-
-  if (jobStatus === 'granted' && accessUrl) {
-    const clubVendu = String(body.club_id || body.gym || resa.club_id || '').trim()
-    if (clubVendu && clubVendu === String(resa.club_id || '')) {
-      await prevenirBadgeSalle({
-        reservationId,
-        clubId: String(resa.club_id || ''),
-        accessUrl,
-        startsAt: String(resa.starts_at || ''),
-        endsAt: String(resa.ends_at || ''),
-      })
-    }
   }
 
   return reponseJson({ ok: true }, 200, ctx.requestId)

@@ -30,7 +30,7 @@ async function callbackApp(job, payload) {
 }
 
 /**
- * Grant / revoke Deciplus — robot Playwright (compte RAPHAEL + IMAP jeremyfidge).
+ * Grant / revoke Deciplus — robot Playwright (compte JUNIOR + IMAP jeremyfidge).
  *
  * `deps.runRpa` est injectable pour les tests. En prod : `./rpa`.runAccessJob
  * (login, fiche membre, note COACH-SLOT GRANT/REVOKE).

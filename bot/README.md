@@ -1,9 +1,9 @@
-# Bot créneaux coachs — Deciplus RAPHAEL
+# Bot créneaux coachs — Deciplus JUNIOR
 
 Dossier autonome, **sans BOXPLUS**. Déployé sur BotHosting  
 `http://prem-eu4.bot-hosting.net:20695`
 
-- Vendeur Deciplus : **RAPHAEL** / mot de passe dans `bot/.env` (jamais Git)
+- Vendeur Deciplus : **JUNIOR** / mot de passe dans `bot/.env` (jamais Git)
 - 2FA e-mail : **jeremyfidge@gmail.com** (IMAP)
 - App : `https://coach.boxingcenter.fr` → `POST /api/jobs` header `x-sync-secret`
 
@@ -25,7 +25,7 @@ DECIPLUS_IMAP_PASS=xxxx xxxx xxxx xxxx
 
 (Les espaces 4×4 sont acceptés, le bot les enlève.)
 
-6. Dans Deciplus, vérifier que le compte **RAPHAEL** a bien **jeremyfidge@gmail.com** comme e-mail (sinon le code 2FA n’arrive pas dans cette boîte).
+6. Dans Deciplus, vérifier que le compte **JUNIOR** a bien **jeremyfidge@gmail.com** comme e-mail (sinon le code 2FA n’arrive pas dans cette boîte).
 7. Test local :
 
 ```bash
@@ -53,7 +53,7 @@ node bootstrap.js      # comme BotHosting : charge .env, npm, start.js
 
 Les jobs restent **en file** tant que l’IMAP n’est pas branché (pas d’échec silencieux).
 
-Dès que `DECIPLUS_IMAP_PASS` est posé, le worker lance **Playwright** : login RAPHAEL
+Dès que `DECIPLUS_IMAP_PASS` est posé, le worker lance **Playwright** : login JUNIOR
 (+ code 2FA lu dans Gmail), fiche membre, note `COACH-SLOT GRANT/REVOKE` dans
 Deciplus, puis callback `POST /api/v1/internal/deciplus/callback`.
 

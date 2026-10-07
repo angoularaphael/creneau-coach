@@ -57,17 +57,17 @@ crée dans le tableau de bord PayPal : URL
 les mêmes clés en `PAYPAL_TEST_*`, du bac à sable. Sans clés, le bouton PayPal
 n'apparaît pas — rien ne casse.
 
-## 0 ter. E-mails — no-reply via Resend (à poser sur Vercel, 2 minutes)
+## 0 ter. E-mails — via Brevo (à poser sur Vercel, 2 minutes)
 
 Tous les e-mails (confirmation, à signer, créneau confirmé, contact) partent de
-`no-reply@boxingcenter.fr` (Resend). Supabase ne fait qu'émettre le jeton
+`suzinabot@gmail.com` (Brevo). Supabase ne fait qu'émettre le jeton
 d'inscription : il n'envoie plus d'e-mail. Sur Vercel
 → projet `creneau-coach` → Settings → Environment Variables (Production) :
-`RESEND_API_KEY`, `RESEND_SENDER_EMAIL=no-reply@boxingcenter.fr`,
-`RESEND_SENDER_NAME=Boxing Center`, `RESEND_REPLY_TO`, puis **Redeploy**.
+`BREVO_API_KEY`, `BREVO_SENDER_EMAIL=suzinabot@gmail.com`,
+`BREVO_SENDER_NAME=Boxing Center`, `BREVO_REPLY_TO`, puis **Redeploy**.
 Vérifier aussi que `SITE_URL` vaut l'adresse qui répond vraiment (aujourd'hui
 `https://creneau-coach.vercel.app`) : c'est elle que désignent les liens.
-Sans `RESEND_API_KEY`, l'inscription refuse d'envoyer plutôt que de retomber
+Sans `BREVO_API_KEY`, l'inscription refuse d'envoyer plutôt que de retomber
 sur le mailer Supabase.
 
 ## 1. OVH — créer l'adresse (5 minutes)
