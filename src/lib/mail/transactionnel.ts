@@ -1,7 +1,6 @@
 import 'server-only'
 
 import { nomClub } from '@/lib/clubs'
-import { pngDepuisUrl } from '@/lib/qr-access'
 import { createServiceClient } from '@/lib/supabase/service'
 
 import { envoyerCourriel, gabarit, urlPublique } from './envoi'
@@ -63,64 +62,6 @@ export async function prevenirASigner(reservationId: string): Promise<void> {
     if (!envoi.ok) console.error('[mail] a signer', { raison: envoi.raison })
   } catch (e) {
     console.error('[mail] a signer', { raison: e instanceof Error ? e.name : 'erreur' })
-  }
-}
-
-function emailSalle(): string {
-  return (
-    process.env.DIRECTION_NOTIFY_EMAIL?.trim() ||
-    process.env.MANAGER_EMAIL_DEFAULT?.trim() ||
-    'boxingcenter31@gmail.com'
-  )
-}
-
-function pngBase64(dataUrl: string): string | null {
-  const m = dataUrl.match(/^data:image\/png;base64,([A-Za-z0-9+/=]+)$/)
-  return m ? m[1] : null
-}
-
-/**
- * Après une vente badge Deciplus au club réservé : le QR (valable 1 h) part
- * à la salle, boxingcenter31@gmail.com par défaut.
- */
-export async function prevenirBadgeSalle(o: {
-  reservationId: string
-  clubId: string
-  accessUrl: string
-  startsAt: string
-  endsAt: string
-}): Promise<void> {
-  try {
-    const png = await pngDepuisUrl(o.accessUrl)
-    const b64 = pngBase64(png)
-    if (!b64) {
-      console.error('[mail] badge salle', { raison: 'png_invalide' })
-      return
-    }
-    const club = nomClub(o.clubId)
-    const debut = quand(o.startsAt)
-    const fin = quand(o.endsAt)
-    const minutes = Math.round((new Date(o.endsAt).getTime() - new Date(o.startsAt).getTime()) / 60000)
-    const duree = minutes === 60 ? 'une heure' : `${minutes} minutes`
-    const g = gabarit({
-      titre: `Badge d'accès — ${club}`,
-      paragraphes: [
-        `Vente Deciplus enregistrée au ${club}. Ce QR n'ouvre que ce club.`,
-        `Valable ${duree} : ${debut} jusqu'à ${fin} (heure de Paris).`,
-        `Réservation ${o.reservationId}.`,
-      ],
-      bouton: { libelle: 'Ouvrir le badge', lien: o.accessUrl },
-      imageCid: 'qr-badge',
-    })
-    const envoi = await envoyerCourriel({
-      a: emailSalle(),
-      sujet: `QR accès 1 h — ${club}`,
-      pieces: [{ nom: 'badge-acces.png', contenuBase64: b64, cid: 'qr-badge', typeMime: 'image/png' }],
-      ...g,
-    })
-    if (!envoi.ok) console.error('[mail] badge salle', { raison: envoi.raison })
-  } catch (e) {
-    console.error('[mail] badge salle', { raison: e instanceof Error ? e.name : 'erreur' })
   }
 }
 

@@ -9,36 +9,12 @@ const CLUBS = {
   portet: 'Portet',
 };
 
-function normaliserLibelleSite(valeur) {
-  return String(valeur || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/\bst\b/g, 'saint')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .replace(/\bboxing center\b/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function sitesCorrespondent(a, b) {
-  const x = normaliserLibelleSite(a);
-  const y = normaliserLibelleSite(b);
-  return Boolean(x && y && (x === y || x.includes(y) || y.includes(x)));
-}
-
 function gymLabel(clubId) {
-  const slug = String(clubId || '')
+  const slug = String(clubId || process.env.DECIPLUS_DEFAULT_SITE || 'minimes')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '-');
-  const label = CLUBS[slug];
-  if (!label) {
-    const err = new Error(`Club Deciplus inconnu: ${clubId || '(vide)'} — vente refusee`);
-    err.code = 'CLUB_INCONNU';
-    throw err;
-  }
-  return label;
+  return CLUBS[slug] || process.env.DECIPLUS_DEFAULT_SITE || 'Minimes';
 }
 
 function parisStamp(iso) {
@@ -92,8 +68,6 @@ module.exports = {
   CLUBS,
   MARKER,
   gymLabel,
-  normaliserLibelleSite,
-  sitesCorrespondent,
   parisStamp,
   slotNote,
   identityFromJob,

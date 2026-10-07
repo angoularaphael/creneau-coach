@@ -2,8 +2,6 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { contexteRequete } from '@/lib/security'
 import { verifyInternalRequest, reponseRefusInterne } from '@/lib/security/internal-auth'
 import { reponseJson } from '@/lib/http/erreurs'
-import { venteAuBonClub } from '@/domain/vente-club'
-import { prevenirBadgeSalle } from '@/lib/mail/transactionnel'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -55,39 +53,12 @@ export async function POST(req: Request) {
 
   const { data: resa } = await sb
     .from('coach_reservations')
-    .select('id, coach_id, club_id, starts_at, ends_at')
+    .select('id, coach_id')
     .eq('id', reservationId)
     .maybeSingle()
 
   if (!resa) {
     return reponseJson({ ok: true, ignored: true }, 200, ctx.requestId)
-  }
-
-  const clubVendu = String(body.club_id || body.gym || '').trim()
-  if (jobStatus === 'granted' && !venteAuBonClub(String(resa.club_id || ''), clubVendu)) {
-    await sb
-      .from('coach_reservations')
-      .update({ deciplus_job_status: 'error' })
-      .eq('id', reservationId)
-    const { data: jobsMauvais } = await sb
-      .from('coach_deciplus_jobs')
-      .select('id')
-      .eq('reservation_id', reservationId)
-      .eq('status', 'queued')
-      .order('created_at', { ascending: false })
-      .limit(1)
-    const jobMauvais = jobsMauvais?.[0]?.id
-    if (jobMauvais) {
-      await sb
-        .from('coach_deciplus_jobs')
-        .update({
-          status: 'error',
-          deciplus_member_id: memberId,
-          error: 'vente_mauvais_club',
-        })
-        .eq('id', jobMauvais)
-    }
-    return reponseJson({ ok: true, refuse: 'mauvais_club' }, 200, ctx.requestId)
   }
 
   await sb
@@ -118,16 +89,6 @@ export async function POST(req: Request) {
 
   if (memberId && resa.coach_id && !fichePartagee) {
     await sb.from('coach_profiles').update({ deciplus_member_id: memberId }).eq('id', resa.coach_id)
-  }
-
-  if (jobStatus === 'granted' && accessUrl) {
-    await prevenirBadgeSalle({
-      reservationId,
-      clubId: String(resa.club_id || ''),
-      accessUrl,
-      startsAt: String(resa.starts_at || ''),
-      endsAt: String(resa.ends_at || ''),
-    })
   }
 
   return reponseJson({ ok: true }, 200, ctx.requestId)

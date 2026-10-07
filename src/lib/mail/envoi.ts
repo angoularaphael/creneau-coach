@@ -9,13 +9,6 @@ import 'server-only'
 const API_RESEND = 'https://api.resend.com/emails'
 const EXPEDITEUR = 'no-reply@boxingcenter.fr'
 
-export type PieceJointe = {
-  readonly nom: string
-  readonly contenuBase64: string
-  readonly cid?: string
-  readonly typeMime?: string
-}
-
 export type Courriel = {
   readonly a: string
   readonly sujet: string
@@ -23,7 +16,6 @@ export type Courriel = {
   readonly texte: string
   /** Réponse du destinataire. Sinon l'adresse de réponse du compte Resend. */
   readonly reponse?: string
-  readonly pieces?: readonly PieceJointe[]
 }
 
 export function mailConfigure(): boolean {
@@ -79,16 +71,6 @@ export async function envoyerCourriel(c: Courriel): Promise<{ ok: true } | { ok:
         subject: c.sujet,
         html: c.html,
         text: c.texte,
-        ...(c.pieces?.length
-          ? {
-              attachments: c.pieces.map((p) => ({
-                filename: p.nom,
-                content: p.contenuBase64,
-                ...(p.cid ? { content_id: p.cid } : {}),
-                ...(p.typeMime ? { content_type: p.typeMime } : {}),
-              })),
-            }
-          : {}),
       }),
       signal: AbortSignal.timeout(10_000),
     })
@@ -115,22 +97,17 @@ export function gabarit(o: {
   paragraphes: readonly string[]
   bouton: { libelle: string; lien: string }
   apres?: string
-  imageCid?: string
 }): { html: string; texte: string } {
   const lien = echapper(o.bouton.lien)
   const paras = o.paragraphes
     .map((p) => `<p style="margin:0 0 16px;font-size:16px;line-height:1.55;color:#e6e6ea">${echapper(p)}</p>`)
     .join('')
-  const image = o.imageCid
-    ? `<tr><td style="padding:0 28px 20px" align="center"><img src="cid:${echapper(o.imageCid)}" alt="QR d acces" width="280" height="280" style="display:block;width:100%;max-width:280px;height:auto;border:0;background:#ffffff" /></td></tr>`
-    : ''
   const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${echapper(o.titre)}</title></head>
 <body style="margin:0;padding:0;background:#080808;font-family:Arial,Helvetica,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#080808;padding:32px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#111218;border:1px solid #23253a;border-radius:10px">
 <tr><td style="padding:28px 28px 8px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#c98a4b;font-weight:700">Boxing Center · Coachs indépendants</td></tr>
 <tr><td style="padding:8px 28px 4px"><h1 style="margin:0 0 18px;font-size:24px;line-height:1.25;color:#ffffff">${echapper(o.titre)}</h1>${paras}</td></tr>
-${image}
 <tr><td style="padding:4px 28px 24px"><a href="${lien}" style="display:inline-block;background:#c98a4b;color:#080808;text-decoration:none;font-weight:700;font-size:16px;padding:14px 26px;border-radius:6px">${echapper(o.bouton.libelle)}</a></td></tr>
 <tr><td style="padding:0 28px 24px;font-size:13px;line-height:1.5;color:#a8abc4">Le bouton ne s’ouvre pas ? Copiez ce lien dans votre navigateur :<br><a href="${lien}" style="color:#c98a4b;word-break:break-all">${lien}</a></td></tr>
 ${o.apres ? `<tr><td style="padding:0 28px 28px;font-size:13px;line-height:1.5;color:#a8abc4">${echapper(o.apres)}</td></tr>` : ''}

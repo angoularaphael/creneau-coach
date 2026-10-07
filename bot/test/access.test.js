@@ -2,14 +2,7 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const {
-  gymLabel,
-  sitesCorrespondent,
-  slotNote,
-  identityFromJob,
-  isCoachAccessAction,
-  MARKER,
-} = require('../lib/slot-note');
+const { gymLabel, slotNote, identityFromJob, isCoachAccessAction, MARKER } = require('../lib/slot-note');
 const { processAccessJob } = require('../lib/access');
 const { normalizeJob } = require('../server');
 
@@ -36,18 +29,6 @@ test('gymLabel mappe les 5 clubs Boxing Center', () => {
   assert.equal(gymLabel('etats-unis'), 'Etats-Unis');
   assert.equal(gymLabel('ramonville'), 'Ramonville');
   assert.equal(gymLabel('portet'), 'Portet');
-});
-
-test('gymLabel refuse un club inconnu — pas de repli Minimes', () => {
-  assert.throws(() => gymLabel('balma'), (err) => err.code === 'CLUB_INCONNU');
-  assert.throws(() => gymLabel(''), (err) => err.code === 'CLUB_INCONNU');
-  assert.throws(() => gymLabel('toulouse'), (err) => err.code === 'CLUB_INCONNU');
-});
-
-test('sitesCorrespondent reconnait le libelle Deciplus du club reserve', () => {
-  assert.equal(sitesCorrespondent('Minimes', 'Boxing Center Minimes'), true);
-  assert.equal(sitesCorrespondent('St Cyprien', 'Saint-Cyprien'), true);
-  assert.equal(sitesCorrespondent('Portet', 'Minimes'), false);
 });
 
 test('slotNote porte le marqueur COACH-SLOT et les bornes', () => {

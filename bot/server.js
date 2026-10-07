@@ -73,9 +73,6 @@ function createBotServer() {
     if (!['coach_grant', 'coach_revoke', 'coach_revoke_coach'].includes(job.action)) {
       return res.status(400).json({ ok: false, error: `action inconnue: ${job.action}` });
     }
-    if (job.action === 'coach_grant' && !job.club_id) {
-      return res.status(400).json({ ok: false, error: 'club_id requis pour la vente badge' });
-    }
     const result = enqueue(job);
     res.json({ ok: true, ...result, imap_ready: isImapOtpConfigured() });
   });
