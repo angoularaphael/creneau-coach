@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 import { Faq } from '@/components/aeo/Faq'
@@ -10,11 +11,13 @@ import { breadcrumbJsonLd, type QuestionReponse } from '@/lib/seo/jsonld'
 import {
   CLUBS_VERITE,
   REGISTRE_VERIFIE_LE,
+  REGLES,
   TOTAL_RINGS,
   adresseEnLigne,
   type ClubVerite,
 } from '@/lib/seo/verite'
 import { ESPACES_PAR_CLUB, REGLAGES_DEFAUT, prixCourt, type ClubId } from '@/domain/contrat'
+import { PHOTOS_CLUBS } from '@/lib/photos-clubs'
 
 export const metadata = metadataDeRoute('/clubs')
 
@@ -147,23 +150,65 @@ export default async function ClubsPage() {
         </div>
       </section>
 
-      {clubs.map((c, i) => (
-        <section
-          key={c.id}
-          className={i % 2 === 0 ? 'section section--encre' : 'section'}
-          {...(i % 2 === 0 ? { 'data-polarite': 'encre' } : {})}
-        >
-          <div className="enveloppe">
-            <h2>{c.nom}</h2>
-            <address className="adresse-club">{adresseEnLigne(c)}</address>
-            <p>Sur place : {c.equipement.resume}.</p>
-            {c.acces ? <p>{c.acces.texte}</p> : null}
-            <Link className="lien-fleche" href={`/clubs/${slugDe(c.id)}`}>
-              Les heures libres à {court(c)}
-            </Link>
-          </div>
-        </section>
-      ))}
+      {clubs.map((c, i) => {
+        const photo = PHOTOS_CLUBS[c.id]
+        const espaces = ESPACES_PAR_CLUB[c.id] as readonly string[]
+        const nomsEspaces = espaces.map((espace) => NOM_ESPACE[espace] ?? espace)
+
+        return (
+          <section
+            key={c.id}
+            className={i % 2 === 0 ? 'section section--encre club-portrait' : 'section club-portrait'}
+            data-club={c.id}
+            {...(i % 2 === 0 ? { 'data-polarite': 'encre' } : {})}
+          >
+            <div className={`enveloppe club-portrait__grille${i % 2 === 1 ? ' club-portrait__grille--inverse' : ''}`}>
+              <figure className="club-portrait__visuel">
+                <Image
+                  src={photo.src}
+                  alt={photo.alt}
+                  width={1200}
+                  height={750}
+                  sizes="(min-width: 60rem) 52vw, 100vw"
+                />
+                <figcaption className="mono">Vue du club · {photo.cadrage}</figcaption>
+              </figure>
+
+              <div className="club-portrait__contenu">
+                <p className="sur mono">
+                  Club {String(i + 1).padStart(2, '0')} / {String(clubs.length).padStart(2, '0')} · {c.ville}
+                </p>
+                <h2>{c.nom}</h2>
+                <address className="adresse-club">{adresseEnLigne(c)}</address>
+                <p className="club-portrait__promesse">{`${c.equipement.resume}.`}</p>
+
+                <dl className="club-portrait__faits">
+                  <div>
+                    <dt>Rings</dt>
+                    <dd>{c.equipement.rings}</dd>
+                  </div>
+                  <div>
+                    <dt>Espaces</dt>
+                    <dd>{espaces.length}</dd>
+                  </div>
+                  <div>
+                    <dt>À partir de</dt>
+                    <dd>{prixCourt(REGLAGES_DEFAUT.offpeak_cents)}</dd>
+                  </div>
+                </dl>
+
+                <p className="club-portrait__zones mono">{nomsEspaces.join(' · ')}</p>
+                {c.acces ? <p className="club-portrait__acces">{c.acces.texte}</p> : null}
+                <p className="club-portrait__precision">{REGLES.partage.texte}</p>
+
+                <Link className="btn btn-primary" href={`/clubs/${slugDe(c.id)}`}>
+                  Voir les heures libres à {court(c)}
+                </Link>
+              </div>
+            </div>
+          </section>
+        )
+      })}
 
       <Faq items={QUESTIONS} titre="Choisir son club" />
 

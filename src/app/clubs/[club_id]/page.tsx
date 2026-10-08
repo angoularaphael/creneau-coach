@@ -8,6 +8,7 @@ import { getClubBySlug, getClubByApiId, cheminClub } from '@/lib/seo';
 import { redirect } from 'next/navigation';
 import { Calendrier } from '@/components/Calendrier';
 import { PrechargeVisuel } from '@/components/PrechargeVisuel';
+import { GalerieClub } from '@/components/GalerieClub';
 import { SectionsClub } from './SectionsClub';
 import { getSessionMe } from '@/lib/auth/session';
 import { JsonLd } from '@/lib/seo/json-ld';
@@ -177,6 +178,8 @@ export default async function ClubDetailPage({ params, searchParams }: Props) {
           <p className="muted">Sur place : {club.amenities.join(' · ')}</p>
         ) : null}
       </header>
+
+      <GalerieClub club={apiId} nomCourt={nomCourt} creuse={creuse} pleine={pleine} />
 
       <section className="section">
         <div className="section-head">

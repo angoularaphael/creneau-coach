@@ -1453,6 +1453,278 @@ p {
   color: var(--accent-hot);
 }
 
+/* ── La vitrine des cinq clubs ──────────────────────────────────────────
+   Le coach n'achète pas une promesse abstraite : il choisit un lieu. Les
+   photos réelles prennent donc plus de place que le texte, tandis que chaque
+   carte garde juste les faits utiles à la décision et une seule sortie : le
+   planning de ce club. */
+.section--vitrine {
+  overflow: hidden;
+  position: relative;
+}
+
+.section--vitrine::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0 49.92%, rgba(255, 255, 255, 0.022) 50% 50.08%, transparent 50.16%),
+    radial-gradient(circle at 95% 4%, rgba(184, 118, 58, 0.13), transparent 28rem);
+  background-size: 6rem 100%, auto;
+  content: '';
+  pointer-events: none;
+}
+
+.section--vitrine > .enveloppe {
+  position: relative;
+}
+
+.vitrine-clubs__entete {
+  display: grid;
+  gap: 0.5rem 3rem;
+  margin-bottom: clamp(1.75rem, 5vw, 3rem);
+}
+
+.vitrine-clubs__entete .intro {
+  margin: 0;
+  align-self: end;
+}
+
+.vitrine-clubs {
+  display: grid;
+  gap: 1rem;
+}
+
+.vitrine-club {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(168, 171, 196, 0.22);
+  border-radius: 8px;
+  background: rgba(8, 8, 8, 0.72);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.18);
+  transition:
+    border-color 180ms ease,
+    transform 240ms var(--e-sortie, ease),
+    box-shadow 240ms ease;
+}
+
+.vitrine-club:hover {
+  border-color: rgba(201, 138, 75, 0.58);
+  box-shadow: 0 1.75rem 4.5rem rgba(0, 0, 0, 0.34);
+  transform: translateY(-3px);
+}
+
+.vitrine-club__visuel {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(168, 171, 196, 0.18);
+  background: var(--bg);
+}
+
+.vitrine-club__visuel::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 52%, rgba(8, 8, 8, 0.78));
+  content: '';
+  pointer-events: none;
+}
+
+.vitrine-club__visuel img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 8 / 5;
+  object-fit: cover;
+  transition: filter 360ms ease, transform 680ms var(--e-sortie, ease);
+}
+
+.vitrine-club:hover .vitrine-club__visuel img {
+  filter: saturate(1.05) contrast(1.03);
+  transform: scale(1.035);
+}
+
+.vitrine-club__cadrage {
+  position: absolute;
+  z-index: 1;
+  right: 0.85rem;
+  bottom: 0.75rem;
+  left: 0.85rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.66rem;
+  letter-spacing: 0.13em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.vitrine-club__corps {
+  display: flex;
+  flex-direction: column;
+  min-height: 19rem;
+  padding: clamp(1rem, 3vw, 1.4rem);
+}
+
+.vitrine-club__titre {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.vitrine-club__ville {
+  margin: 0 0 0.25rem;
+  color: var(--accent-hot) !important;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.vitrine-club h3 {
+  margin: 0;
+  font-size: clamp(1.45rem, 4vw, 2rem);
+  line-height: 0.98;
+}
+
+.vitrine-club h3 a:hover {
+  color: var(--accent-hot);
+}
+
+.vitrine-club__espaces {
+  flex: 0 0 auto;
+  padding: 0.34rem 0.48rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vitrine-club__preuve {
+  margin: 1rem 0 0.5rem;
+  color: var(--ink) !important;
+  font-size: 0.94rem;
+  line-height: 1.45 !important;
+}
+
+.vitrine-club address {
+  margin: 0 0 0.7rem;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.vitrine-club__zones {
+  margin: 0 0 1.15rem !important;
+  color: var(--ink-muted) !important;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vitrine-club__action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: var(--tap);
+  margin-top: auto;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--pile-titre);
+  font-size: 0.88rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.vitrine-club__action span {
+  color: var(--accent-hot);
+  transition: transform 160ms ease;
+}
+
+.vitrine-club__action:hover span {
+  transform: translate(0.18rem, -0.18rem);
+}
+
+.vitrine-clubs__decision {
+  display: grid;
+  gap: 1.25rem 2rem;
+  align-items: center;
+  margin-top: 1rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid rgba(201, 138, 75, 0.45);
+  border-radius: 8px;
+  background:
+    linear-gradient(120deg, rgba(184, 118, 58, 0.14), transparent 42%),
+    rgba(8, 8, 8, 0.82);
+}
+
+.vitrine-clubs__decision h3 {
+  margin: 0 0 0.45rem;
+  font-size: clamp(1.55rem, 4vw, 2.25rem);
+}
+
+.vitrine-clubs__decision p:last-child {
+  margin: 0;
+  max-width: 70ch;
+  font-size: 0.9rem;
+}
+
+.vitrine-clubs__decision .btn {
+  justify-self: start;
+  text-align: center;
+}
+
+@media (min-width: 48rem) {
+  .vitrine-clubs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vitrine-club:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .vitrine-club:last-child {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.75fr);
+  }
+
+  .vitrine-club:last-child .vitrine-club__visuel,
+  .vitrine-club:last-child .vitrine-club__visuel img {
+    height: 100%;
+  }
+
+  .vitrine-clubs__decision {
+    grid-template-columns: 1fr auto;
+  }
+
+  .vitrine-clubs__decision .btn {
+    justify-self: end;
+  }
+}
+
+@media (min-width: 70rem) {
+  .vitrine-clubs__entete {
+    grid-template-columns: minmax(0, 1.05fr) minmax(22rem, 0.75fr);
+  }
+
+  .vitrine-clubs {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .vitrine-club:nth-child(1) { grid-column: span 7; }
+  .vitrine-club:nth-child(2) { grid-column: span 5; }
+  .vitrine-club:nth-child(n + 3) { grid-column: span 4; }
+
+  .vitrine-club:last-child {
+    display: block;
+  }
+
+  .vitrine-club:last-child .vitrine-club__visuel,
+  .vitrine-club:last-child .vitrine-club__visuel img {
+    height: auto;
+  }
+}
+
 /* ── Les étapes ─────────────────────────────────────────────────────── */
 .etapes {
   list-style: none;
@@ -3646,6 +3918,174 @@ p {
   }
 }
 
+/* ── /clubs : une vraie visite guidée, club par club ────────────────────
+   Le tableau répond vite ; ces cinq portraits permettent ensuite de juger la
+   salle avant d'ouvrir son planning. Le rythme alterne photo et décision sans
+   créer cinq cartes génériques identiques. */
+.club-portrait {
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+}
+
+.club-portrait__grille {
+  display: grid;
+  gap: clamp(1.75rem, 5vw, 4.5rem);
+  align-items: center;
+}
+
+.club-portrait__visuel {
+  position: relative;
+  isolation: isolate;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(168, 171, 196, 0.22);
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.3);
+}
+
+.club-portrait__visuel::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: inherit;
+  box-shadow: inset 0 -5rem 6rem rgba(8, 8, 8, 0.38);
+  content: '';
+  pointer-events: none;
+}
+
+.club-portrait__visuel img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 8 / 5;
+  object-fit: cover;
+  transition: transform 850ms var(--e-sortie, ease);
+}
+
+.club-portrait:hover .club-portrait__visuel img {
+  transform: scale(1.025);
+}
+
+.club-portrait__visuel figcaption {
+  position: absolute;
+  z-index: 2;
+  right: 0.85rem;
+  bottom: 0.75rem;
+  left: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.club-portrait__contenu {
+  min-width: 0;
+}
+
+.club-portrait__contenu h2 {
+  max-width: 16ch;
+  margin-bottom: 0.65rem;
+  font-size: clamp(2.25rem, 7vw, 4.25rem);
+}
+
+.club-portrait__contenu .adresse-club {
+  margin: 0 0 1.25rem;
+  color: var(--accent-hot);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-style: normal;
+  letter-spacing: 0.04em;
+}
+
+.club-portrait__promesse {
+  margin: 0 0 1.35rem;
+  color: var(--ink) !important;
+  font-size: clamp(1rem, 2vw, 1.16rem);
+  line-height: 1.55 !important;
+}
+
+.club-portrait__faits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 1.15rem;
+  border-block: 1px solid var(--line);
+}
+
+.club-portrait__faits > div {
+  min-width: 0;
+  padding: 0.85rem 0.45rem;
+  border-right: 1px solid var(--line);
+}
+
+.club-portrait__faits > div:first-child { padding-left: 0; }
+.club-portrait__faits > div:last-child { border-right: 0; }
+
+.club-portrait__faits dt {
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.club-portrait__faits dd {
+  margin: 0.2rem 0 0;
+  color: var(--ink);
+  font-family: var(--pile-titre);
+  font-size: clamp(1.55rem, 5vw, 2.25rem);
+  line-height: 1;
+}
+
+.club-portrait__zones {
+  margin: 0 0 0.8rem !important;
+  color: var(--ink) !important;
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.club-portrait__acces {
+  margin-bottom: 0.8rem !important;
+  font-size: 0.9rem;
+}
+
+.club-portrait__precision {
+  margin: 0 0 1.35rem !important;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--accent);
+  font-size: 0.78rem;
+  line-height: 1.5 !important;
+}
+
+.club-portrait__contenu .btn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (min-width: 60rem) {
+  .club-portrait__grille {
+    grid-template-columns: minmax(0, 1.16fr) minmax(21rem, 0.84fr);
+  }
+
+  .club-portrait__grille--inverse {
+    grid-template-columns: minmax(21rem, 0.84fr) minmax(0, 1.16fr);
+  }
+
+  .club-portrait__grille--inverse .club-portrait__visuel {
+    order: 2;
+  }
+
+  .club-portrait__contenu .btn {
+    width: auto;
+  }
+}
+
 /* ── CONTACT : les blocs à côté du formulaire ──────────────────────────── */
 .contact-bloc {
   display: grid;
@@ -3830,3 +4270,12 @@ p {
   .chargeur__logo { animation: chargeur-souffle 2.4s ease-in-out infinite; }
   .chargeur-voile { animation: none; }
 }
+
+/* ── Galerie du club : ce que le coach loue (08/10/2026) ───────────────── */
+.galerie-club__grille { list-style: none; margin: 1.6rem 0 0; padding: 0; display: grid; gap: .8rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.galerie-club__item--grand { grid-column: span 2; grid-row: span 2; }
+.galerie-club__item figure { margin: 0; position: relative; overflow: hidden; aspect-ratio: 3 / 2; height: 100%; }
+.galerie-club__item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .8s cubic-bezier(.16,1,.3,1); }
+.galerie-club__item:hover img { transform: scale(1.04); }
+.galerie-club__item figcaption { position: absolute; left: .6rem; bottom: .6rem; padding: .3rem .55rem; background: rgba(8,10,14,.72); color: #fff; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+@media (max-width: 47.99rem) { .galerie-club__grille { grid-template-columns: repeat(2, minmax(0, 1fr)); } .galerie-club__item--grand { grid-column: span 2; grid-row: auto; } }

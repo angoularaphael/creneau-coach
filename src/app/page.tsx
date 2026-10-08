@@ -6,7 +6,8 @@ import { pageWebJsonLd, serviceJsonLd } from '@/lib/seo/jsonld';
 import { PrechargeVisuel } from '@/components/PrechargeVisuel';
 import { metadataDeRoute, CLUB_PAGES } from '@/lib/seo';
 import { ESPACES_PAR_CLUB, REGLAGES_DEFAUT, prixCourt, type ClubId } from '@/domain/contrat';
-import { TOTAL_RINGS } from '@/lib/seo/verite';
+import { CLUBS_VERITE, TOTAL_RINGS, adresseEnLigne } from '@/lib/seo/verite';
+import { PHOTOS_CLUBS } from '@/lib/photos-clubs';
 
 export const metadata = metadataDeRoute('/');
 
@@ -52,6 +53,14 @@ const ESPACES = [
       'Surface dégagée pour le sol, le grappling, la préparation physique et les étirements.',
   },
 ] as const;
+
+const NOM_ESPACE: Record<string, string> = {
+  salle: 'Salle',
+  boxe: 'Boxe',
+  'mma-sol': 'MMA / Sol',
+  fitness: 'Fitness',
+  'boxe-fitness': 'Boxe et Fitness',
+};
 
 // Les montants et les délais viennent des réglages, jamais écrits en dur : la
 // signature, qui manquait au déroulé, y est — elle suit CHAQUE paiement (CG
@@ -178,33 +187,83 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Les clubs — la porte vers les pages club ──────────────────────── */}
-      <section className="section section--encre" data-polarite="encre">
+      {/* ── Les clubs — voir le lieu avant de choisir l'heure ─────────────── */}
+      <section className="section section--encre section--vitrine" data-polarite="encre">
         <div className="enveloppe">
-          <p className="sur mono">Cinq clubs autour de Toulouse</p>
-          <h2>Cinq clubs à Toulouse, Ramonville et Portet-sur-Garonne.</h2>
-          <p className="intro">
-            Chaque club a ses espaces et son planning. Un créneau se réserve dans un
-            club précis, et le QR n’ouvre que celui-là.
-          </p>
-          <ul className="clubs">
+          <div className="vitrine-clubs__entete">
+            <div>
+              <p className="sur mono">Cinq vrais lieux de travail</p>
+              <h2>Choisissez la salle qui sert votre séance.</h2>
+            </div>
+            <p className="intro">
+              Ring, sacs, tatamis, cage ou octogone&nbsp;: regardez l’espace, puis
+              ouvrez son planning. Les photos montrent les clubs réels et les
+              équipements annoncés viennent de leurs pages officielles.
+            </p>
+          </div>
+
+          <div className="vitrine-clubs">
             {CLUB_PAGES.map((c) => {
-              const espaces = ESPACES_PAR_CLUB[c.clubId as ClubId] ?? [];
+              const clubId = c.clubId as ClubId;
+              const club = CLUBS_VERITE[clubId];
+              const photo = PHOTOS_CLUBS[clubId];
+              const espaces = ESPACES_PAR_CLUB[clubId] ?? [];
+              const nomsEspaces = espaces.map((espace) => NOM_ESPACE[espace] ?? espace);
+
               return (
-                <li key={c.slug}>
-                  <Link className="club" href={`/clubs/${c.slug}`}>
-                    <span className="club__nom">{c.nom}</span>
-                    <span className="club__meta mono">
-                      {espaces.length} espace{espaces.length > 1 ? 's' : ''}
-                    </span>
-                    <span className="club__fleche" aria-hidden="true">
-                      ↗
-                    </span>
+                <article className="vitrine-club" data-club={clubId} key={c.slug}>
+                  <Link
+                    className="vitrine-club__visuel"
+                    href={`/clubs/${c.slug}`}
+                    aria-label={`Voir le planning du club ${c.nom}`}
+                  >
+                    <Image
+                      src={photo.src}
+                      alt={photo.alt}
+                      width={1200}
+                      height={750}
+                      sizes="(min-width: 70rem) 34vw, (min-width: 48rem) 50vw, 100vw"
+                    />
+                    <span className="vitrine-club__cadrage mono">{photo.cadrage}</span>
                   </Link>
-                </li>
+                  <div className="vitrine-club__corps">
+                    <div className="vitrine-club__titre">
+                      <div>
+                        <p className="vitrine-club__ville mono">{club.ville}</p>
+                        <h3>
+                          <Link href={`/clubs/${c.slug}`}>{c.nom}</Link>
+                        </h3>
+                      </div>
+                      <span className="vitrine-club__espaces mono">
+                        {`${espaces.length} espace${espaces.length > 1 ? 's' : ''}`}
+                      </span>
+                    </div>
+                    <p className="vitrine-club__preuve">{`${club.equipement.resume}.`}</p>
+                    <address>{adresseEnLigne(club)}</address>
+                    <p className="vitrine-club__zones mono">{nomsEspaces.join(' · ')}</p>
+                    <Link className="vitrine-club__action" href={`/clubs/${c.slug}`}>
+                      Voir les heures libres <span aria-hidden="true">↗</span>
+                    </Link>
+                  </div>
+                </article>
               );
             })}
-          </ul>
+          </div>
+
+          <aside className="vitrine-clubs__decision" aria-label="Décider avant de réserver">
+            <div>
+              <p className="sur mono">Décider sans mauvaise surprise</p>
+              <h3>Une heure, un espace précis, un prix connu.</h3>
+              <p>
+                Le tarif est identique dans les cinq clubs&nbsp;: {prixCourt(REGLAGES_DEFAUT.offpeak_cents)} en
+                heure creuse ou {prixCourt(REGLAGES_DEFAUT.peak_cents)} en heure pleine. L’espace reste
+                partagé avec les adhérents du club et le planning vous montre les cours avant le paiement.
+              </p>
+            </div>
+            <Link className="btn btn-primary" href="/clubs">
+              Comparer les cinq clubs
+            </Link>
+          </aside>
         </div>
       </section>
 
