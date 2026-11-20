@@ -7,7 +7,7 @@ import 'server-only'
  */
 
 const API_BREVO = 'https://api.brevo.com/v3/smtp/email'
-const EXPEDITEUR = 'suzinabot@gmail.com'
+const EXPEDITEUR = 'contact@boxingcenter.fr'
 
 export type Courriel = {
   readonly a: string

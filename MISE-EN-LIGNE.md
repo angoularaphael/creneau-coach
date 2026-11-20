@@ -60,10 +60,10 @@ n'apparaît pas — rien ne casse.
 ## 0 ter. E-mails — via Brevo (à poser sur Vercel, 2 minutes)
 
 Tous les e-mails (confirmation, à signer, créneau confirmé, contact) partent de
-`suzinabot@gmail.com` (Brevo). Supabase ne fait qu'émettre le jeton
+`contact@boxingcenter.fr` (Brevo). Supabase ne fait qu'émettre le jeton
 d'inscription : il n'envoie plus d'e-mail. Sur Vercel
 → projet `creneau-coach` → Settings → Environment Variables (Production) :
-`BREVO_API_KEY`, `BREVO_SENDER_EMAIL=suzinabot@gmail.com`,
+`BREVO_API_KEY`, `BREVO_SENDER_EMAIL=contact@boxingcenter.fr`,
 `BREVO_SENDER_NAME=Boxing Center`, `BREVO_REPLY_TO`, puis **Redeploy**.
 Vérifier aussi que `SITE_URL` vaut l'adresse qui répond vraiment (aujourd'hui
 `https://creneau-coach.vercel.app`) : c'est elle que désignent les liens.
